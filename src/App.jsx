@@ -5,67 +5,11 @@ const LOGO_B64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAlgAAAC9CAIAAADg
 // ── Seed Data ────────────────────────────────────────────────────────────────
 const COACH = { email: "coach@me.com", password: "coach123", name: "Coach" };
 
-const SEED_NUTRITION = {
-  c1: {
-    calories: 2250, protein: 130, carbs: 300, fat: 60,
-    notes: "Small surplus for lean gain. Carbs concentrated around training. Creatine 5g/day.",
-    meals: [
-      { id:"m1", name:"Breakfast", description:"3 eggs + 2 whites, oats with banana & honey, black coffee", protein:32, carbs:68, fat:18 },
-      { id:"m2", name:"Lunch", description:"Chicken or tofu rice bowl, 1.5 cups rice, stir-fried greens, kimchi", protein:36, carbs:80, fat:13 },
-      { id:"m3", name:"Pre-Train", description:"Greek yogurt + berries, or rice cake + whey shake (60–90 min before)", protein:22, carbs:36, fat:3 },
-      { id:"m4", name:"Post / Dinner", description:"150g fish or lean beef, 1.5 cups rice or noodles, edamame, vegetables", protein:32, carbs:86, fat:16 },
-      { id:"m5", name:"Evening", description:"Cottage cheese or tofu pudding + fruit", protein:18, carbs:30, fat:10 },
-    ],
-  },
-};
+const SEED_NUTRITION = {};
 
-const SEED_CLIENTS = [
-  { id:"c1", name:"Sarah Lim", email:"sarah@client.com", password:"sarah123", age:32, weight:58, height:162, goal:"Lean muscle gain", programs:["p1"] },
-  { id:"c2", name:"Priya Nair", email:"priya@client.com", password:"priya123", age:27, weight:62, height:165, goal:"Strength & tone", programs:[] },
-];
+const SEED_CLIENTS = [];
 
-const SEED_PROGRAMS = [
-  {
-    id:"p1", name:"Curve Engine A — Advanced 5-Day", tag:"Advanced · 5 days/week", color:"#CBFB45", assignedTo:["c1"],
-    days:[
-      { id:"d1", label:"Day 1 — Lower (Glute)", exercises:[
-        { id:"e1", name:"Hip Thrust (Smith)", sets:4, reps:"8–12", rest:"90s", notes:"Full extension at top, controlled negative" },
-        { id:"e2", name:"Romanian Deadlift", sets:3, reps:"10–12", rest:"90s", notes:"Hinge deep, feel the stretch" },
-        { id:"e3", name:"Cable Kickback", sets:3, reps:"15–20", rest:"60s", notes:"Myo-reps on last set" },
-        { id:"e4", name:"Seated Abduction", sets:3, reps:"15–20", rest:"60s", notes:"Drop set on final set" },
-        { id:"e5", name:"Standing Calf Raise (Smith)", sets:4, reps:"12–15", rest:"60s", notes:"Full stretch at bottom" },
-      ]},
-      { id:"d2", label:"Day 2 — Upper (Back / Rear Delts)", exercises:[
-        { id:"e6", name:"Lat Pulldown", sets:4, reps:"8–12", rest:"90s", notes:"Pull to upper chest, squeeze lats" },
-        { id:"e7", name:"Seated Cable Row", sets:3, reps:"10–12", rest:"90s", notes:"Elbows close, full stretch forward" },
-        { id:"e8", name:"Face Pull", sets:3, reps:"15–20", rest:"60s", notes:"External rotation at end" },
-        { id:"e9", name:"Rear Delt Fly (Pec Deck)", sets:3, reps:"15–20", rest:"60s", notes:"Drop set final set" },
-        { id:"e10", name:"Seated Calf Raise", sets:4, reps:"12–15", rest:"60s", notes:"Soleus focus — bent knee" },
-      ]},
-      { id:"d3", label:"Day 3 — Lower (Quad)", exercises:[
-        { id:"e11", name:"Leg Press", sets:4, reps:"10–14", rest:"90s", notes:"High foot placement for glute bias" },
-        { id:"e12", name:"Leg Extension", sets:3, reps:"12–15", rest:"60s", notes:"Drop set on final set" },
-        { id:"e13", name:"Walking Lunge", sets:3, reps:"12–16/leg", rest:"90s", notes:"Full step, upright torso" },
-        { id:"e14", name:"Lying Leg Curl", sets:3, reps:"10–12", rest:"60s", notes:"Lengthened partials after failure" },
-        { id:"e15", name:"Standing Calf Raise (Smith)", sets:3, reps:"12–15", rest:"60s", notes:"" },
-      ]},
-      { id:"d4", label:"Day 4 — Upper (Shoulders)", exercises:[
-        { id:"e16", name:"Dumbbell Shoulder Press", sets:4, reps:"8–12", rest:"90s", notes:"Don't lock out at top" },
-        { id:"e17", name:"Lateral Raise", sets:4, reps:"15–20", rest:"60s", notes:"Myo-reps on final set" },
-        { id:"e18", name:"Cable Lateral Raise", sets:3, reps:"12–15", rest:"60s", notes:"Lengthened partials after failure" },
-        { id:"e19", name:"Upright Row (Cable)", sets:3, reps:"12–15", rest:"60s", notes:"Elbows high" },
-        { id:"e20", name:"Seated Calf Raise", sets:3, reps:"15–20", rest:"60s", notes:"" },
-      ]},
-      { id:"d5", label:"Day 5 — Lower (Posterior)", exercises:[
-        { id:"e21", name:"Sumo Deadlift", sets:4, reps:"6–10", rest:"120s", notes:"Brace hard, push floor away" },
-        { id:"e22", name:"Glute Bridge (Barbell)", sets:3, reps:"12–15", rest:"90s", notes:"Pause 1s at top" },
-        { id:"e23", name:"Seated Leg Curl", sets:3, reps:"10–12", rest:"60s", notes:"Lengthened partials after failure" },
-        { id:"e24", name:"Hip Abduction Machine", sets:3, reps:"15–20", rest:"60s", notes:"Drop set on final set" },
-        { id:"e25", name:"Abs — Cable Crunch", sets:3, reps:"15–20", rest:"60s", notes:"Flex from ribs, not hips" },
-      ]},
-    ],
-  },
-];
+const SEED_PROGRAMS = [];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const uid = () => Math.random().toString(36).slice(2, 9);
