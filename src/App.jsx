@@ -13,7 +13,7 @@ const SEED_PROGRAMS = [];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const uid = () => Math.random().toString(36).slice(2, 9);
-const DAY_COLORS = ["#CBFB45","#5BC0FF","#FF6B4A","#B88CFF","#7BE0A0","#F4B740","#FF9F45"];
+const DAY_COLORS = ["#FFFFFF","#DDDDDD","#BBBBBB","#AAAAAA","#CCCCCC","#EEEEEE","#888888"];
 const fmt = (d) => new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
 const todayKey = () => new Date().toISOString().slice(0,10);
 
@@ -159,6 +159,7 @@ function CoachApp({ clients, setClients, programs, setPrograms, nutrition, setNu
 // ── CLIENT DETAIL (coach view) ────────────────────────────────────────────────
 function ClientDetail({ client, programs, clients, setClients, setPrograms, nutrition, setNutrition, workoutLog, onBack, onOpenProgram }) {
   const [tab, setTab] = useState("programs");
+  const [showEdit, setShowEdit] = useState(false);
   const assigned = programs.filter(p=>p.assignedTo.includes(client.id));
   const unassigned = programs.filter(p=>!p.assignedTo.includes(client.id));
 
@@ -176,6 +177,7 @@ function ClientDetail({ client, programs, clients, setClients, setPrograms, nutr
       <Topbar title={client.name} subtitle={client.goal} onLogout={null}
         left={<button style={S.backBtn} onClick={onBack}>← Back</button>}
         right={<div style={{display:"flex",gap:8}}>
+          <button style={S.btnGhost} onClick={()=>setShowEdit(true)}>✏️ Edit</button>
           <TabBtn label="Programs" active={tab==="programs"} onClick={()=>setTab("programs")} />
           <TabBtn label="Nutrition" active={tab==="nutrition"} onClick={()=>setTab("nutrition")} />
           <TabBtn label="Log History" active={tab==="history"} onClick={()=>setTab("history")} />
@@ -206,7 +208,27 @@ function ClientDetail({ client, programs, clients, setClients, setPrograms, nutr
 
         {tab==="history" && <CoachLogHistory clientId={client.id} programs={assigned} workoutLog={workoutLog} pbs={pbs} />}
       </div>
+      {showEdit && <EditClientModal client={client} onClose={()=>setShowEdit(false)}
+        onSave={updated=>{setClients(prev=>prev.map(c=>c.id===client.id?{...c,...updated}:c));setShowEdit(false);}} />}
     </div>
+  );
+}
+
+// ── EDIT CLIENT MODAL ─────────────────────────────────────────────────────────
+function EditClientModal({ client, onClose, onSave }) {
+  const [form, setForm] = useState({name:client.name,email:client.email,age:client.age,weight:client.weight,height:client.height,goal:client.goal});
+  const f=(k,v)=>setForm(p=>({...p,[k]:v}));
+  return (
+    <Modal title="Edit Client" onClose={onClose} onSave={()=>onSave(form)}>
+      <Field label="Name"><input style={S.input} value={form.name} onChange={e=>f("name",e.target.value)} /></Field>
+      <Field label="Email"><input style={S.input} value={form.email} onChange={e=>f("email",e.target.value)} type="email" /></Field>
+      <div style={{display:"flex",gap:8}}>
+        <Field label="Age"><input style={S.input} value={form.age} onChange={e=>f("age",+e.target.value)} type="number" /></Field>
+        <Field label="Weight (kg)"><input style={S.input} value={form.weight} onChange={e=>f("weight",+e.target.value)} type="number" /></Field>
+        <Field label="Height (cm)"><input style={S.input} value={form.height} onChange={e=>f("height",+e.target.value)} type="number" /></Field>
+      </div>
+      <Field label="Goal"><input style={S.input} value={form.goal} onChange={e=>f("goal",e.target.value)} /></Field>
+    </Modal>
   );
 }
 
@@ -291,7 +313,7 @@ function NutritionEditor({ nutrition, onSave, client }) {
           <div key={key} style={S.macroBox}>
             <div style={S.macroLabel}>{label}</div>
             <div style={{display:"flex",alignItems:"baseline",gap:4}}>
-              <input style={{...S.input,fontSize:22,fontWeight:800,color:"#CBFB45",background:"transparent",border:"none",width:80,padding:0}}
+              <input style={{...S.input,fontSize:22,fontWeight:800,color:"#FFFFFF",background:"transparent",border:"none",width:80,padding:0}}
                 type="number" value={form[key]} onChange={e=>f(key,+e.target.value)} />
               <span style={{color:C.muted,fontSize:12}}>{unit}</span>
             </div>
@@ -336,7 +358,7 @@ function ProgramBuilder({ program, setPrograms, onBack }) {
     <div style={S.app}>
       <Topbar title={prog.name} subtitle={prog.tag} onLogout={null}
         left={<button style={S.backBtn} onClick={onBack}>← Back</button>}
-        right={<span style={{color:"#CBFB45",fontSize:12}}>✓ Auto-saved</span>} />
+        right={<span style={{color:"#FFFFFF",fontSize:12}}>✓ Auto-saved</span>} />
       <div style={S.content}>
         <SectionHeader title={`Training Days (${prog.days.length})`} action={<button style={S.btnSm} onClick={addDay}>+ Add Day</button>} />
         {prog.days.length===0 && <Empty text="No days yet. Add your first training day." />}
@@ -473,23 +495,23 @@ function ClientNutritionView({ nutrition }) {
     <div>
       <SectionHeader title="Your Nutrition Plan" />
       <div style={S.macroGrid}>
-        {[["Calories",calories,"kcal","#CBFB45"],["Protein",protein,"g","#5BC0FF"],["Carbs",carbs,"g","#FF6B4A"],["Fat",fat,"g","#B88CFF"]].map(([l,v,u,col])=>(
+        {[["Calories",calories,"kcal","#FFFFFF"],["Protein",protein,"g","#FFFFFF"],["Carbs",carbs,"g","#CCCCCC"],["Fat",fat,"g","#999999"]].map(([l,v,u,col])=>(
           <div key={l} style={{...S.macroBox,borderColor:col+"33"}}>
             <div style={{...S.macroLabel,color:col}}>{l}</div>
             <div style={{fontSize:24,fontWeight:800,color:col}}>{v}<span style={{fontSize:13,fontWeight:400,color:C.muted,marginLeft:3}}>{u}</span></div>
           </div>
         ))}
       </div>
-      {notes && <div style={S.coachNote}><span style={{color:"#CBFB45",marginRight:6}}>📋</span>{notes}</div>}
+      {notes && <div style={S.coachNote}><span style={{color:"#FFFFFF",marginRight:6}}>📋</span>{notes}</div>}
       <SectionHeader title="Meal Breakdown" />
       {meals.map(m=>(
         <div key={m.id} style={S.mealViewCard}>
           <div style={S.mealName}>{m.name}</div>
           <div style={S.mealDesc}>{m.description}</div>
           <div style={S.mealMacros}>
-            <span style={{color:"#5BC0FF"}}>P {m.protein}g</span>
-            <span style={{color:"#FF6B4A"}}>C {m.carbs}g</span>
-            <span style={{color:"#B88CFF"}}>F {m.fat}g</span>
+            <span style={{color:"#FFFFFF"}}>P {m.protein}g</span>
+            <span style={{color:"#CCCCCC"}}>C {m.carbs}g</span>
+            <span style={{color:"#999999"}}>F {m.fat}g</span>
             <span style={{color:C.muted}}>{m.protein*4+m.carbs*4+m.fat*9} kcal</span>
           </div>
         </div>
@@ -552,7 +574,7 @@ function ClientHistoryView({ clientId, programs, workoutLog }) {
                 <div key={ex.id} style={S.historyEx}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                     <div style={S.historyExName}>{ex.name}</div>
-                    {pbs[ex.id]===best && best>0 && <span style={{fontSize:10,color:"#CBFB45",fontWeight:700}}>🏆 PB</span>}
+                    {pbs[ex.id]===best && best>0 && <span style={{fontSize:10,color:"#FFFFFF",fontWeight:700}}>🏆 PB</span>}
                   </div>
                   <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:4}}>
                     {doneSets.map((s,i)=>(
@@ -671,7 +693,7 @@ function DayView({ day, clientId, workoutLog, onBack }) {
                   <div style={S.wcMeta}>{ex.sets} sets · {ex.reps} reps · {ex.rest} rest</div>
                   {ex.notes && <div style={S.wcNotes}>{ex.notes}</div>}
                 </div>
-                {allDone && <span style={{color:"#CBFB45",fontSize:18}}>✓</span>}
+                {allDone && <span style={{color:"#FFFFFF",fontSize:18}}>✓</span>}
               </div>
 
               <div style={S.setLogWrap}>
@@ -682,14 +704,14 @@ function DayView({ day, clientId, workoutLog, onBack }) {
                   <span style={{flex:"0 0 40px"}}></span>
                 </div>
                 {sets.map((s,si)=>(
-                  <div key={si} style={{...S.setLogRow,background:s.done?"#CBFB4510":"transparent"}}>
-                    <span style={{...S.setNum,color:s.done?"#CBFB45":C.muted}}>{si+1}</span>
-                    <input style={{...S.setInput,borderColor:s.done?"#CBFB4550":C.line2}} placeholder="—"
+                  <div key={si} style={{...S.setLogRow,background:s.done?"#FFFFFF10":"transparent"}}>
+                    <span style={{...S.setNum,color:s.done?"#FFFFFF":C.muted}}>{si+1}</span>
+                    <input style={{...S.setInput,borderColor:s.done?"#FFFFFF50":C.line2}} placeholder="—"
                       value={s.weight} type="number" onChange={e=>updateSet(ex.id,si,"weight",e.target.value)} />
-                    <input style={{...S.setInput,borderColor:s.done?"#CBFB4550":C.line2}} placeholder="—"
+                    <input style={{...S.setInput,borderColor:s.done?"#FFFFFF50":C.line2}} placeholder="—"
                       value={s.reps} type="number" onChange={e=>updateSet(ex.id,si,"reps",e.target.value)} />
                     <button style={{...S.checkBtn,width:32,height:32,fontSize:13,
-                      background:s.done?"#CBFB45":"transparent",color:s.done?"#000":"#CBFB45"}}
+                      background:s.done?"#FFFFFF":"transparent",color:s.done?"#000":"#FFFFFF"}}
                       onClick={()=>toggleSet(ex.id,si)}>{s.done?"✓":"○"}</button>
                   </div>
                 ))}
@@ -731,7 +753,7 @@ function NewClientModal({ onClose, onSave }) {
 }
 
 function NewProgramModal({ onClose, onSave }) {
-  const [form, setForm] = useState({name:"",tag:"",color:"#CBFB45"});
+  const [form, setForm] = useState({name:"",tag:"",color:"#FFFFFF"});
   const f=(k,v)=>setForm(p=>({...p,[k]:v}));
   return (
     <Modal title="New Program" onClose={onClose} onSave={()=>onSave(form)}>
@@ -832,23 +854,23 @@ function Empty({ text, small }) {
 }
 
 // ── STYLES ────────────────────────────────────────────────────────────────────
-const C = { bg:"#0b0b0d", surface:"#141418", surface2:"#1b1b21",
-  line:"rgba(255,255,255,.08)", line2:"rgba(255,255,255,.16)",
-  text:"#ECEAE3", muted:"#8f8f99", faint:"#65656e", accent:"#CBFB45" };
+const C = { bg:"#080808", surface:"#111111", surface2:"#1a1a1a",
+  line:"rgba(255,255,255,.1)", line2:"rgba(255,255,255,.2)",
+  text:"#F5F5F5", muted:"#999999", faint:"#555555", accent:"#FFFFFF" };
 
 const S = {
-  app:{ background:C.bg, minHeight:"100vh", color:C.text, fontFamily:"system-ui,sans-serif" },
+  app:{ background:"linear-gradient(160deg,#0f0f0f 0%,#080808 100%)", minHeight:"100vh", color:C.text, fontFamily:"system-ui,sans-serif" },
   loginWrap:{ background:"radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0b0b0d 70%)", minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center" },
   loginCard:{ background:C.surface, border:`1px solid ${C.line2}`, borderRadius:16, padding:48, width:"100%", maxWidth:480 },
   loginLogo:{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, marginBottom:28 },
-  logoMark:{ width:44, height:44, background:"#CBFB45", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:16, color:"#000", flexShrink:0 },
+  logoMark:{ width:44, height:44, background:"#FFFFFF", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:16, color:"#000", flexShrink:0 },
   logoTitle:{ fontWeight:800, fontSize:18, color:C.text },
   logoSub:{ fontSize:12, color:C.muted },
   loginField:{ marginBottom:14 },
   label:{ fontSize:11, fontWeight:600, color:C.muted, textTransform:"uppercase", letterSpacing:1, display:"block", marginBottom:5 },
   input:{ width:"100%", background:C.surface2, border:`1px solid ${C.line2}`, borderRadius:8, color:C.text, padding:"10px 12px", fontSize:14, outline:"none", boxSizing:"border-box" },
-  btn:{ background:"#CBFB45", color:"#000", border:"none", borderRadius:8, padding:"10px 20px", fontWeight:700, fontSize:14, cursor:"pointer" },
-  btnSm:{ background:"#CBFB45", color:"#000", border:"none", borderRadius:6, padding:"6px 14px", fontWeight:700, fontSize:12, cursor:"pointer" },
+  btn:{ background:"#FFFFFF", color:"#000", border:"none", borderRadius:8, padding:"10px 20px", fontWeight:700, fontSize:14, cursor:"pointer" },
+  btnSm:{ background:"#FFFFFF", color:"#000", border:"none", borderRadius:6, padding:"6px 14px", fontWeight:700, fontSize:12, cursor:"pointer" },
   btnGhost:{ background:"transparent", color:C.muted, border:`1px solid ${C.line2}`, borderRadius:8, padding:"8px 16px", fontWeight:600, fontSize:13, cursor:"pointer" },
   error:{ color:"#ff6b6b", fontSize:13, marginBottom:8 },
   loginHint:{ marginTop:20, fontSize:11, color:C.faint, lineHeight:1.7, textAlign:"center" },
@@ -866,30 +888,30 @@ const S = {
 
   grid:{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))", gap:12 },
   card:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:12, padding:16, cursor:"pointer" },
-  cardAvatar:{ width:40, height:40, background:"#CBFB4522", border:"1px solid #CBFB4544", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700, fontSize:14, color:"#CBFB45", marginBottom:10 },
+  cardAvatar:{ width:40, height:40, background:"#FFFFFF22", border:"1px solid #FFFFFF44", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700, fontSize:14, color:"#FFFFFF", marginBottom:10 },
   cardName:{ fontWeight:700, fontSize:14, marginBottom:4 },
   cardMeta:{ fontSize:12, color:C.muted, marginBottom:2 },
-  cardTag:{ fontSize:11, color:"#CBFB45", marginTop:8, fontWeight:600 },
+  cardTag:{ fontSize:11, color:"#FFFFFF", marginTop:8, fontWeight:600 },
 
   statsRow:{ display:"flex", gap:10, marginBottom:4 },
-  statBox:{ flex:1, background:C.surface, border:`1px solid ${C.line}`, borderRadius:10, padding:"12px 8px", textAlign:"center" },
-  statVal:{ fontSize:18, fontWeight:800, color:"#CBFB45" },
+  statBox:{ flex:1, background:"linear-gradient(160deg,#181818,#0f0f0f)", border:"1px solid rgba(255,255,255,0.09)", borderRadius:12, padding:"14px 8px", textAlign:"center" },
+  statVal:{ fontSize:18, fontWeight:800, color:"#FFFFFF" },
   statLabel:{ fontSize:10, color:C.muted, marginTop:2, textTransform:"uppercase", letterSpacing:0.5 },
 
   programDot:{ width:12, height:12, borderRadius:"50%", marginBottom:6 },
-  progCard:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:12, padding:16, cursor:"pointer" },
+  progCard:{ background:"linear-gradient(160deg,#181818,#0f0f0f)", border:"1px solid rgba(255,255,255,0.09)", borderRadius:14, padding:16, cursor:"pointer" },
   progAccent:{ height:3, borderRadius:2, marginBottom:12 },
   progName:{ fontWeight:700, fontSize:14, marginBottom:4 },
   progTag:{ fontSize:12, color:C.muted, marginBottom:4 },
   progDays:{ fontSize:12, color:C.faint },
 
   dayGrid:{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:12 },
-  dayTile:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:12, padding:16, cursor:"pointer" },
+  dayTile:{ background:"linear-gradient(160deg,#181818,#0f0f0f)", border:"1px solid rgba(255,255,255,0.09)", borderRadius:14, padding:16, cursor:"pointer" },
   dayTileAccent:{ height:3, borderRadius:2, marginBottom:12 },
   dayTileName:{ fontWeight:700, fontSize:13, marginBottom:4 },
   dayTileCount:{ fontSize:12, color:C.muted },
 
-  dayBlock:{ background:C.surface, borderRadius:10, marginBottom:12, overflow:"hidden" },
+  dayBlock:{ background:"linear-gradient(160deg,#181818,#0f0f0f)", borderRadius:12, marginBottom:12, overflow:"hidden" },
   dayHeader:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 14px", cursor:"pointer" },
   dayLeft:{ display:"flex", alignItems:"center", gap:6, flex:1 },
   dayTitle:{ fontWeight:700, fontSize:14, cursor:"text" },
@@ -902,11 +924,11 @@ const S = {
   exInput:{ background:C.surface2, border:`1px solid ${C.line2}`, borderRadius:6, color:C.text, padding:"6px 8px", fontSize:12, minWidth:60 },
 
   workoutCard:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:10, padding:"14px 16px", marginBottom:10, display:"flex", alignItems:"flex-start", gap:12, transition:"opacity .2s" },
-  wcNum:{ width:24, height:24, background:"#CBFB4522", borderRadius:6, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:"#CBFB45", flexShrink:0, marginTop:2 },
+  wcNum:{ width:24, height:24, background:"#FFFFFF22", borderRadius:6, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:"#FFFFFF", flexShrink:0, marginTop:2 },
   wcName:{ fontWeight:700, fontSize:14, marginBottom:3 },
   wcMeta:{ fontSize:12, color:C.muted },
   wcNotes:{ fontSize:11, color:C.faint, marginTop:4, fontStyle:"italic" },
-  checkBtn:{ border:"1px solid #CBFB45", borderRadius:8, width:36, height:36, cursor:"pointer", fontWeight:700, fontSize:16, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" },
+  checkBtn:{ border:"1px solid #FFFFFF", borderRadius:8, width:36, height:36, cursor:"pointer", fontWeight:700, fontSize:16, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" },
 
   setLogWrap:{ borderTop:"1px solid rgba(255,255,255,.07)", paddingTop:10, marginTop:4 },
   setLogHeader:{ display:"flex", alignItems:"center", gap:8, marginBottom:6, fontSize:10, fontWeight:700, color:"#65656e", textTransform:"uppercase", letterSpacing:0.8, padding:"0 2px" },
@@ -915,45 +937,45 @@ const S = {
   setInput:{ flex:1, background:"#1b1b21", border:"1px solid", borderRadius:6, color:"#ECEAE3", padding:"6px 8px", fontSize:13, textAlign:"center", outline:"none", minWidth:0, transition:"border-color .2s" },
 
   progressBar:{ height:4, background:C.line2, borderRadius:2, marginBottom:20, overflow:"hidden" },
-  progressFill:{ height:"100%", background:"#CBFB45", borderRadius:2, transition:"width .4s" },
-  doneMsg:{ textAlign:"center", padding:"24px 0", color:"#CBFB45", fontWeight:700, fontSize:16 },
+  progressFill:{ height:"100%", background:"#FFFFFF", borderRadius:2, transition:"width .4s" },
+  doneMsg:{ textAlign:"center", padding:"24px 0", color:"#FFFFFF", fontWeight:700, fontSize:16 },
 
-  pbBadge:{ fontSize:10, background:"#CBFB4520", color:"#CBFB45", border:"1px solid #CBFB4540", borderRadius:4, padding:"2px 6px", fontWeight:700 },
+  pbBadge:{ fontSize:10, background:"#FFFFFF20", color:"#FFFFFF", border:"1px solid #FFFFFF40", borderRadius:4, padding:"2px 6px", fontWeight:700 },
   prevPB:{ fontSize:10, color:C.faint, fontWeight:600 },
   pbRow:{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:16 },
-  pbChip:{ background:"#CBFB4510", border:"1px solid #CBFB4530", borderRadius:8, padding:"8px 12px", textAlign:"center" },
-  pbVal:{ fontSize:18, fontWeight:800, color:"#CBFB45" },
+  pbChip:{ background:"#FFFFFF10", border:"1px solid #FFFFFF30", borderRadius:8, padding:"8px 12px", textAlign:"center" },
+  pbVal:{ fontSize:18, fontWeight:800, color:"#FFFFFF" },
   pbName:{ fontSize:10, color:C.muted, marginTop:2, maxWidth:100, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" },
-  pbLabel:{ fontSize:9, color:"#CBFB45", fontWeight:700, marginTop:2 },
+  pbLabel:{ fontSize:9, color:"#FFFFFF", fontWeight:700, marginTop:2 },
 
   historySession:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:10, padding:"14px 16px", marginBottom:10 },
-  historyDate:{ fontSize:11, fontWeight:700, color:"#CBFB45", marginBottom:10, textTransform:"uppercase", letterSpacing:0.5 },
+  historyDate:{ fontSize:11, fontWeight:700, color:"#FFFFFF", marginBottom:10, textTransform:"uppercase", letterSpacing:0.5 },
   historyEx:{ marginBottom:10 },
   historyExName:{ fontSize:13, fontWeight:700, color:C.text },
   historySetChip:{ background:C.surface2, border:`1px solid ${C.line2}`, borderRadius:6, padding:"3px 10px", fontSize:12, color:C.muted },
 
-  assignCard:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:10, padding:14, display:"flex", alignItems:"center", gap:10 },
+  assignCard:{ background:"linear-gradient(160deg,#181818,#0f0f0f)", border:"1px solid rgba(255,255,255,0.09)", borderRadius:12, padding:14, display:"flex", alignItems:"center", gap:10 },
   assignName:{ flex:1, fontSize:13, fontWeight:600 },
 
   macroGrid:{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginBottom:16 },
   macroBox:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:10, padding:"12px 14px" },
   macroLabel:{ fontSize:10, color:C.muted, fontWeight:700, textTransform:"uppercase", letterSpacing:0.8, marginBottom:6 },
 
-  mealEditorCard:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:10, padding:14, marginBottom:10 },
-  mealViewCard:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:10, padding:14, marginBottom:10 },
+  mealEditorCard:{ background:"linear-gradient(160deg,#181818,#0f0f0f)", border:"1px solid rgba(255,255,255,0.09)", borderRadius:10, padding:14, marginBottom:10 },
+  mealViewCard:{ background:"linear-gradient(160deg,#181818,#0f0f0f)", border:"1px solid rgba(255,255,255,0.09)", borderRadius:10, padding:14, marginBottom:10 },
   mealName:{ fontWeight:700, fontSize:14, marginBottom:4 },
   mealDesc:{ fontSize:13, color:C.muted, marginBottom:8, lineHeight:1.5 },
   mealMacros:{ display:"flex", gap:12, fontSize:12, fontWeight:600 },
   mealTotal:{ fontSize:11, color:C.faint, textAlign:"center", padding:"12px 0", borderTop:`1px solid ${C.line}`, marginTop:8 },
-  coachNote:{ background:"#CBFB4510", border:"1px solid #CBFB4520", borderRadius:8, padding:"10px 14px", fontSize:13, color:C.muted, marginBottom:16, lineHeight:1.5 },
+  coachNote:{ background:"#FFFFFF10", border:"1px solid #FFFFFF20", borderRadius:8, padding:"10px 14px", fontSize:13, color:C.muted, marginBottom:16, lineHeight:1.5 },
 
   overlay:{ position:"fixed", inset:0, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:100 },
-  modal:{ background:C.surface, border:`1px solid ${C.line2}`, borderRadius:16, width:"100%", maxWidth:420, maxHeight:"90vh", overflow:"auto" },
+  modal:{ background:"linear-gradient(160deg,#1c1c1c,#0f0f0f)", border:"1px solid rgba(255,255,255,0.15)", borderRadius:18, width:"100%", maxWidth:420, maxHeight:"90vh", overflow:"auto" },
   modalHeader:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 20px", borderBottom:`1px solid ${C.line}` },
   modalTitle:{ fontWeight:700, fontSize:15 },
   modalBody:{ padding:"20px 20px 0" },
   modalFooter:{ display:"flex", justifyContent:"flex-end", gap:8, padding:20 },
   empty:{ color:C.faint, textAlign:"center", padding:"24px 0" },
   tabBtn:{ background:"transparent", color:C.muted, border:`1px solid ${C.line}`, borderRadius:6, padding:"6px 14px", cursor:"pointer", fontSize:12, fontWeight:600 },
-  tabBtnActive:{ background:"#CBFB4520", color:"#CBFB45", borderColor:"#CBFB4540" },
+  tabBtnActive:{ background:"#FFFFFF20", color:"#FFFFFF", borderColor:"#FFFFFF40" },
 };
