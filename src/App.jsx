@@ -141,7 +141,7 @@ function CoachApp({ clients, setClients, programs, setPrograms, nutrition, setNu
       <div style={S.content}>
         {tab==="clients" && <>
           <SectionHeader title={`Clients (${clients.length})`} action={<button style={S.btnSm} onClick={()=>setShowNewClient(true)}>+ New Client</button>} />
-          <div style={S.grid}>{clients.map(c=><ClientCard key={c.id} client={c} programs={programs} onClick={()=>setActiveClient(c.id)} />)}</div>
+          <div style={S.grid}>{clients.map(c=><ClientCard key={c.id} client={c} programs={programs} onClick={()=>setActiveClient(c.id)} onDelete={id=>setClients(prev=>prev.filter(c=>c.id!==id))} />)}</div>
         </>}
         {tab==="programs" && <>
           <SectionHeader title={`Programs (${programs.length})`} action={<button style={S.btnSm} onClick={()=>setShowNewProgram(true)}>+ New Program</button>} />
@@ -791,11 +791,15 @@ function SectionHeader({ title, action }) {
 function Field({ label, children }) {
   return <div style={S.loginField}><label style={S.label}>{label}</label>{children}</div>;
 }
-function ClientCard({ client, programs, onClick }) {
+function ClientCard({ client, programs, onClick, onDelete }) {
   const count = programs.filter(p=>p.assignedTo.includes(client.id)).length;
   return (
     <div style={S.card} onClick={onClick}>
-      <div style={S.cardAvatar}>{client.name.split(" ").map(n=>n[0]).join("")}</div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+        <div style={S.cardAvatar}>{client.name.split(" ").map(n=>n[0]).join("")}</div>
+        <button style={{background:"transparent",border:"1px solid #ff6b6b",color:"#ff6b6b",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:11,fontWeight:700}}
+          onClick={e=>{e.stopPropagation();if(window.confirm("Remove "+client.name+"?"))onDelete(client.id);}}>✕ Remove</button>
+      </div>
       <div style={S.cardName}>{client.name}</div>
       <div style={S.cardMeta}>{client.goal}</div>
       <div style={S.cardMeta}>{client.age}y · {client.weight}kg · {client.height}cm</div>
