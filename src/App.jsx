@@ -155,13 +155,13 @@ function Login({ onLogin }) {
     <div style={S.loginWrap}>
       <div style={S.loginCard}>
         <div style={S.loginLogo}>
-          <img src={LOGO_B64} alt="CoachedByNickhee" style={{width:"100%",maxWidth:320,marginBottom:4,objectFit:"contain"}} />
+          <img src={LOGO_B64} alt="CoachedByNickhee" style={{width:"100%",maxWidth:420,marginBottom:16,objectFit:"contain"}} />
         </div>
         <Field label="Email"><input style={S.input} value={email} onChange={e=>setEmail(e.target.value)} placeholder="your@email.com" type="email" onKeyDown={e=>e.key==="Enter"&&submit()} /></Field>
         <Field label="Password"><input style={S.input} value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" type="password" onKeyDown={e=>e.key==="Enter"&&submit()} /></Field>
         {error && <div style={S.error}>{error}</div>}
         <button style={{...S.btn,width:"100%",marginTop:8}} onClick={submit} disabled={loading}>{loading?"Signing in…":"Sign In →"}</button>
-        <div style={S.loginHint}><b>Coach:</b> coach@me.com / coach123<br/><b>Client:</b> sarah@client.com / sarah123</div>
+        <div style={S.loginHint}>Contact your coach if you need login details.</div>
       </div>
     </div>
   );
@@ -890,8 +890,8 @@ const C = { bg:"#0b0b0d", surface:"#141418", surface2:"#1b1b21",
 
 const S = {
   app:{ background:C.bg, minHeight:"100vh", color:C.text, fontFamily:"system-ui,sans-serif" },
-  loginWrap:{ background:C.bg, minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center" },
-  loginCard:{ background:C.surface, border:`1px solid ${C.line2}`, borderRadius:16, padding:32, width:"100%", maxWidth:380 },
+  loginWrap:{ background:"radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0b0b0d 70%)", minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center" },
+  loginCard:{ background:C.surface, border:`1px solid ${C.line2}`, borderRadius:16, padding:48, width:"100%", maxWidth:480 },
   loginLogo:{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, marginBottom:28 },
   logoMark:{ width:44, height:44, background:"#CBFB45", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:16, color:"#000", flexShrink:0 },
   logoTitle:{ fontWeight:800, fontSize:18, color:C.text },
