@@ -132,234 +132,7 @@ const useWorkoutLog = () => {
   return { log, saveSession, loadHistory, getHistory, getPBs };
 };
 
-// ── App Root ─────────────────────────────────────────────────────────────────
-export default function App() {
-  const [clients, setClients] = useState([]);
-  const [programs, setPrograms] = useState([]);
-  const [nutrition, setNutrition] = useState({});
-  const [measurements, setMeasurements] = useState({});
-  const [checkins, setCheckins] = useState({});
-  const [habits, setHabits] = useState({});
-  const [habitLogs, setHabitLogs] = useState({});
-  const [user, setUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem("cbnh_user");
-      return saved ? JSON.parse(saved) : null;
-    } catch { return null; }
-  });
-  const [loading, setLoading] = useState(false);
-  const workoutLog = useWorkoutLog();
 
-  // Load all data from Supabase
-  const loadData = async () => {
-    try {
-      const [c, p] = await Promise.all([
-        sb.get("clients", "?order=created_at"),
-        sb.get("programs", "?order=created_at"),
-      ]);
-      setClients(c || []);
-      setPrograms((p || []).map(prog => ({
-        ...prog,
-        assignedTo: prog.assigned_to || [],
-        days: prog.days || [],
-      })));
-    } catch(e) { console.error("Load error:", e); }
-  };
-
-  useEffect(() => { loadData(); }, []);
-
-  const login = async (email, password) => {
-    if (email === COACH.email && password === COACH.password) {
-      const u = { role:"coach" };
-      setUser(u);
-      localStorage.setItem("cbnh_user", JSON.stringify(u));
-      return true;
-    }
-    const matches = await sb.get("clients", `?email=eq.${encodeURIComponent(email)}&client_password=eq.${encodeURIComponent(password)}`);
-    if (matches && matches.length > 0) {
-      const u = { role:"client", id:matches[0].id };
-      setUser(u);
-      localStorage.setItem("cbnh_user", JSON.stringify(u));
-      return true;
-    }
-    return false;
-  };
-  const logout = () => { setUser(null); localStorage.removeItem("cbnh_user"); };
-
-  // Wrapped setters that sync to Supabase
-  const addClient = async (clientData) => {
-    try {
-      const toSave = {...clientData, client_password: clientData.password}; delete toSave.password; const result = await sb.post("clients", toSave);
-      if (result && result[0]) setClients(prev => [...prev, result[0]]);
-    } catch(e) { alert("Error saving client: " + e.message); }
-  };
-
-  const updateClient = async (id, data) => {
-    try {
-      await sb.patch("clients", data, `?id=eq.${id}`);
-      setClients(prev => prev.map(c => c.id === id ? {...c, ...data} : c));
-    } catch(e) { alert("Error updating client: " + e.message); }
-  };
-
-  const removeClient = async (id) => {
-    try {
-      await sb.delete("clients", `?id=eq.${id}`);
-      setClients(prev => prev.filter(c => c.id !== id));
-    } catch(e) { alert("Error removing client: " + e.message); }
-  };
-
-  const addProgram = async (progData) => {
-    try {
-      const toSave = { name: progData.name, tag: progData.tag, color: progData.color, days: [], assigned_to: [] };
-      const result = await sb.post("programs", toSave);
-      if (result && result[0]) setPrograms(prev => [...prev, {...result[0], assignedTo: [], days: []}]);
-    } catch(e) { alert("Error saving program: " + e.message); }
-  };
-
-  const updateProgram = async (prog) => {
-    try {
-      const toSave = { name: prog.name, tag: prog.tag, color: prog.color, days: prog.days, assigned_to: prog.assignedTo };
-      await sb.patch("programs", toSave, `?id=eq.${prog.id}`);
-      setPrograms(prev => prev.map(p => p.id === prog.id ? prog : p));
-    } catch(e) { console.error("Error updating program:", e); }
-  };
-
-  const deleteProgram = async (progId) => {
-    try {
-      await sb.delete("programs", `?id=eq.${progId}`);
-      setPrograms(prev => prev.filter(p => p.id !== progId));
-    } catch(e) { alert("Error deleting program: " + e.message); }
-  };
-
-  const assignProgram = async (programId, clientId) => {
-    const prog = programs.find(p => p.id === programId);
-    if (!prog) return;
-    const newAssigned = [...(prog.assignedTo || []), clientId];
-    await updateProgram({...prog, assignedTo: newAssigned});
-  };
-
-  const saveNutrition = async (clientId, data) => {
-    try {
-      const existing = await sb.get("nutrition", `?client_id=eq.${clientId}`);
-      if (existing && existing.length > 0) {
-        await sb.patch("nutrition", {...data, updated_at: new Date().toISOString()}, `?client_id=eq.${clientId}`);
-      } else {
-        await sb.post("nutrition", {...data, client_id: clientId});
-      }
-      setNutrition(prev => ({...prev, [clientId]: data}));
-    } catch(e) { alert("Error saving nutrition: " + e.message); }
-  };
-
-  const loadNutrition = async (clientId) => {
-    if (nutrition[clientId]) return;
-    try {
-      const result = await sb.get("nutrition", `?client_id=eq.${clientId}`);
-      if (result && result[0]) setNutrition(prev => ({...prev, [clientId]: result[0]}));
-    } catch(e) { console.error("Error loading nutrition:", e); }
-  };
-
-  const saveMeasurement = async (clientId, data) => {
-    try {
-      await sb.post("measurements", {...data, client_id: clientId});
-      setMeasurements(prev => ({...prev, [clientId]: [...(prev[clientId]||[]), data]}));
-    } catch(e) { console.error("Error saving measurement:", e); }
-  };
-
-  const loadMeasurements = async (clientId) => {
-    if (measurements[clientId]) return;
-    try {
-      const result = await sb.get("measurements", `?client_id=eq.${clientId}&order=date.desc`);
-      if (result) setMeasurements(prev => ({...prev, [clientId]: result}));
-    } catch(e) { console.error("Error loading measurements:", e); }
-  };
-
-  if (!user) return <Login onLogin={login} />;
-  // ── Check-in functions ──
-  const saveCheckin = async (clientId, data) => {
-    try {
-      const existing = await sb.get("checkins", `?client_id=eq.${clientId}&week_start=eq.${data.week_start}`);
-      if (existing && existing.length > 0) {
-        await sb.patch("checkins", data, `?client_id=eq.${clientId}&week_start=eq.${data.week_start}`);
-      } else {
-        await sb.post("checkins", {...data, client_id: clientId});
-      }
-      setCheckins(prev => ({...prev, [clientId]: [...(prev[clientId]||[]).filter(c=>c.week_start!==data.week_start), {...data, client_id: clientId}]}));
-    } catch(e) { console.error("Error saving checkin:", e); }
-  };
-
-  const loadCheckins = async (clientId) => {
-    if (checkins[clientId]) return;
-    try {
-      const result = await sb.get("checkins", `?client_id=eq.${clientId}&order=week_start.desc`);
-      if (result) setCheckins(prev => ({...prev, [clientId]: result}));
-    } catch(e) { console.error("Error loading checkins:", e); }
-  };
-
-  // ── Habit functions ──
-  const saveHabits = async (clientId, habitList) => {
-    try {
-      const existing = await sb.get("habits", `?client_id=eq.${clientId}`);
-      if (existing && existing.length > 0) {
-        await sb.patch("habits", {habits: habitList, updated_at: new Date().toISOString()}, `?client_id=eq.${clientId}`);
-      } else {
-        await sb.post("habits", {client_id: clientId, habits: habitList});
-      }
-      setHabits(prev => ({...prev, [clientId]: habitList}));
-    } catch(e) { console.error("Error saving habits:", e); }
-  };
-
-  const loadHabits = async (clientId) => {
-    if (habits[clientId]) return;
-    try {
-      const result = await sb.get("habits", `?client_id=eq.${clientId}`);
-      if (result && result[0]) setHabits(prev => ({...prev, [clientId]: result[0].habits || []}));
-      else setHabits(prev => ({...prev, [clientId]: []}));
-    } catch(e) { console.error("Error loading habits:", e); }
-  };
-
-  const saveHabitLog = async (clientId, date, completions) => {
-    try {
-      const existing = await sb.get("habit_logs", `?client_id=eq.${clientId}&date=eq.${date}`);
-      if (existing && existing.length > 0) {
-        await sb.patch("habit_logs", {completions}, `?client_id=eq.${clientId}&date=eq.${date}`);
-      } else {
-        await sb.post("habit_logs", {client_id: clientId, date, completions});
-      }
-      setHabitLogs(prev => ({...prev, [clientId]: {...(prev[clientId]||{}), [date]: completions}}));
-    } catch(e) { console.error("Error saving habit log:", e); }
-  };
-
-  const loadHabitLogs = async (clientId) => {
-    try {
-      const result = await sb.get("habit_logs", `?client_id=eq.${clientId}&order=date.desc&limit=30`);
-      if (result) {
-        const byDate = {};
-        result.forEach(r => { byDate[r.date] = r.completions; });
-        setHabitLogs(prev => ({...prev, [clientId]: byDate}));
-      }
-    } catch(e) { console.error("Error loading habit logs:", e); }
-  };
-
-  if (user.role === "coach") return (
-    <CoachApp clients={clients} programs={programs} nutrition={nutrition}
-      addClient={addClient} updateClient={updateClient} removeClient={removeClient}
-      addProgram={addProgram} updateProgram={updateProgram} assignProgram={assignProgram} deleteProgram={deleteProgram}
-      saveNutrition={saveNutrition} loadNutrition={loadNutrition}
-      measurements={measurements} saveMeasurement={saveMeasurement} loadMeasurements={loadMeasurements}
-      checkins={checkins} loadCheckins={loadCheckins}
-      habits={habits} saveHabits={saveHabits} loadHabits={loadHabits}
-      workoutLog={workoutLog} onLogout={logout} />
-  );
-  const clientData = clients.find(c => c.id === user.id);
-  return <ClientApp client={clientData} programs={programs}
-    nutrition={nutrition[user.id]} workoutLog={workoutLog}
-    loadNutrition={() => loadNutrition(user.id)}
-    measurements={measurements[user.id]||[]} loadMeasurements={() => loadMeasurements(user.id)}
-    checkins={checkins[user.id]||[]} saveCheckin={(d) => saveCheckin(user.id, d)} loadCheckins={() => loadCheckins(user.id)}
-    habits={habits[user.id]||[]} saveHabitLog={(date,c) => saveHabitLog(user.id, date, c)}
-    habitLogs={habitLogs[user.id]||{}} loadHabitLogs={() => loadHabitLogs(user.id)}
-    onLogout={logout} />;
-}
 
 // ── LOGIN ────────────────────────────────────────────────────────────────────
 function Login({ onLogin }) {
@@ -3973,3 +3746,232 @@ function NutritionEditor({ nutrition, onSave, client, onMount }) {
 }
 
 // ── App Root ─────────────────────────────────────────────────────────────────
+
+// ── App Root ─────────────────────────────────────────────────────────────────
+export default function App() {
+  const [clients, setClients] = useState([]);
+  const [programs, setPrograms] = useState([]);
+  const [nutrition, setNutrition] = useState({});
+  const [measurements, setMeasurements] = useState({});
+  const [checkins, setCheckins] = useState({});
+  const [habits, setHabits] = useState({});
+  const [habitLogs, setHabitLogs] = useState({});
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem("cbnh_user");
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+  const [loading, setLoading] = useState(false);
+  const workoutLog = useWorkoutLog();
+
+  // Load all data from Supabase
+  const loadData = async () => {
+    try {
+      const [c, p] = await Promise.all([
+        sb.get("clients", "?order=created_at"),
+        sb.get("programs", "?order=created_at"),
+      ]);
+      setClients(c || []);
+      setPrograms((p || []).map(prog => ({
+        ...prog,
+        assignedTo: prog.assigned_to || [],
+        days: prog.days || [],
+      })));
+    } catch(e) { console.error("Load error:", e); }
+  };
+
+  useEffect(() => { loadData(); }, []);
+
+  const login = async (email, password) => {
+    if (email === COACH.email && password === COACH.password) {
+      const u = { role:"coach" };
+      setUser(u);
+      localStorage.setItem("cbnh_user", JSON.stringify(u));
+      return true;
+    }
+    const matches = await sb.get("clients", `?email=eq.${encodeURIComponent(email)}&client_password=eq.${encodeURIComponent(password)}`);
+    if (matches && matches.length > 0) {
+      const u = { role:"client", id:matches[0].id };
+      setUser(u);
+      localStorage.setItem("cbnh_user", JSON.stringify(u));
+      return true;
+    }
+    return false;
+  };
+  const logout = () => { setUser(null); localStorage.removeItem("cbnh_user"); };
+
+  // Wrapped setters that sync to Supabase
+  const addClient = async (clientData) => {
+    try {
+      const toSave = {...clientData, client_password: clientData.password}; delete toSave.password; const result = await sb.post("clients", toSave);
+      if (result && result[0]) setClients(prev => [...prev, result[0]]);
+    } catch(e) { alert("Error saving client: " + e.message); }
+  };
+
+  const updateClient = async (id, data) => {
+    try {
+      await sb.patch("clients", data, `?id=eq.${id}`);
+      setClients(prev => prev.map(c => c.id === id ? {...c, ...data} : c));
+    } catch(e) { alert("Error updating client: " + e.message); }
+  };
+
+  const removeClient = async (id) => {
+    try {
+      await sb.delete("clients", `?id=eq.${id}`);
+      setClients(prev => prev.filter(c => c.id !== id));
+    } catch(e) { alert("Error removing client: " + e.message); }
+  };
+
+  const addProgram = async (progData) => {
+    try {
+      const toSave = { name: progData.name, tag: progData.tag, color: progData.color, days: [], assigned_to: [] };
+      const result = await sb.post("programs", toSave);
+      if (result && result[0]) setPrograms(prev => [...prev, {...result[0], assignedTo: [], days: []}]);
+    } catch(e) { alert("Error saving program: " + e.message); }
+  };
+
+  const updateProgram = async (prog) => {
+    try {
+      const toSave = { name: prog.name, tag: prog.tag, color: prog.color, days: prog.days, assigned_to: prog.assignedTo };
+      await sb.patch("programs", toSave, `?id=eq.${prog.id}`);
+      setPrograms(prev => prev.map(p => p.id === prog.id ? prog : p));
+    } catch(e) { console.error("Error updating program:", e); }
+  };
+
+  const deleteProgram = async (progId) => {
+    try {
+      await sb.delete("programs", `?id=eq.${progId}`);
+      setPrograms(prev => prev.filter(p => p.id !== progId));
+    } catch(e) { alert("Error deleting program: " + e.message); }
+  };
+
+  const assignProgram = async (programId, clientId) => {
+    const prog = programs.find(p => p.id === programId);
+    if (!prog) return;
+    const newAssigned = [...(prog.assignedTo || []), clientId];
+    await updateProgram({...prog, assignedTo: newAssigned});
+  };
+
+  const saveNutrition = async (clientId, data) => {
+    try {
+      const existing = await sb.get("nutrition", `?client_id=eq.${clientId}`);
+      if (existing && existing.length > 0) {
+        await sb.patch("nutrition", {...data, updated_at: new Date().toISOString()}, `?client_id=eq.${clientId}`);
+      } else {
+        await sb.post("nutrition", {...data, client_id: clientId});
+      }
+      setNutrition(prev => ({...prev, [clientId]: data}));
+    } catch(e) { alert("Error saving nutrition: " + e.message); }
+  };
+
+  const loadNutrition = async (clientId) => {
+    if (nutrition[clientId]) return;
+    try {
+      const result = await sb.get("nutrition", `?client_id=eq.${clientId}`);
+      if (result && result[0]) setNutrition(prev => ({...prev, [clientId]: result[0]}));
+    } catch(e) { console.error("Error loading nutrition:", e); }
+  };
+
+  const saveMeasurement = async (clientId, data) => {
+    try {
+      await sb.post("measurements", {...data, client_id: clientId});
+      setMeasurements(prev => ({...prev, [clientId]: [...(prev[clientId]||[]), data]}));
+    } catch(e) { console.error("Error saving measurement:", e); }
+  };
+
+  const loadMeasurements = async (clientId) => {
+    if (measurements[clientId]) return;
+    try {
+      const result = await sb.get("measurements", `?client_id=eq.${clientId}&order=date.desc`);
+      if (result) setMeasurements(prev => ({...prev, [clientId]: result}));
+    } catch(e) { console.error("Error loading measurements:", e); }
+  };
+
+  if (!user) return <Login onLogin={login} />;
+  // ── Check-in functions ──
+  const saveCheckin = async (clientId, data) => {
+    try {
+      const existing = await sb.get("checkins", `?client_id=eq.${clientId}&week_start=eq.${data.week_start}`);
+      if (existing && existing.length > 0) {
+        await sb.patch("checkins", data, `?client_id=eq.${clientId}&week_start=eq.${data.week_start}`);
+      } else {
+        await sb.post("checkins", {...data, client_id: clientId});
+      }
+      setCheckins(prev => ({...prev, [clientId]: [...(prev[clientId]||[]).filter(c=>c.week_start!==data.week_start), {...data, client_id: clientId}]}));
+    } catch(e) { console.error("Error saving checkin:", e); }
+  };
+
+  const loadCheckins = async (clientId) => {
+    if (checkins[clientId]) return;
+    try {
+      const result = await sb.get("checkins", `?client_id=eq.${clientId}&order=week_start.desc`);
+      if (result) setCheckins(prev => ({...prev, [clientId]: result}));
+    } catch(e) { console.error("Error loading checkins:", e); }
+  };
+
+  // ── Habit functions ──
+  const saveHabits = async (clientId, habitList) => {
+    try {
+      const existing = await sb.get("habits", `?client_id=eq.${clientId}`);
+      if (existing && existing.length > 0) {
+        await sb.patch("habits", {habits: habitList, updated_at: new Date().toISOString()}, `?client_id=eq.${clientId}`);
+      } else {
+        await sb.post("habits", {client_id: clientId, habits: habitList});
+      }
+      setHabits(prev => ({...prev, [clientId]: habitList}));
+    } catch(e) { console.error("Error saving habits:", e); }
+  };
+
+  const loadHabits = async (clientId) => {
+    if (habits[clientId]) return;
+    try {
+      const result = await sb.get("habits", `?client_id=eq.${clientId}`);
+      if (result && result[0]) setHabits(prev => ({...prev, [clientId]: result[0].habits || []}));
+      else setHabits(prev => ({...prev, [clientId]: []}));
+    } catch(e) { console.error("Error loading habits:", e); }
+  };
+
+  const saveHabitLog = async (clientId, date, completions) => {
+    try {
+      const existing = await sb.get("habit_logs", `?client_id=eq.${clientId}&date=eq.${date}`);
+      if (existing && existing.length > 0) {
+        await sb.patch("habit_logs", {completions}, `?client_id=eq.${clientId}&date=eq.${date}`);
+      } else {
+        await sb.post("habit_logs", {client_id: clientId, date, completions});
+      }
+      setHabitLogs(prev => ({...prev, [clientId]: {...(prev[clientId]||{}), [date]: completions}}));
+    } catch(e) { console.error("Error saving habit log:", e); }
+  };
+
+  const loadHabitLogs = async (clientId) => {
+    try {
+      const result = await sb.get("habit_logs", `?client_id=eq.${clientId}&order=date.desc&limit=30`);
+      if (result) {
+        const byDate = {};
+        result.forEach(r => { byDate[r.date] = r.completions; });
+        setHabitLogs(prev => ({...prev, [clientId]: byDate}));
+      }
+    } catch(e) { console.error("Error loading habit logs:", e); }
+  };
+
+  if (user.role === "coach") return (
+    <CoachApp clients={clients} programs={programs} nutrition={nutrition}
+      addClient={addClient} updateClient={updateClient} removeClient={removeClient}
+      addProgram={addProgram} updateProgram={updateProgram} assignProgram={assignProgram} deleteProgram={deleteProgram}
+      saveNutrition={saveNutrition} loadNutrition={loadNutrition}
+      measurements={measurements} saveMeasurement={saveMeasurement} loadMeasurements={loadMeasurements}
+      checkins={checkins} loadCheckins={loadCheckins}
+      habits={habits} saveHabits={saveHabits} loadHabits={loadHabits}
+      workoutLog={workoutLog} onLogout={logout} />
+  );
+  const clientData = clients.find(c => c.id === user.id);
+  return <ClientApp client={clientData} programs={programs}
+    nutrition={nutrition[user.id]} workoutLog={workoutLog}
+    loadNutrition={() => loadNutrition(user.id)}
+    measurements={measurements[user.id]||[]} loadMeasurements={() => loadMeasurements(user.id)}
+    checkins={checkins[user.id]||[]} saveCheckin={(d) => saveCheckin(user.id, d)} loadCheckins={() => loadCheckins(user.id)}
+    habits={habits[user.id]||[]} saveHabitLog={(date,c) => saveHabitLog(user.id, date, c)}
+    habitLogs={habitLogs[user.id]||{}} loadHabitLogs={() => loadHabitLogs(user.id)}
+    onLogout={logout} />;
+}
