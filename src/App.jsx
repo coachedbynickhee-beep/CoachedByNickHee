@@ -831,41 +831,55 @@ function ExRow({ ex, index, color, onChange, onDelete }) {
 }
 
 // ── CLIENT APP ────────────────────────────────────────────────────────────────
-function ClientApp({ client, programs, nutrition, workoutLog, loadNutrition, onLogout }) {
-  const [tab, setTab] = useState("training");
+function ClientApp({ client, programs, nutrition, workoutLog, loadNutrition, measurements, loadMeasurements, checkins, saveCheckin, loadCheckins, habits, saveHabitLog, habitLogs, loadHabitLogs, onLogout }) {
+  const [tab, setTab] = useState("dashboard");
   const [activeProg, setActiveProg] = useState(null);
   const [activeDay, setActiveDay] = useState(null);
   const assigned = programs.filter(p=>p.assignedTo.includes(client.id));
 
-  useEffect(()=>{ if(loadNutrition) loadNutrition(); },[]);
+  useEffect(()=>{ if(loadNutrition) loadNutrition(); if(loadMeasurements) loadMeasurements(); if(loadCheckins) loadCheckins(); if(loadHabitLogs) loadHabitLogs(); },[]);
 
   if (activeDay && activeProg) {
-    const prog = programs.find(p=>p.id===activeProg);
-    return <DayView day={activeDay} clientId={client.id} workoutLog={workoutLog}
-      onBack={()=>setActiveDay(null)} />;
+    return <DayView day={activeDay} clientId={client.id} workoutLog={workoutLog} onBack={()=>setActiveDay(null)} />;
   }
   if (activeProg) {
     const prog = programs.find(p=>p.id===activeProg);
     return <ProgramView program={prog} clientId={client.id} workoutLog={workoutLog}
-      onBack={()=>setActiveProg(null)} onSelectDay={d=>{setActiveDay(d);}} />;
+      onBack={()=>setActiveProg(null)} onSelectDay={d=>setActiveDay(d)} />;
   }
+
+  const tabs = [
+    {id:"dashboard",label:"Dashboard"},
+    {id:"programs",label:"Programs"},
+    {id:"nutrition",label:"Nutrition"},
+    {id:"measurements",label:"Measurements"},
+    {id:"checkin",label:"Check-In"},
+    {id:"habits",label:"Habits"},
+    {id:"history",label:"Log History"},
+  ];
 
   return (
     <div style={S.app}>
-      <Topbar title={`Hey, ${client.name.split(" ")[0]} 👋`} subtitle={client.goal} onLogout={onLogout}
-        right={<div style={{display:"flex",gap:8}}>
-          <TabBtn label="Training" active={tab==="training"} onClick={()=>setTab("training")} />
-          <TabBtn label="Nutrition" active={tab==="nutrition"} onClick={()=>setTab("nutrition")} />
-          <TabBtn label="History" active={tab==="history"} onClick={()=>setTab("history")} />
-        </div>} />
-      <div style={S.content}>
-        <div style={S.statsRow}>
-          <Stat label="Weight" value={client.weight+"kg"} />
-          <Stat label="Height" value={client.height+"cm"} />
-          <Stat label="Programs" value={assigned.length} />
+      <div style={{...S.topbar,flexDirection:"column",alignItems:"flex-start",gap:0,padding:"16px 16px 0"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",marginBottom:14}}>
+          <div>
+            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:26,color:C.text,letterSpacing:"0.05em",lineHeight:1}}>
+              Hey, {client.name.split(" ")[0]} 👋
+            </div>
+            <div style={{fontSize:12,color:C.muted,marginTop:2}}>{client.goal}</div>
+          </div>
+          <button style={S.btnGhost} onClick={onLogout}>Sign out</button>
         </div>
-
-        {tab==="training" && <>
+        <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:12,width:"100%",scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}>
+          {tabs.map(t=>(
+            <button key={t.id} style={{...S.tabBtn,...(tab===t.id?S.tabBtnActive:{}),flexShrink:0}}
+              onClick={()=>setTab(t.id)}>{t.label}</button>
+          ))}
+        </div>
+      </div>
+      <div style={S.content}>
+        {tab==="dashboard" && <ClientDashboard client={client} assigned={assigned} nutrition={nutrition} measurements={measurements||[]} workoutLog={workoutLog} habits={habits||[]} habitLogs={habitLogs||{}} checkins={checkins||[]} onGoPrograms={()=>setTab("programs")} onGoNutrition={()=>setTab("nutrition")} onGoCheckin={()=>setTab("checkin")} onGoHabits={()=>setTab("habits")} />}
+        {tab==="programs" && <>
           <SectionHeader title="Your Programs" />
           {assigned.length===0 && <Empty text="Your coach hasn't assigned a program yet." />}
           <div style={S.grid}>{assigned.map(p=>(
@@ -878,11 +892,173 @@ function ClientApp({ client, programs, nutrition, workoutLog, loadNutrition, onL
             </div>
           ))}</div>
         </>}
-
         {tab==="nutrition" && <ClientNutritionView nutrition={nutrition} />}
-
+        {tab==="measurements" && <ClientMeasurementsView measurements={measurements||[]} />}
+        {tab==="checkin" && <ClientCheckinForm checkins={checkins||[]} onSave={saveCheckin} />}
+        {tab==="habits" && <ClientHabitsView habits={habits||[]} habitLogs={habitLogs||{}} onLog={saveHabitLog} />}
         {tab==="history" && <ClientHistoryView clientId={client.id} programs={assigned} workoutLog={workoutLog} />}
       </div>
+    </div>
+  );
+}
+
+// ── CLIENT DASHBOARD ──────────────────────────────────────────────────────────
+function ClientDashboard({ client, assigned, nutrition, measurements, workoutLog, habits, habitLogs, checkins, onGoPrograms, onGoNutrition, onGoCheckin, onGoHabits }) {
+  const latest = measurements && measurements.length > 0 ? [...measurements].sort((a,b)=>b.date.localeCompare(a.date))[0] : null;
+  const allEx = assigned.flatMap(p=>p.days.flatMap(d=>d.exercises));
+  const pbs = workoutLog.getPBs(client.id, allEx);
+  const pbCount = Object.keys(pbs).length;
+
+  const recentSessions = [];
+  assigned.forEach(prog => {
+    prog.days.forEach(day => {
+      const hist = workoutLog.getHistory(client.id, day.id);
+      if (hist.length > 0) recentSessions.push({date:hist[hist.length-1].date,dayLabel:day.label,progName:prog.name,color:prog.color});
+    });
+  });
+  recentSessions.sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  const getWeekStart = () => { const d=new Date(); const day=d.getDay(); const diff=d.getDate()-day+(day===0?-6:1); return new Date(new Date().setDate(new Date().getDate()-new Date().getDay()+(new Date().getDay()===0?-6:1))).toISOString().slice(0,10); };
+  const hasCheckin = checkins && checkins.some(c=>c.week_start===getWeekStart());
+  const today = new Date().toISOString().slice(0,10);
+  const todayHabitLog = habitLogs[today]||{};
+  const habitsDone = (habits||[]).filter(h=>todayHabitLog[h.id]).length;
+
+  return (
+    <div>
+      {/* Hero stats */}
+      <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:16,padding:20,marginBottom:14,backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(203,251,69,0.06),transparent 60%)"}}>
+        <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.2em",marginBottom:14}}>Your Stats</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+          {[{val:client.weight+"kg",label:"Weight"},{val:client.height+"cm",label:"Height"},{val:assigned.length,label:"Programs"},{val:pbCount||"—",label:"Personal Bests"},{val:recentSessions.length||"—",label:"Days Trained"},{val:latest?.bodyfat?latest.bodyfat+"%":"—",label:"Body Fat"}].map(s=>(
+            <div key={s.label} style={{textAlign:"center"}}>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,color:C.text,lineHeight:1}}>{s.val}</div>
+              <div style={{fontSize:9,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginTop:3}}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Check-in nudge */}
+      {!hasCheckin && (
+        <div style={{background:"rgba(203,251,69,0.06)",border:"1px solid rgba(203,251,69,0.25)",borderRadius:14,padding:18,marginBottom:14,cursor:"pointer"}} onClick={onGoCheckin}>
+          <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:6}}>📋 Weekly Check-In Due</div>
+          <div style={{fontSize:13,color:C.muted,marginBottom:8}}>Your coach is waiting for your weekly update.</div>
+          <div style={{fontSize:12,color:C.accent,fontWeight:700}}>Submit now →</div>
+        </div>
+      )}
+
+      {/* Habits today */}
+      {habits && habits.length > 0 && (
+        <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:18,marginBottom:14,cursor:"pointer"}} onClick={onGoHabits}>
+          <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:10}}>Today's Habits</div>
+          <div style={{display:"flex",alignItems:"baseline",gap:6,marginBottom:8}}>
+            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:42,color:habitsDone===habits.length?C.accent:C.text,lineHeight:1}}>{habitsDone}</div>
+            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,color:C.muted}}>/ {habits.length}</div>
+          </div>
+          <div style={{background:C.surface2,borderRadius:999,height:5,overflow:"hidden"}}>
+            <div style={{height:"100%",background:`linear-gradient(90deg,${C.accent},#a8e800)`,borderRadius:999,width:`${habits.length>0?(habitsDone/habits.length)*100:0}%`,transition:"width .4s"}} />
+          </div>
+          <div style={{marginTop:8,fontSize:12,color:C.accent,fontWeight:700}}>Log habits →</div>
+        </div>
+      )}
+
+      {/* Programs */}
+      {assigned.length > 0 && (
+        <div style={{marginBottom:14}}>
+          <SectionHeader title="Active Programs" action={<button style={S.btnSm} onClick={onGoPrograms}>View All →</button>} />
+          <div style={S.grid}>{assigned.slice(0,2).map(p=>(
+            <div key={p.id} style={S.progCard} onClick={onGoPrograms}>
+              <div style={{...S.progAccent,background:p.color}} />
+              <div style={S.progName}>{p.name}</div>
+              <div style={S.progTag}>{p.tag}</div>
+              <div style={S.progDays}>{p.days.length} days · {p.days.reduce((s,d)=>s+d.exercises.length,0)} exercises</div>
+            </div>
+          ))}</div>
+        </div>
+      )}
+      {assigned.length===0 && (
+        <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:24,textAlign:"center",marginBottom:14}}>
+          <div style={{fontSize:32,marginBottom:8}}>💪</div>
+          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,color:C.text,marginBottom:6}}>No Programs Yet</div>
+          <div style={{fontSize:13,color:C.muted}}>Your coach will assign your program soon.</div>
+        </div>
+      )}
+
+      {/* Recent sessions */}
+      {recentSessions.length > 0 && (
+        <div style={{marginBottom:14}}>
+          <SectionHeader title="Recent Sessions" />
+          {recentSessions.slice(0,3).map((s,i)=>(
+            <div key={i} style={{...S.historySession,display:"flex",alignItems:"center",gap:12,marginBottom:8,padding:"12px 14px"}}>
+              <div style={{width:4,height:36,borderRadius:2,background:s.color,flexShrink:0}} />
+              <div style={{flex:1}}>
+                <div style={{fontWeight:700,fontSize:13}}>{s.dayLabel}</div>
+                <div style={{fontSize:11,color:C.muted,marginTop:2}}>{s.progName}</div>
+              </div>
+              <div style={{fontSize:11,color:C.faint,fontWeight:700}}>{fmt(s.date)}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Nutrition teaser */}
+      {nutrition && (
+        <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:18,cursor:"pointer"}} onClick={onGoNutrition}>
+          <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:10}}>Your Nutrition Plan</div>
+          <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
+            {[["Calories",nutrition.calories,"kcal"],["Protein",nutrition.protein,"g"],["Carbs",nutrition.carbs,"g"],["Fat",nutrition.fat,"g"]].map(([l,v,u])=>(
+              <div key={l} style={{textAlign:"center"}}>
+                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:26,color:C.text,lineHeight:1}}>{v||"—"}<span style={{fontSize:11,color:C.muted}}>{u}</span></div>
+                <div style={{fontSize:9,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",marginTop:3}}>{l}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{marginTop:10,fontSize:12,color:C.accent,fontWeight:700}}>View full plan →</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── CLIENT MEASUREMENTS VIEW ──────────────────────────────────────────────────
+function ClientMeasurementsView({ measurements }) {
+  if (!measurements || measurements.length === 0) return (
+    <div style={{textAlign:"center",padding:"48px 0"}}>
+      <div style={{fontSize:32,marginBottom:12}}>📏</div>
+      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:24,color:C.text,marginBottom:8}}>No Measurements Yet</div>
+      <div style={{color:C.muted,fontSize:14}}>Your coach will record your measurements soon.</div>
+    </div>
+  );
+  const sorted = [...measurements].sort((a,b)=>b.date.localeCompare(a.date));
+  const latest = sorted[0];
+  return (
+    <div>
+      <SectionHeader title="Your Measurements" />
+      <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:16,padding:20,marginBottom:16,backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(203,251,69,0.05),transparent 60%)"}}>
+        <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:14}}>Latest — {latest.date}</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(90px,1fr))",gap:10}}>
+          {MEASUREMENT_FIELDS.filter(f=>f.key!=="date"&&latest[f.key]).map(field=>(
+            <div key={field.key} style={{background:C.surface2,borderRadius:12,padding:"12px 8px",textAlign:"center"}}>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:26,color:C.text,lineHeight:1}}>{latest[field.key]}<span style={{fontSize:11,color:C.muted}}>{field.unit}</span></div>
+              <div style={{fontSize:9,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",marginTop:4}}>{field.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {sorted.length>1 && <>
+        <SectionHeader title="History" />
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+            <thead><tr style={{borderBottom:`1px solid ${C.line}`}}>
+              {MEASUREMENT_FIELDS.map(f=>(<th key={f.key} style={{padding:"8px 10px",textAlign:"left",color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",fontSize:9,whiteSpace:"nowrap"}}>{f.label}</th>))}
+            </tr></thead>
+            <tbody>{sorted.map((row,i)=>(<tr key={i} style={{borderBottom:`1px solid ${C.line}`}}>
+              {MEASUREMENT_FIELDS.map(f=>(<td key={f.key} style={{padding:"10px",color:i===0?C.text:C.muted,whiteSpace:"nowrap",fontWeight:i===0?700:400}}>{row[f.key]||"—"}{row[f.key]&&f.unit?<span style={{color:C.faint,fontSize:10}}>{f.unit}</span>:""}</td>))}
+            </tr>))}</tbody>
+          </table>
+        </div>
+      </>}
     </div>
   );
 }
