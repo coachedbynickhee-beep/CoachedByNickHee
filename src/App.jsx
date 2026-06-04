@@ -119,6 +119,9 @@ export default function App() {
   const [programs, setPrograms] = useState([]);
   const [nutrition, setNutrition] = useState({});
   const [measurements, setMeasurements] = useState({});
+  const [checkins, setCheckins] = useState({});
+  const [habits, setHabits] = useState({});
+  const [habitLogs, setHabitLogs] = useState({});
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const workoutLog = useWorkoutLog();
@@ -241,12 +244,80 @@ export default function App() {
   };
 
   if (!user) return <Login onLogin={login} />;
+  // ── Check-in functions ──
+  const saveCheckin = async (clientId, data) => {
+    try {
+      const existing = await sb.get("checkins", `?client_id=eq.${clientId}&week_start=eq.${data.week_start}`);
+      if (existing && existing.length > 0) {
+        await sb.patch("checkins", data, `?client_id=eq.${clientId}&week_start=eq.${data.week_start}`);
+      } else {
+        await sb.post("checkins", {...data, client_id: clientId});
+      }
+      setCheckins(prev => ({...prev, [clientId]: [...(prev[clientId]||[]).filter(c=>c.week_start!==data.week_start), {...data, client_id: clientId}]}));
+    } catch(e) { console.error("Error saving checkin:", e); }
+  };
+
+  const loadCheckins = async (clientId) => {
+    if (checkins[clientId]) return;
+    try {
+      const result = await sb.get("checkins", `?client_id=eq.${clientId}&order=week_start.desc`);
+      if (result) setCheckins(prev => ({...prev, [clientId]: result}));
+    } catch(e) { console.error("Error loading checkins:", e); }
+  };
+
+  // ── Habit functions ──
+  const saveHabits = async (clientId, habitList) => {
+    try {
+      const existing = await sb.get("habits", `?client_id=eq.${clientId}`);
+      if (existing && existing.length > 0) {
+        await sb.patch("habits", {habits: habitList, updated_at: new Date().toISOString()}, `?client_id=eq.${clientId}`);
+      } else {
+        await sb.post("habits", {client_id: clientId, habits: habitList});
+      }
+      setHabits(prev => ({...prev, [clientId]: habitList}));
+    } catch(e) { console.error("Error saving habits:", e); }
+  };
+
+  const loadHabits = async (clientId) => {
+    if (habits[clientId]) return;
+    try {
+      const result = await sb.get("habits", `?client_id=eq.${clientId}`);
+      if (result && result[0]) setHabits(prev => ({...prev, [clientId]: result[0].habits || []}));
+      else setHabits(prev => ({...prev, [clientId]: []}));
+    } catch(e) { console.error("Error loading habits:", e); }
+  };
+
+  const saveHabitLog = async (clientId, date, completions) => {
+    try {
+      const existing = await sb.get("habit_logs", `?client_id=eq.${clientId}&date=eq.${date}`);
+      if (existing && existing.length > 0) {
+        await sb.patch("habit_logs", {completions}, `?client_id=eq.${clientId}&date=eq.${date}`);
+      } else {
+        await sb.post("habit_logs", {client_id: clientId, date, completions});
+      }
+      setHabitLogs(prev => ({...prev, [clientId]: {...(prev[clientId]||{}), [date]: completions}}));
+    } catch(e) { console.error("Error saving habit log:", e); }
+  };
+
+  const loadHabitLogs = async (clientId) => {
+    try {
+      const result = await sb.get("habit_logs", `?client_id=eq.${clientId}&order=date.desc&limit=30`);
+      if (result) {
+        const byDate = {};
+        result.forEach(r => { byDate[r.date] = r.completions; });
+        setHabitLogs(prev => ({...prev, [clientId]: byDate}));
+      }
+    } catch(e) { console.error("Error loading habit logs:", e); }
+  };
+
   if (user.role === "coach") return (
     <CoachApp clients={clients} programs={programs} nutrition={nutrition}
       addClient={addClient} updateClient={updateClient} removeClient={removeClient}
       addProgram={addProgram} updateProgram={updateProgram} assignProgram={assignProgram} deleteProgram={deleteProgram}
       saveNutrition={saveNutrition} loadNutrition={loadNutrition}
       measurements={measurements} saveMeasurement={saveMeasurement} loadMeasurements={loadMeasurements}
+      checkins={checkins} loadCheckins={loadCheckins}
+      habits={habits} saveHabits={saveHabits} loadHabits={loadHabits}
       workoutLog={workoutLog} onLogout={logout} />
   );
   const clientData = clients.find(c => c.id === user.id);
@@ -254,6 +325,9 @@ export default function App() {
     nutrition={nutrition[user.id]} workoutLog={workoutLog}
     loadNutrition={() => loadNutrition(user.id)}
     measurements={measurements[user.id]||[]} loadMeasurements={() => loadMeasurements(user.id)}
+    checkins={checkins[user.id]||[]} saveCheckin={(d) => saveCheckin(user.id, d)} loadCheckins={() => loadCheckins(user.id)}
+    habits={habits[user.id]||[]} saveHabitLog={(date,c) => saveHabitLog(user.id, date, c)}
+    habitLogs={habitLogs[user.id]||{}} loadHabitLogs={() => loadHabitLogs(user.id)}
     onLogout={logout} />;
 }
 
@@ -407,7 +481,7 @@ function Login({ onLogin }) {
 }
 
 // ── COACH APP ────────────────────────────────────────────────────────────────
-function CoachApp({ clients, programs, nutrition, addClient, updateClient, removeClient, addProgram, updateProgram, assignProgram, deleteProgram, saveNutrition, loadNutrition, measurements, saveMeasurement, loadMeasurements, workoutLog, onLogout }) {
+function CoachApp({ clients, programs, nutrition, addClient, updateClient, removeClient, addProgram, updateProgram, assignProgram, deleteProgram, saveNutrition, loadNutrition, measurements, saveMeasurement, loadMeasurements, checkins, loadCheckins, habits, saveHabits, loadHabits, workoutLog, onLogout }) {
   const [tab, setTab] = useState("clients");
   const [activeClient, setActiveClient] = useState(null);
   const [activeProgram, setActiveProgram] = useState(null);
@@ -424,6 +498,8 @@ function CoachApp({ clients, programs, nutrition, addClient, updateClient, remov
       updateClient={updateClient} updateProgram={updateProgram} assignProgram={assignProgram}
       nutrition={nutrition[c.id]} saveNutrition={(n)=>saveNutrition(c.id,n)} loadNutrition={()=>loadNutrition(c.id)}
       measurements={measurements[c.id]||[]} saveMeasurement={(d)=>saveMeasurement(c.id,d)} loadMeasurements={()=>loadMeasurements(c.id)}
+      checkins={checkins[c.id]||[]} loadCheckins={()=>loadCheckins(c.id)}
+      habits={habits[c.id]||[]} saveHabits={(h)=>saveHabits(c.id,h)} loadHabits={()=>loadHabits(c.id)}
       workoutLog={workoutLog}
       onBack={()=>setActiveClient(null)} onOpenProgram={setActiveProgram} />;
   }
@@ -453,7 +529,7 @@ function CoachApp({ clients, programs, nutrition, addClient, updateClient, remov
 }
 
 // ── CLIENT DETAIL (coach view) ────────────────────────────────────────────────
-function ClientDetail({ client, programs, clients, updateClient, updateProgram, assignProgram, nutrition, saveNutrition, loadNutrition, measurements, saveMeasurement, loadMeasurements, workoutLog, onBack, onOpenProgram }) {
+function ClientDetail({ client, programs, clients, updateClient, updateProgram, assignProgram, nutrition, saveNutrition, loadNutrition, measurements, saveMeasurement, loadMeasurements, checkins, loadCheckins, habits, saveHabits, loadHabits, workoutLog, onBack, onOpenProgram }) {
   const [tab, setTab] = useState("programs");
   const [showEdit, setShowEdit] = useState(false);
   const assigned = programs.filter(p=>p.assignedTo.includes(client.id));
@@ -477,6 +553,8 @@ function ClientDetail({ client, programs, clients, updateClient, updateProgram, 
           <TabBtn label="Nutrition" active={tab==="nutrition"} onClick={()=>setTab("nutrition")} />
           <TabBtn label="Log History" active={tab==="history"} onClick={()=>setTab("history")} />
           <TabBtn label="Measurements" active={tab==="measurements"} onClick={()=>{setTab("measurements");loadMeasurements();}} />
+          <TabBtn label="Check-ins" active={tab==="checkins"} onClick={()=>{setTab("checkins");loadCheckins();}} />
+          <TabBtn label="Habits" active={tab==="habits"} onClick={()=>{setTab("habits");loadHabits();}} />
         </div>} />
       <div style={S.content}>
         <div style={S.statsRow}>
@@ -504,6 +582,8 @@ function ClientDetail({ client, programs, clients, updateClient, updateProgram, 
 
         {tab==="history" && <CoachLogHistory clientId={client.id} programs={assigned} workoutLog={workoutLog} pbs={pbs} />}
         {tab==="measurements" && <MeasurementsPanel measurements={measurements} onSave={saveMeasurement} clientName={client.name} />}
+        {tab==="checkins" && <CoachCheckinView checkins={checkins} clientName={client.name} />}
+        {tab==="habits" && <HabitsEditor habits={habits} onSave={saveHabits} clientName={client.name} />}
       </div>
       {showEdit && <EditClientModal client={client} onClose={()=>setShowEdit(false)}
         onSave={updated=>{updateClient(client.id,updated);setShowEdit(false);}} />}
@@ -1274,6 +1354,325 @@ function MeasurementsPanel({ measurements, onSave, clientName }) {
           )}
         </>
       )}
+    </div>
+  );
+}
+
+// ── WEEKLY CHECK-IN FORM (client fills in) ───────────────────────────────────
+function ClientCheckinForm({ checkins, onSave }) {
+  const getWeekStart = () => {
+    const d = new Date();
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(d.setDate(diff)).toISOString().slice(0,10);
+  };
+  const weekStart = getWeekStart();
+  const existing = checkins.find(c => c.week_start === weekStart) || {};
+
+  const [form, setForm] = useState({
+    week_start: weekStart,
+    sleep_quality: existing.sleep_quality || 5,
+    stress: existing.stress || 5,
+    energy: existing.energy || 5,
+    adherence: existing.adherence || 5,
+    water_intake: existing.water_intake || "",
+    steps: existing.steps || "",
+    notes: existing.notes || "",
+  });
+  const [saved, setSaved] = useState(false);
+  const f = (k,v) => setForm(p=>({...p,[k]:v}));
+
+  const handleSave = async () => {
+    await onSave(form);
+    setSaved(true);
+    setTimeout(()=>setSaved(false), 2000);
+  };
+
+  const SliderField = ({label, field, emoji}) => (
+    <div style={{background:C.surface2,borderRadius:12,padding:16,marginBottom:12}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+        <div style={{fontSize:13,fontWeight:700,color:C.text}}>{emoji} {label}</div>
+        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,color:C.accent,lineHeight:1}}>{form[field]}<span style={{fontSize:14,color:C.muted}}>/10</span></div>
+      </div>
+      <input type="range" min="1" max="10" value={form[field]}
+        onChange={e=>f(field,+e.target.value)}
+        style={{width:"100%",accentColor:C.accent,cursor:"pointer"}} />
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:C.faint,marginTop:4}}>
+        <span>Poor</span><span>Average</span><span>Excellent</span>
+      </div>
+    </div>
+  );
+
+  return (
+    <div>
+      <SectionHeader title={`Week of ${weekStart}`} />
+      <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:16,padding:20,marginBottom:16,
+        backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(203,251,69,0.05),transparent 60%)"}}>
+        <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:16}}>
+          Weekly Check-In
+        </div>
+        <SliderField label="Sleep Quality" field="sleep_quality" emoji="😴" />
+        <SliderField label="Stress Level" field="stress" emoji="🧠" />
+        <SliderField label="Energy Level" field="energy" emoji="⚡" />
+        <SliderField label="Training Adherence" field="adherence" emoji="🎯" />
+
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+          <div>
+            <div style={{fontSize:10,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:6}}>💧 Water Intake</div>
+            <input style={{...S.input}} value={form.water_intake} onChange={e=>f("water_intake",e.target.value)} placeholder="e.g. 2.5L" />
+          </div>
+          <div>
+            <div style={{fontSize:10,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:6}}>👟 Steps</div>
+            <input style={{...S.input}} value={form.steps} onChange={e=>f("steps",e.target.value)} placeholder="e.g. 8000" />
+          </div>
+        </div>
+
+        <div>
+          <div style={{fontSize:10,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:6}}>📝 Notes for your coach</div>
+          <textarea style={{...S.input,minHeight:100,resize:"vertical"}} value={form.notes}
+            onChange={e=>f("notes",e.target.value)} placeholder="How did the week go? Any struggles, wins, or feedback?" />
+        </div>
+
+        <button style={{...S.btn,width:"100%",marginTop:16,padding:"14px",...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+          {saved ? "✓ Submitted!" : "Submit Check-In →"}
+        </button>
+      </div>
+
+      {/* Past check-ins */}
+      {checkins.filter(c=>c.week_start!==weekStart).length > 0 && (
+        <>
+          <SectionHeader title="Past Check-Ins" />
+          {checkins.filter(c=>c.week_start!==weekStart).sort((a,b)=>b.week_start.localeCompare(a.week_start)).map((c,i)=>(
+            <div key={i} style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:16,marginBottom:10}}>
+              <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:12}}>Week of {c.week_start}</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:c.notes?12:0}}>
+                {[["😴","Sleep",c.sleep_quality],["🧠","Stress",c.stress],["⚡","Energy",c.energy],["🎯","Adherence",c.adherence]].map(([emoji,label,val])=>(
+                  <div key={label} style={{textAlign:"center",background:C.surface2,borderRadius:8,padding:"10px 6px"}}>
+                    <div style={{fontSize:10,marginBottom:2}}>{emoji}</div>
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:24,color:C.text,lineHeight:1}}>{val||"—"}</div>
+                    <div style={{fontSize:9,color:C.faint,marginTop:2,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em"}}>{label}</div>
+                  </div>
+                ))}
+              </div>
+              {c.notes && <div style={{fontSize:13,color:C.muted,borderTop:`1px solid ${C.line}`,paddingTop:10,lineHeight:1.6}}>{c.notes}</div>}
+            </div>
+          ))}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── COACH CHECK-IN VIEW ───────────────────────────────────────────────────────
+function CoachCheckinView({ checkins, clientName }) {
+  if (!checkins || checkins.length === 0) return (
+    <div style={{textAlign:"center",padding:"48px 0"}}>
+      <div style={{fontSize:32,marginBottom:12}}>📋</div>
+      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:24,color:C.text,marginBottom:8}}>No Check-ins Yet</div>
+      <div style={{color:C.muted,fontSize:14}}>{clientName} hasn't submitted a check-in yet.</div>
+    </div>
+  );
+
+  const sorted = [...checkins].sort((a,b)=>b.week_start.localeCompare(a.week_start));
+
+  return (
+    <div>
+      <SectionHeader title={`Check-ins (${checkins.length})`} />
+      {sorted.map((c,i)=>(
+        <div key={i} style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:20,marginBottom:12,
+          ...(i===0?{backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(203,251,69,0.05),transparent 60%)"}:{})}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+            <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em"}}>
+              Week of {c.week_start}
+            </div>
+            {i===0 && <span style={{fontSize:10,background:"rgba(203,251,69,0.1)",color:C.accent,border:`1px solid rgba(203,251,69,0.3)`,borderRadius:999,padding:"3px 10px",fontWeight:700}}>Latest</span>}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:12}}>
+            {[["😴","Sleep Quality",c.sleep_quality],["🧠","Stress",c.stress],["⚡","Energy",c.energy],["🎯","Adherence",c.adherence]].map(([emoji,label,val])=>{
+              const color = val>=8?"#7BE0A0":val>=5?C.accent:"#FF6B4A";
+              return (
+                <div key={label} style={{textAlign:"center",background:C.surface2,borderRadius:10,padding:12}}>
+                  <div style={{fontSize:12,marginBottom:4}}>{emoji}</div>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:30,color,lineHeight:1}}>{val||"—"}<span style={{fontSize:12,color:C.muted}}>/10</span></div>
+                  <div style={{fontSize:9,color:C.faint,marginTop:4,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em"}}>{label}</div>
+                </div>
+              );
+            })}
+          </div>
+          {(c.water_intake||c.steps) && (
+            <div style={{display:"flex",gap:12,marginBottom:c.notes?12:0}}>
+              {c.water_intake && <div style={{background:C.surface2,borderRadius:8,padding:"8px 14px",fontSize:13,color:C.muted}}>💧 {c.water_intake}</div>}
+              {c.steps && <div style={{background:C.surface2,borderRadius:8,padding:"8px 14px",fontSize:13,color:C.muted}}>👟 {c.steps} steps</div>}
+            </div>
+          )}
+          {c.notes && (
+            <div style={{background:C.surface2,borderRadius:10,padding:14,fontSize:13,color:C.muted,lineHeight:1.6,borderLeft:`3px solid ${C.accent}`}}>
+              <div style={{fontSize:10,color:C.accent,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Client Notes</div>
+              {c.notes}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── HABITS EDITOR (coach sets habits) ─────────────────────────────────────────
+function HabitsEditor({ habits, onSave, clientName }) {
+  const [list, setList] = useState(habits || []);
+  const [newHabit, setNewHabit] = useState("");
+  const [saved, setSaved] = useState(false);
+  useEffect(()=>{ setList(habits||[]); },[habits]);
+
+  const addHabit = () => {
+    if(!newHabit.trim()) return;
+    setList(prev=>[...prev,{id:uid(),label:newHabit.trim(),emoji:"✅"}]);
+    setNewHabit("");
+  };
+  const removeHabit = (id) => setList(prev=>prev.filter(h=>h.id!==id));
+  const updateEmoji = (id,emoji) => setList(prev=>prev.map(h=>h.id===id?{...h,emoji}:h));
+
+  const handleSave = async () => {
+    await onSave(list);
+    setSaved(true);
+    setTimeout(()=>setSaved(false),2000);
+  };
+
+  const EMOJIS = ["✅","💧","🏃","🥗","😴","📖","🧘","💊","🚶","⚡","🎯","🔥"];
+
+  return (
+    <div>
+      <SectionHeader title="Daily Habits" action={
+        <button style={{...S.btn,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+          {saved?"✓ Saved!":"Save Habits →"}
+        </button>
+      } />
+      <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:20,marginBottom:16}}>
+        <div style={{fontSize:10,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:14}}>
+          Set daily habits for {clientName}
+        </div>
+        {list.length===0 && <Empty text="No habits set yet. Add habits below." />}
+        {list.map(h=>(
+          <div key={h.id} style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,background:C.surface2,borderRadius:10,padding:"10px 14px"}}>
+            <select value={h.emoji} onChange={e=>updateEmoji(h.id,e.target.value)}
+              style={{background:"transparent",border:"none",fontSize:18,cursor:"pointer",outline:"none"}}>
+              {EMOJIS.map(e=><option key={e} value={e}>{e}</option>)}
+            </select>
+            <div style={{flex:1,fontSize:14,fontWeight:600,color:C.text}}>{h.label}</div>
+            <button style={{background:"transparent",border:"none",color:"#ff6b6b",cursor:"pointer",fontSize:16}} onClick={()=>removeHabit(h.id)}>✕</button>
+          </div>
+        ))}
+        <div style={{display:"flex",gap:8,marginTop:14}}>
+          <input style={{...S.input,flex:1}} value={newHabit} onChange={e=>setNewHabit(e.target.value)}
+            placeholder="e.g. Drink 2L of water" onKeyDown={e=>e.key==="Enter"&&addHabit()} />
+          <button style={S.btnSm} onClick={addHabit}>+ Add</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── CLIENT HABITS VIEW (client logs daily) ────────────────────────────────────
+function ClientHabitsView({ habits, habitLogs, onLog }) {
+  const today = new Date().toISOString().slice(0,10);
+  const todayLog = habitLogs[today] || {};
+  const [completions, setCompletions] = useState(todayLog);
+  const [saved, setSaved] = useState(false);
+  useEffect(()=>{ setCompletions(habitLogs[today]||{}); },[habitLogs, today]);
+
+  if (!habits || habits.length === 0) return (
+    <div style={{textAlign:"center",padding:"48px 0"}}>
+      <div style={{fontSize:32,marginBottom:12}}>✅</div>
+      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:24,color:C.text,marginBottom:8}}>No Habits Yet</div>
+      <div style={{color:C.muted,fontSize:14}}>Your coach will set your daily habits soon.</div>
+    </div>
+  );
+
+  const toggle = (id) => setCompletions(prev=>({...prev,[id]:!prev[id]}));
+  const doneCount = habits.filter(h=>completions[h.id]).length;
+
+  const handleSave = async () => {
+    await onLog(today, completions);
+    setSaved(true);
+    setTimeout(()=>setSaved(false),2000);
+  };
+
+  // Last 7 days for streak
+  const last7 = Array.from({length:7},(_,i)=>{
+    const d = new Date();
+    d.setDate(d.getDate()-i);
+    return d.toISOString().slice(0,10);
+  }).reverse();
+
+  return (
+    <div>
+      <SectionHeader title={`Today — ${today}`} />
+
+      {/* Progress ring */}
+      <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:16,padding:24,marginBottom:16,
+        backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(203,251,69,0.06),transparent 60%)",textAlign:"center"}}>
+        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:72,color:doneCount===habits.length?C.accent:C.text,lineHeight:1}}>
+          {doneCount}<span style={{fontSize:32,color:C.muted}}>/{habits.length}</span>
+        </div>
+        <div style={{fontSize:11,color:C.muted,textTransform:"uppercase",letterSpacing:"0.15em",fontWeight:700,marginTop:4}}>
+          {doneCount===habits.length?"All habits complete! 🎉":"Habits completed today"}
+        </div>
+        {/* Progress bar */}
+        <div style={{background:C.surface2,borderRadius:999,height:6,marginTop:16,overflow:"hidden"}}>
+          <div style={{height:"100%",background:`linear-gradient(90deg,${C.accent},#a8e800)`,borderRadius:999,
+            width:`${habits.length>0?(doneCount/habits.length)*100:0}%`,transition:"width .4s"}} />
+        </div>
+      </div>
+
+      {/* Habit checklist */}
+      <div style={{marginBottom:16}}>
+        {habits.map(h=>(
+          <div key={h.id}
+            style={{display:"flex",alignItems:"center",gap:14,background:C.surface,border:`1px solid ${completions[h.id]?C.accent+"40":C.line}`,
+              borderRadius:12,padding:"14px 16px",marginBottom:8,cursor:"pointer",transition:"all .2s",
+              opacity:completions[h.id]?0.7:1}}
+            onClick={()=>toggle(h.id)}>
+            <div style={{fontSize:22}}>{h.emoji}</div>
+            <div style={{flex:1,fontSize:14,fontWeight:700,color:C.text,textDecoration:completions[h.id]?"line-through":"none"}}>{h.label}</div>
+            <div style={{width:28,height:28,borderRadius:999,border:`2px solid ${completions[h.id]?C.accent:C.line2}`,
+              background:completions[h.id]?C.accent:"transparent",display:"flex",alignItems:"center",justifyContent:"center",
+              color:"#000",fontSize:14,fontWeight:800,transition:"all .2s"}}>
+              {completions[h.id]?"✓":""}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button style={{...S.btn,width:"100%",padding:14,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+        {saved?"✓ Saved!":"Save Today's Habits →"}
+      </button>
+
+      {/* 7-day streak view */}
+      <div style={{marginTop:24}}>
+        <SectionHeader title="Last 7 Days" />
+        <div style={{display:"flex",gap:8}}>
+          {last7.map(date=>{
+            const log = habitLogs[date]||{};
+            const done = habits.filter(h=>log[h.id]).length;
+            const pct = habits.length>0?done/habits.length:0;
+            const isToday = date===today;
+            return (
+              <div key={date} style={{flex:1,textAlign:"center"}}>
+                <div style={{fontSize:9,color:C.faint,fontWeight:700,marginBottom:6,textTransform:"uppercase",letterSpacing:"0.1em"}}>
+                  {new Date(date+"T12:00:00").toLocaleDateString("en",{weekday:"short"})}
+                </div>
+                <div style={{height:48,background:C.surface2,borderRadius:8,position:"relative",overflow:"hidden",border:`1px solid ${isToday?C.accent:C.line}`}}>
+                  <div style={{position:"absolute",bottom:0,left:0,right:0,height:`${pct*100}%`,
+                    background:pct===1?C.accent:`rgba(203,251,69,${0.3+pct*0.4})`,transition:"height .3s"}} />
+                </div>
+                <div style={{fontSize:10,color:pct===1?C.accent:C.muted,fontWeight:700,marginTop:4}}>
+                  {done}/{habits.length}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
