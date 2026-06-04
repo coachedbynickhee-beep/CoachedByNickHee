@@ -141,7 +141,12 @@ export default function App() {
   const [checkins, setCheckins] = useState({});
   const [habits, setHabits] = useState({});
   const [habitLogs, setHabitLogs] = useState({});
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem("cbnh_user");
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
   const [loading, setLoading] = useState(false);
   const workoutLog = useWorkoutLog();
 
@@ -165,15 +170,21 @@ export default function App() {
 
   const login = async (email, password) => {
     if (email === COACH.email && password === COACH.password) {
-      setUser({ role:"coach" }); return true;
+      const u = { role:"coach" };
+      setUser(u);
+      localStorage.setItem("cbnh_user", JSON.stringify(u));
+      return true;
     }
     const matches = await sb.get("clients", `?email=eq.${encodeURIComponent(email)}&client_password=eq.${encodeURIComponent(password)}`);
     if (matches && matches.length > 0) {
-      setUser({ role:"client", id:matches[0].id }); return true;
+      const u = { role:"client", id:matches[0].id };
+      setUser(u);
+      localStorage.setItem("cbnh_user", JSON.stringify(u));
+      return true;
     }
     return false;
   };
-  const logout = () => setUser(null);
+  const logout = () => { setUser(null); localStorage.removeItem("cbnh_user"); };
 
   // Wrapped setters that sync to Supabase
   const addClient = async (clientData) => {
