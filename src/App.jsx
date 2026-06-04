@@ -512,53 +512,1816 @@ function Login({ onLogin }) {
   );
 }
 
-// ── COACH APP ────────────────────────────────────────────────────────────────
-function CoachApp({ clients, programs, nutrition, addClient, updateClient, removeClient, addProgram, updateProgram, assignProgram, deleteProgram, saveNutrition, loadNutrition, measurements, saveMeasurement, loadMeasurements, checkins, loadCheckins, habits, saveHabits, loadHabits, workoutLog, onLogout }) {
-  const [tab, setTab] = useState("clients");
-  const [activeClient, setActiveClient] = useState(null);
-  const [activeProgram, setActiveProgram] = useState(null);
-  const [showNewClient, setShowNewClient] = useState(false);
-  const [showNewProgram, setShowNewProgram] = useState(false);
-
-  if (activeProgram) {
-    const prog = programs.find(p => p.id === activeProgram);
-    return <ProgramBuilder program={prog} onUpdate={updateProgram} onBack={()=>setActiveProgram(null)} />;
-  }
-  if (activeClient) {
-    const c = clients.find(c => c.id === activeClient);
-    return <ClientDetail client={c} programs={programs} clients={clients}
-      updateClient={updateClient} updateProgram={updateProgram} assignProgram={assignProgram}
-      nutrition={nutrition[c.id]} saveNutrition={(n)=>saveNutrition(c.id,n)} loadNutrition={()=>loadNutrition(c.id)}
-      measurements={measurements[c.id]||[]} saveMeasurement={(d)=>saveMeasurement(c.id,d)} loadMeasurements={()=>loadMeasurements(c.id)}
-      checkins={checkins[c.id]||[]} loadCheckins={()=>loadCheckins(c.id)}
-      habits={habits[c.id]||[]} saveHabits={(h)=>saveHabits(c.id,h)} loadHabits={()=>loadHabits(c.id)}
-      workoutLog={workoutLog}
-      onBack={()=>setActiveClient(null)} onOpenProgram={setActiveProgram} />;
-  }
+// ── SHARED COMPONENTS ─────────────────────────────────────────────────────────
+function Topbar({ title, subtitle, onLogout, left, right }) {
   return (
-    <div style={S.app}>
-      <Topbar title={<img src={LOGO_B64} alt="CoachedByNickhee" style={{height:28,objectFit:"contain"}} />} subtitle="" onLogout={onLogout}
-        right={<div style={{display:"flex",gap:8}}>
-          <TabBtn label="Clients" active={tab==="clients"} onClick={()=>setTab("clients")} />
-          <TabBtn label="Programs" active={tab==="programs"} onClick={()=>setTab("programs")} />
-        </div>} />
-      <div style={S.content}>
-        {tab==="clients" && <>
-          <SectionHeader title={`Clients (${clients.length})`} action={<button style={S.btnSm} onClick={()=>setShowNewClient(true)}>+ New Client</button>} />
-          <div style={S.grid}>{clients.map(c=><ClientCard key={c.id} client={c} programs={programs} onClick={()=>setActiveClient(c.id)} onDelete={id=>{if(window.confirm("Remove "+c.name+"?"))removeClient(id);}} />)}</div>
-        </>}
-        {tab==="programs" && <>
-          <SectionHeader title={`Programs (${programs.length})`} action={<button style={S.btnSm} onClick={()=>setShowNewProgram(true)}>+ New Program</button>} />
-          <div style={S.grid}>{programs.map(p=><ProgramCard key={p.id} program={p} clients={clients} onClick={()=>setActiveProgram(p.id)} onDelete={deleteProgram} />)}</div>
-        </>}
+    <div style={S.topbar}>
+      <div style={S.topbarLeft}>
+        {left}
+        <div><div style={S.topbarTitle}>{title}</div>{subtitle&&<div style={S.topbarSub}>{subtitle}</div>}</div>
       </div>
-      {showNewClient && <NewClientModal onClose={()=>setShowNewClient(false)}
-        onSave={c=>{addClient(c);setShowNewClient(false);}} />}
-      {showNewProgram && <NewProgramModal onClose={()=>setShowNewProgram(false)}
-        onSave={p=>{addProgram(p);setShowNewProgram(false);}} />}
+      <div style={S.topbarRight}>
+        {right}
+        {onLogout&&<button style={S.btnGhost} onClick={onLogout}>Sign out</button>}
+      </div>
     </div>
   );
 }
+function TabBtn({ label, active, onClick }) {
+  return <button style={{...S.tabBtn,...(active?S.tabBtnActive:{})}} onClick={onClick}>{label}</button>;
+}
+function SectionHeader({ title, action }) {
+  return <div style={S.sectionHeader}><div style={S.sectionTitle}>{title}</div>{action}</div>;
+}
+function Field({ label, children }) {
+  return <div style={S.loginField}><label style={S.label}>{label}</label>{children}</div>;
+}
+function ClientCard({ client, programs, onClick, onDelete }) {
+  const count = programs.filter(p=>p.assignedTo.includes(client.id)).length;
+  return (
+    <div style={S.card} onClick={onClick}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+        <div style={S.cardAvatar}>{client.name.split(" ").map(n=>n[0]).join("")}</div>
+        <button style={{background:"transparent",border:"1px solid #ff6b6b",color:"#ff6b6b",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:11,fontWeight:700}}
+          onClick={e=>{e.stopPropagation();if(window.confirm("Remove "+client.name+"?"))onDelete(client.id);}}>✕ Remove</button>
+      </div>
+      <div style={S.cardName}>{client.name}</div>
+      <div style={S.cardMeta}>{client.goal}</div>
+      <div style={S.cardMeta}>{client.age}y · {client.weight}kg · {client.height}cm</div>
+      <div style={S.cardTag}>{count} program{count!==1?"s":""} assigned</div>
+    </div>
+  );
+}
+function ProgramCard({ program, clients, onClick, onDelete }) {
+  const count = (program.assignedTo||[]).length;
+  return (
+    <div style={S.card} onClick={onClick}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+        <div style={{...S.programDot,background:program.color,width:36,height:36}} />
+        {onDelete && <button style={{background:"transparent",border:"1px solid #ff6b6b",color:"#ff6b6b",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:11,fontWeight:700}}
+          onClick={e=>{e.stopPropagation();if(window.confirm("Delete "+program.name+"?"))onDelete(program.id);}}>✕ Delete</button>}
+      </div>
+      <div style={S.cardName}>{program.name}</div>
+      <div style={S.cardMeta}>{program.tag}</div>
+      <div style={S.cardMeta}>{program.days.length} days · {program.days.reduce((s,d)=>s+d.exercises.length,0)} exercises</div>
+      <div style={S.cardTag}>{count} client{count!==1?"s":""}</div>
+    </div>
+  );
+}
+function Stat({ label, value }) {
+  return (
+    <div style={S.statBox}>
+      <div style={S.statVal}>{value}</div>
+      <div style={S.statLabel}>{label}</div>
+    </div>
+  );
+}
+function Empty({ text, small }) {
+  return <div style={{...S.empty,fontSize:small?12:14}}>{text}</div>;
+}
+
+// ── STYLES ────────────────────────────────────────────────────────────────────
+const C = {
+  bg:"#080809", surface:"#0f0f12", surface2:"#16161b",
+  line:"rgba(255,255,255,.06)", line2:"rgba(255,255,255,.12)",
+  text:"#F0EDE6", muted:"#7a7a85", faint:"#4a4a55", accent:"#D4F53C",
+  glute:"#FF6B4A", quad:"#5BC0FF", ham:"#7BE0A0", abd:"#F4B740",
+  back:"#B88CFF", sh:"#FF9F45", cf:"#4FD1C5",
+};
+
+const S = {
+  app:{ boxSizing:"border-box", overflowX:"hidden", background:"#080809", backgroundImage:"radial-gradient(900px 500px at 85% -5%,rgba(255,107,74,.08),transparent 60%),radial-gradient(800px 500px at -10% 10%,rgba(203,251,69,.05),transparent 55%)", minHeight:"100vh", color:C.text, fontFamily:"'Manrope',system-ui,sans-serif" },
+  loginWrap:{ background:"radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0b0b0d 70%)", minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center" },
+  loginCard:{ background:C.surface, border:`1px solid ${C.line2}`, borderRadius:16, padding:48, width:"100%", maxWidth:480 },
+  loginLogo:{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, marginBottom:28 },
+  logoMark:{ width:44, height:44, background:"#FFFFFF", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:16, color:"#000", flexShrink:0 },
+  logoTitle:{ fontWeight:800, fontSize:18, color:C.text },
+  logoSub:{ fontSize:12, color:C.muted },
+  loginField:{ marginBottom:14 },
+  label:{ fontSize:11, fontWeight:600, color:C.muted, textTransform:"uppercase", letterSpacing:1, display:"block", marginBottom:5 },
+  input:{ width:"100%", background:"rgba(22,22,27,0.8)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:10, color:C.text, padding:"11px 14px", fontSize:14, outline:"none", boxSizing:"border-box", transition:"border-color .2s" },
+  btn:{ background:C.accent, color:"#080809", border:"none", borderRadius:10, padding:"11px 22px", fontWeight:800, fontSize:13, cursor:"pointer", fontFamily:"'Manrope',sans-serif", letterSpacing:"0.06em", textTransform:"uppercase", transition:"opacity .15s" },
+  btnSm:{ background:"#FFFFFF", color:"#000", border:"none", borderRadius:6, padding:"6px 14px", fontWeight:700, fontSize:12, cursor:"pointer" },
+  btnGhost:{ background:"transparent", color:C.muted, border:"1px solid rgba(255,255,255,0.1)", borderRadius:999, padding:"7px 18px", fontWeight:600, fontSize:11, cursor:"pointer", textTransform:"uppercase", letterSpacing:"0.08em", transition:"border-color .2s" },
+  error:{ color:"#ff6b6b", fontSize:13, marginBottom:8 },
+  loginHint:{ marginTop:20, fontSize:11, color:C.faint, lineHeight:1.7, textAlign:"center" },
+
+  topbar:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 20px", borderBottom:`1px solid ${C.line}`, background:C.surface, position:"sticky", top:0, zIndex:10, gap:12, flexWrap:"wrap" },
+  topbarLeft:{ display:"flex", alignItems:"center", gap:12 },
+  topbarRight:{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" },
+  topbarTitle:{ fontWeight:400, fontSize:22, color:C.text, fontFamily:"'Bebas Neue',sans-serif", letterSpacing:"0.06em" },
+  topbarSub:{ fontSize:11, color:C.muted, marginTop:1 },
+  backBtn:{ background:"transparent", color:C.muted, border:"none", cursor:"pointer", fontSize:13, padding:"6px 10px", borderRadius:6 },
+
+  content:{ padding:"20px 18px", maxWidth:920, margin:"0 auto" },
+  sectionHeader:{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14, marginTop:20 },
+  sectionTitle:{ fontWeight:700, fontSize:10, color:C.faint, textTransform:"uppercase", letterSpacing:"0.25em" },
+
+  grid:{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(min(220px,100%),1fr))", gap:12 },
+  card:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:12, padding:16, cursor:"pointer" },
+  cardAvatar:{ width:40, height:40, background:"#FFFFFF22", border:"1px solid #FFFFFF44", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700, fontSize:14, color:"#FFFFFF", marginBottom:10 },
+  cardName:{ fontWeight:800, fontSize:15, marginBottom:6, letterSpacing:"-0.02em", lineHeight:1.2 },
+  cardMeta:{ fontSize:12, color:C.muted, marginBottom:2 },
+  cardTag:{ fontSize:11, color:"#FFFFFF", marginTop:8, fontWeight:600 },
+
+  statsRow:{ display:"flex", gap:8, marginBottom:4, flexWrap:"wrap" },
+  statBox:{ flex:1, background:"rgba(15,15,18,0.8)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:14, padding:"16px 8px", textAlign:"center" },
+  statVal:{ fontSize:18, fontWeight:800, color:"#FFFFFF" },
+  statLabel:{ fontSize:9, color:C.faint, marginTop:2, textTransform:"uppercase", letterSpacing:"0.12em", fontWeight:700 },
+
+  programDot:{ width:12, height:12, borderRadius:"50%", marginBottom:6 },
+  progCard:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:16, padding:18, cursor:"pointer", transition:"all .2s" },
+  progAccent:{ height:3, borderRadius:0, marginBottom:14, marginLeft:-16, marginRight:-16, marginTop:-16, width:"calc(100% + 32px)" },
+  progName:{ fontWeight:400, fontSize:22, marginBottom:6, fontFamily:"'Bebas Neue',sans-serif", letterSpacing:"0.04em", lineHeight:1 },
+  progTag:{ fontSize:12, color:C.muted, marginBottom:4 },
+  progDays:{ fontSize:12, color:C.faint },
+
+  dayGrid:{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(min(150px,100%),1fr))", gap:12 },
+  dayTile:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:16, padding:16, cursor:"pointer", transition:"border-color .2s" },
+  dayTileAccent:{ height:3, borderRadius:2, marginBottom:12 },
+  dayTileName:{ fontWeight:400, fontSize:20, marginBottom:6, fontFamily:"'Bebas Neue',sans-serif", letterSpacing:"0.04em", lineHeight:1 },
+  dayTileCount:{ fontSize:12, color:C.muted },
+
+  dayBlock:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:16, marginBottom:12, overflow:"hidden" },
+  dayHeader:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 14px", cursor:"pointer" },
+  dayLeft:{ display:"flex", alignItems:"center", gap:6, flex:1 },
+  dayTitle:{ fontWeight:800, fontSize:14, cursor:"text", letterSpacing:"-0.01em" },
+  exCount:{ fontSize:11, color:C.muted, marginLeft:6 },
+  iconBtn:{ background:"transparent", color:C.muted, border:"none", cursor:"pointer", fontSize:12, padding:"4px 10px", borderRadius:6, fontWeight:600 },
+  exList:{ padding:"0 14px 14px" },
+  exRow:{ display:"flex", alignItems:"center", gap:8, marginBottom:8 },
+  exNum:{ fontWeight:800, fontSize:13, width:18, flexShrink:0 },
+  exFields:{ display:"flex", gap:6, flex:1, flexWrap:"wrap", minWidth:0 },
+  exInput:{ background:C.surface2, border:`1px solid ${C.line2}`, borderRadius:6, color:C.text, padding:"6px 8px", fontSize:12, minWidth:60 },
+
+  workoutCard:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:"14px 16px", marginBottom:10, display:"flex", alignItems:"flex-start", gap:12, transition:"opacity .2s" },
+  wcNum:{ width:24, height:24, background:"#FFFFFF22", borderRadius:6, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:"#FFFFFF", flexShrink:0, marginTop:2 },
+  wcName:{ fontWeight:800, fontSize:15, marginBottom:3, letterSpacing:"-0.01em" },
+  wcMeta:{ fontSize:12, color:C.muted },
+  wcNotes:{ fontSize:11, color:C.faint, marginTop:4, fontStyle:"italic" },
+  checkBtn:{ border:"1px solid #FFFFFF", borderRadius:8, width:36, height:36, cursor:"pointer", fontWeight:700, fontSize:16, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" },
+
+  setLogWrap:{ borderTop:"1px solid rgba(255,255,255,.07)", paddingTop:10, marginTop:4 },
+  setLogHeader:{ display:"flex", alignItems:"center", gap:8, marginBottom:6, fontSize:10, fontWeight:700, color:"#65656e", textTransform:"uppercase", letterSpacing:0.8, padding:"0 2px" },
+  setLogRow:{ display:"flex", alignItems:"center", gap:8, marginBottom:6, borderRadius:6, padding:"4px 2px", transition:"background .2s" },
+  setNum:{ flex:"0 0 36px", fontSize:12, fontWeight:700, textAlign:"center" },
+  setInput:{ flex:1, background:"rgba(22,22,27,0.8)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:10, color:C.text, padding:"9px 8px", fontSize:14, textAlign:"center", outline:"none", minWidth:0, transition:"border-color .2s", fontFamily:"'Manrope',sans-serif", fontWeight:700 },
+
+  progressBar:{ height:3, background:"rgba(255,255,255,0.06)", borderRadius:2, marginBottom:20, overflow:"hidden" },
+  progressFill:{ height:"100%", background:"#FFFFFF", borderRadius:2, transition:"width .4s" },
+  doneMsg:{ textAlign:"center", padding:"24px 0", color:"#FFFFFF", fontWeight:700, fontSize:16 },
+
+  pbBadge:{ fontSize:10, background:"#FFFFFF20", color:"#FFFFFF", border:"1px solid #FFFFFF40", borderRadius:4, padding:"2px 6px", fontWeight:700 },
+  prevPB:{ fontSize:10, color:C.faint, fontWeight:600 },
+  pbRow:{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:16 },
+  pbChip:{ background:"#FFFFFF10", border:"1px solid #FFFFFF30", borderRadius:8, padding:"8px 12px", textAlign:"center" },
+  pbVal:{ fontSize:22, fontWeight:400, color:C.accent, fontFamily:"'Bebas Neue',sans-serif" },
+  pbName:{ fontSize:10, color:C.muted, marginTop:2, maxWidth:100, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" },
+  pbLabel:{ fontSize:9, color:"#FFFFFF", fontWeight:700, marginTop:2 },
+
+  historySession:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:"14px 16px", marginBottom:10 },
+  historyDate:{ fontSize:11, fontWeight:700, color:"#FFFFFF", marginBottom:10, textTransform:"uppercase", letterSpacing:0.5 },
+  historyEx:{ marginBottom:10 },
+  historyExName:{ fontSize:13, fontWeight:700, color:C.text },
+  historySetChip:{ background:C.surface2, border:`1px solid ${C.line}`, borderRadius:999, padding:"3px 10px", fontSize:11, color:C.muted, fontWeight:700 },
+
+  assignCard:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:14, padding:14, display:"flex", alignItems:"center", gap:10 },
+  assignName:{ flex:1, fontSize:13, fontWeight:600 },
+
+  macroGrid:{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(min(120px,100%),1fr))", gap:10, marginBottom:16 },
+  macroBox:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:"12px 14px" },
+  macroLabel:{ fontSize:9, color:C.faint, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.15em", marginBottom:6 },
+
+  mealEditorCard:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:14, marginBottom:10 },
+  mealViewCard:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:14, marginBottom:10 },
+  mealName:{ fontWeight:800, fontSize:15, marginBottom:4, letterSpacing:"-0.01em" },
+  mealDesc:{ fontSize:13, color:C.muted, marginBottom:8, lineHeight:1.5 },
+  mealMacros:{ display:"flex", gap:12, fontSize:12, fontWeight:600 },
+  mealTotal:{ fontSize:11, color:C.faint, textAlign:"center", padding:"12px 0", borderTop:`1px solid ${C.line}`, marginTop:8 },
+  coachNote:{ background:"#FFFFFF10", border:"1px solid #FFFFFF20", borderRadius:8, padding:"10px 14px", fontSize:13, color:C.muted, marginBottom:16, lineHeight:1.5 },
+
+  overlay:{ position:"fixed", inset:0, background:"rgba(0,0,0,.85)", backdropFilter:"blur(8px)", WebkitBackdropFilter:"blur(8px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:100 },
+  modal:{ background:"#0f0f12", border:"1px solid rgba(255,255,255,0.1)", borderRadius:20, width:"calc(100% - 32px)", maxWidth:440, maxHeight:"90vh", overflow:"auto", margin:"0 auto", boxShadow:"0 40px 80px rgba(0,0,0,0.8)" },
+  modalHeader:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 20px", borderBottom:`1px solid ${C.line}` },
+  modalTitle:{ fontWeight:700, fontSize:15 },
+  modalBody:{ padding:"20px 20px 0" },
+  modalFooter:{ display:"flex", justifyContent:"flex-end", gap:8, padding:20 },
+  empty:{ color:C.faint, textAlign:"center", padding:"24px 0" },
+  tabBtn:{ background:"transparent", color:C.faint, border:"1px solid rgba(255,255,255,0.08)", borderRadius:999, padding:"7px 14px", cursor:"pointer", fontSize:10, fontWeight:700, whiteSpace:"nowrap", textTransform:"uppercase", letterSpacing:"0.1em", transition:"all .2s" },
+  tabBtnActive:{ background:"#FFFFFF20", color:"#FFFFFF", borderColor:"#FFFFFF40" },
+};
+// ── NUTRITION ASSIGNER (coach assigns plan to client) ────────────────────────
+function NutritionAssigner({ nutrition, onSave, onMount }) {
+  useEffect(()=>{ if(onMount) onMount(); },[]);
+  const blank = { calories:0, protein:0, carbs:0, fat:0, notes:"", meals:[] };
+  const [form, setForm] = useState(nutrition || blank);
+  const [saved, setSaved] = useState(false);
+  const f = (k,v) => setForm(p=>({...p,[k]:v}));
+  useEffect(()=>{ if(nutrition) setForm(nutrition); },[nutrition]);
+
+  const addMeal = () => setForm(p=>({...p,meals:[...p.meals,{id:uid(),name:"New Meal",description:"",protein:0,carbs:0,fat:0}]}));
+  const updateMeal = (id,k,v) => setForm(p=>({...p,meals:p.meals.map(m=>m.id===id?{...m,[k]:v}:m)}));
+  const deleteMeal = (id) => setForm(p=>({...p,meals:p.meals.filter(m=>m.id!==id)}));
+
+  const handleSave = () => {
+    onSave(form);
+    setSaved(true);
+    setTimeout(()=>setSaved(false), 2000);
+  };
+
+  return (
+    <div>
+      <SectionHeader title="Nutrition Plan" action={
+        <button style={{...S.btn,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+          {saved ? "✓ Saved!" : "Assign Plan →"}
+        </button>
+      } />
+      <div style={S.macroGrid}>
+        {[["Calories","calories","kcal"],["Protein","protein","g"],["Carbs","carbs","g"],["Fat","fat","g"]].map(([label,key,unit])=>(
+          <div key={key} style={S.macroBox}>
+            <div style={S.macroLabel}>{label}</div>
+            <div style={{display:"flex",alignItems:"baseline",gap:4}}>
+              <input style={{...S.input,fontSize:22,fontWeight:800,color:C.accent,background:"transparent",border:"none",width:80,padding:0}}
+                type="number" value={form[key]} onChange={e=>f(key,+e.target.value)} />
+              <span style={{color:C.muted,fontSize:12}}>{unit}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <Field label="Coach Notes">
+        <textarea style={{...S.input,minHeight:72,resize:"vertical"}} value={form.notes} onChange={e=>f("notes",e.target.value)}
+          placeholder="e.g. Small surplus for lean gain. Carbs concentrated around training." />
+      </Field>
+      <SectionHeader title="Meal Plan" action={<button style={S.btnSm} onClick={addMeal}>+ Meal</button>} />
+      {form.meals.length===0 && <Empty text="No meals added yet. Click '+ Meal' to build the plan." />}
+      {form.meals.map(m=>(
+        <div key={m.id} style={S.mealEditorCard}>
+          <div style={{display:"flex",gap:8,marginBottom:8}}>
+            <input style={{...S.input,flex:2,fontWeight:700}} value={m.name} onChange={e=>updateMeal(m.id,"name",e.target.value)} placeholder="e.g. Breakfast" />
+            <button style={{...S.iconBtn,color:"#ff6b6b"}} onClick={()=>deleteMeal(m.id)}>✕</button>
+          </div>
+          <textarea style={{...S.input,minHeight:56,resize:"vertical",marginBottom:8}} value={m.description}
+            onChange={e=>updateMeal(m.id,"description",e.target.value)} placeholder="Describe foods and portions…" />
+          <div style={{display:"flex",gap:8}}>
+            {[["P (g)","protein"],["C (g)","carbs"],["F (g)","fat"]].map(([l,k])=>(
+              <div key={k} style={{flex:1}}>
+                <div style={{fontSize:10,color:C.muted,marginBottom:3,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em"}}>{l}</div>
+                <input style={{...S.input,textAlign:"center"}} type="number" value={m[k]} onChange={e=>updateMeal(m.id,k,+e.target.value)} />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── MEASUREMENTS PANEL ────────────────────────────────────────────────────────
+
+
+function MeasurementsPanel({ measurements, onSave, clientName }) {
+  const blank = MEASUREMENT_FIELDS.reduce((acc,f)=>({...acc,[f.key]:f.type==="date"?new Date().toISOString().slice(0,10):""}),{});
+  const [form, setForm] = useState(blank);
+  const [showForm, setShowForm] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const f = (k,v) => setForm(p=>({...p,[k]:v}));
+
+  const handleSave = () => {
+    const entry = {...form};
+    MEASUREMENT_FIELDS.forEach(field => { if(field.type==="number" && entry[field.key]) entry[field.key] = +entry[field.key]; });
+    onSave(entry);
+    setSaved(true);
+    setForm(blank);
+    setTimeout(()=>{ setSaved(false); setShowForm(false); }, 1500);
+  };
+
+  const sorted = [...measurements].sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  return (
+    <div>
+      <SectionHeader title={`Measurements (${measurements.length})`}
+        action={<button style={S.btnSm} onClick={()=>setShowForm(s=>!s)}>{showForm?"Cancel":"+ Add Entry"}</button>} />
+
+      {showForm && (
+        <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:20,marginBottom:20}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:12,marginBottom:16}}>
+            {MEASUREMENT_FIELDS.map(field=>(
+              <div key={field.key}>
+                <div style={{fontSize:10,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:5}}>
+                  {field.label}{field.unit?` (${field.unit})`:""}
+                </div>
+                <input style={{...S.input,padding:"8px 10px"}} type={field.type}
+                  value={form[field.key]} onChange={e=>f(field.key,e.target.value)} />
+              </div>
+            ))}
+          </div>
+          <button style={{...S.btn,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+            {saved?"✓ Saved!":"Save Measurements →"}
+          </button>
+        </div>
+      )}
+
+      {sorted.length===0 && !showForm && <Empty text="No measurements recorded yet. Click '+ Add Entry' to start tracking." />}
+
+      {sorted.length>0 && (
+        <>
+          {/* Latest snapshot */}
+          {sorted[0] && (
+            <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:20,marginBottom:16}}>
+              <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:14}}>
+                Latest — {sorted[0].date}
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(110px,1fr))",gap:12}}>
+                {MEASUREMENT_FIELDS.filter(f=>f.key!=="date"&&sorted[0][f.key]).map(field=>(
+                  <div key={field.key} style={{textAlign:"center",background:C.surface2,borderRadius:10,padding:"12px 8px"}}>
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,color:C.text,lineHeight:1}}>
+                      {sorted[0][field.key]}<span style={{fontSize:14,color:C.muted}}>{field.unit}</span>
+                    </div>
+                    <div style={{fontSize:9,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginTop:4}}>{field.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* History table */}
+          {sorted.length>1 && (
+            <>
+              <SectionHeader title="History" />
+              <div style={{overflowX:"auto"}}>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                  <thead>
+                    <tr style={{borderBottom:`1px solid ${C.line}`}}>
+                      {MEASUREMENT_FIELDS.map(f=>(
+                        <th key={f.key} style={{padding:"8px 10px",textAlign:"left",color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",fontSize:9,whiteSpace:"nowrap"}}>
+                          {f.label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sorted.map((row,i)=>(
+                      <tr key={i} style={{borderBottom:`1px solid ${C.line}`,opacity:i===0?1:0.7}}>
+                        {MEASUREMENT_FIELDS.map(f=>(
+                          <td key={f.key} style={{padding:"10px 10px",color:i===0?C.text:C.muted,whiteSpace:"nowrap",fontWeight:i===0?700:400}}>
+                            {row[f.key]||"—"}{row[f.key]&&f.unit?<span style={{color:C.faint,fontSize:10}}>{f.unit}</span>:""}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── WEEKLY CHECK-IN FORM (client fills in) ───────────────────────────────────
+function ClientCheckinForm({ checkins, onSave }) {
+  const getWeekStart = () => {
+    const d = new Date();
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(d.setDate(diff)).toISOString().slice(0,10);
+  };
+  const weekStart = getWeekStart();
+  const existing = checkins.find(c => c.week_start === weekStart) || {};
+
+  const [form, setForm] = useState({
+    week_start: weekStart,
+    sleep_quality: existing.sleep_quality || 5,
+    stress: existing.stress || 5,
+    energy: existing.energy || 5,
+    adherence: existing.adherence || 5,
+    water_intake: existing.water_intake || "",
+    steps: existing.steps || "",
+    notes: existing.notes || "",
+  });
+  const [saved, setSaved] = useState(false);
+  const f = (k,v) => setForm(p=>({...p,[k]:v}));
+
+  const handleSave = async () => {
+    await onSave(form);
+    setSaved(true);
+    setTimeout(()=>setSaved(false), 2000);
+  };
+
+  const SliderField = ({label, field, emoji}) => (
+    <div style={{background:C.surface2,borderRadius:12,padding:16,marginBottom:12}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+        <div style={{fontSize:13,fontWeight:700,color:C.text}}>{emoji} {label}</div>
+        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,color:C.accent,lineHeight:1}}>{form[field]}<span style={{fontSize:14,color:C.muted}}>/10</span></div>
+      </div>
+      <input type="range" min="1" max="10" value={form[field]}
+        onChange={e=>f(field,+e.target.value)}
+        style={{width:"100%",accentColor:C.accent,cursor:"pointer"}} />
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:C.faint,marginTop:4}}>
+        <span>Poor</span><span>Average</span><span>Excellent</span>
+      </div>
+    </div>
+  );
+
+  return (
+    <div>
+      <SectionHeader title={`Week of ${weekStart}`} />
+      <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:16,padding:20,marginBottom:16,
+        backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(203,251,69,0.05),transparent 60%)"}}>
+        <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:16}}>
+          Weekly Check-In
+        </div>
+        <SliderField label="Sleep Quality" field="sleep_quality" emoji="😴" />
+        <SliderField label="Stress Level" field="stress" emoji="🧠" />
+        <SliderField label="Energy Level" field="energy" emoji="⚡" />
+        <SliderField label="Training Adherence" field="adherence" emoji="🎯" />
+
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+          <div>
+            <div style={{fontSize:10,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:6}}>💧 Water Intake</div>
+            <input style={{...S.input}} value={form.water_intake} onChange={e=>f("water_intake",e.target.value)} placeholder="e.g. 2.5L" />
+          </div>
+          <div>
+            <div style={{fontSize:10,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:6}}>👟 Steps</div>
+            <input style={{...S.input}} value={form.steps} onChange={e=>f("steps",e.target.value)} placeholder="e.g. 8000" />
+          </div>
+        </div>
+
+        <div>
+          <div style={{fontSize:10,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:6}}>📝 Notes for your coach</div>
+          <textarea style={{...S.input,minHeight:100,resize:"vertical"}} value={form.notes}
+            onChange={e=>f("notes",e.target.value)} placeholder="How did the week go? Any struggles, wins, or feedback?" />
+        </div>
+
+        <button style={{...S.btn,width:"100%",marginTop:16,padding:"14px",...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+          {saved ? "✓ Submitted!" : "Submit Check-In →"}
+        </button>
+      </div>
+
+      {/* Past check-ins */}
+      {checkins.filter(c=>c.week_start!==weekStart).length > 0 && (
+        <>
+          <SectionHeader title="Past Check-Ins" />
+          {checkins.filter(c=>c.week_start!==weekStart).sort((a,b)=>b.week_start.localeCompare(a.week_start)).map((c,i)=>(
+            <div key={i} style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:16,marginBottom:10}}>
+              <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:12}}>Week of {c.week_start}</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:c.notes?12:0}}>
+                {[["😴","Sleep",c.sleep_quality],["🧠","Stress",c.stress],["⚡","Energy",c.energy],["🎯","Adherence",c.adherence]].map(([emoji,label,val])=>(
+                  <div key={label} style={{textAlign:"center",background:C.surface2,borderRadius:8,padding:"10px 6px"}}>
+                    <div style={{fontSize:10,marginBottom:2}}>{emoji}</div>
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:24,color:C.text,lineHeight:1}}>{val||"—"}</div>
+                    <div style={{fontSize:9,color:C.faint,marginTop:2,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em"}}>{label}</div>
+                  </div>
+                ))}
+              </div>
+              {c.notes && <div style={{fontSize:13,color:C.muted,borderTop:`1px solid ${C.line}`,paddingTop:10,lineHeight:1.6}}>{c.notes}</div>}
+            </div>
+          ))}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── COACH CHECK-IN VIEW ───────────────────────────────────────────────────────
+function CoachCheckinView({ checkins, clientName }) {
+  if (!checkins || checkins.length === 0) return (
+    <div style={{textAlign:"center",padding:"48px 0"}}>
+      <div style={{fontSize:32,marginBottom:12}}>📋</div>
+      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:24,color:C.text,marginBottom:8}}>No Check-ins Yet</div>
+      <div style={{color:C.muted,fontSize:14}}>{clientName} hasn't submitted a check-in yet.</div>
+    </div>
+  );
+
+  const sorted = [...checkins].sort((a,b)=>b.week_start.localeCompare(a.week_start));
+
+  return (
+    <div>
+      <SectionHeader title={`Check-ins (${checkins.length})`} />
+      {sorted.map((c,i)=>(
+        <div key={i} style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:20,marginBottom:12,
+          ...(i===0?{backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(203,251,69,0.05),transparent 60%)"}:{})}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+            <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em"}}>
+              Week of {c.week_start}
+            </div>
+            {i===0 && <span style={{fontSize:10,background:"rgba(203,251,69,0.1)",color:C.accent,border:`1px solid rgba(203,251,69,0.3)`,borderRadius:999,padding:"3px 10px",fontWeight:700}}>Latest</span>}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:12}}>
+            {[["😴","Sleep Quality",c.sleep_quality],["🧠","Stress",c.stress],["⚡","Energy",c.energy],["🎯","Adherence",c.adherence]].map(([emoji,label,val])=>{
+              const color = val>=8?"#7BE0A0":val>=5?C.accent:"#FF6B4A";
+              return (
+                <div key={label} style={{textAlign:"center",background:C.surface2,borderRadius:10,padding:12}}>
+                  <div style={{fontSize:12,marginBottom:4}}>{emoji}</div>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:30,color,lineHeight:1}}>{val||"—"}<span style={{fontSize:12,color:C.muted}}>/10</span></div>
+                  <div style={{fontSize:9,color:C.faint,marginTop:4,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em"}}>{label}</div>
+                </div>
+              );
+            })}
+          </div>
+          {(c.water_intake||c.steps) && (
+            <div style={{display:"flex",gap:12,marginBottom:c.notes?12:0}}>
+              {c.water_intake && <div style={{background:C.surface2,borderRadius:8,padding:"8px 14px",fontSize:13,color:C.muted}}>💧 {c.water_intake}</div>}
+              {c.steps && <div style={{background:C.surface2,borderRadius:8,padding:"8px 14px",fontSize:13,color:C.muted}}>👟 {c.steps} steps</div>}
+            </div>
+          )}
+          {c.notes && (
+            <div style={{background:C.surface2,borderRadius:10,padding:14,fontSize:13,color:C.muted,lineHeight:1.6,borderLeft:`3px solid ${C.accent}`}}>
+              <div style={{fontSize:10,color:C.accent,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Client Notes</div>
+              {c.notes}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── HABITS EDITOR (coach sets habits) ─────────────────────────────────────────
+function HabitsEditor({ habits, onSave, clientName }) {
+  const [list, setList] = useState(habits || []);
+  const [newHabit, setNewHabit] = useState("");
+  const [saved, setSaved] = useState(false);
+  useEffect(()=>{ setList(habits||[]); },[habits]);
+
+  const addHabit = () => {
+    if(!newHabit.trim()) return;
+    setList(prev=>[...prev,{id:uid(),label:newHabit.trim(),emoji:"✅"}]);
+    setNewHabit("");
+  };
+  const removeHabit = (id) => setList(prev=>prev.filter(h=>h.id!==id));
+  const updateEmoji = (id,emoji) => setList(prev=>prev.map(h=>h.id===id?{...h,emoji}:h));
+
+  const handleSave = async () => {
+    await onSave(list);
+    setSaved(true);
+    setTimeout(()=>setSaved(false),2000);
+  };
+
+  const EMOJIS = ["✅","💧","🏃","🥗","😴","📖","🧘","💊","🚶","⚡","🎯","🔥"];
+
+  return (
+    <div>
+      <SectionHeader title="Daily Habits" action={
+        <button style={{...S.btn,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+          {saved?"✓ Saved!":"Save Habits →"}
+        </button>
+      } />
+      <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:20,marginBottom:16}}>
+        <div style={{fontSize:10,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:14}}>
+          Set daily habits for {clientName}
+        </div>
+        {list.length===0 && <Empty text="No habits set yet. Add habits below." />}
+        {list.map(h=>(
+          <div key={h.id} style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,background:C.surface2,borderRadius:10,padding:"10px 14px"}}>
+            <select value={h.emoji} onChange={e=>updateEmoji(h.id,e.target.value)}
+              style={{background:"transparent",border:"none",fontSize:18,cursor:"pointer",outline:"none"}}>
+              {EMOJIS.map(e=><option key={e} value={e}>{e}</option>)}
+            </select>
+            <div style={{flex:1,fontSize:14,fontWeight:600,color:C.text}}>{h.label}</div>
+            <button style={{background:"transparent",border:"none",color:"#ff6b6b",cursor:"pointer",fontSize:16}} onClick={()=>removeHabit(h.id)}>✕</button>
+          </div>
+        ))}
+        <div style={{display:"flex",gap:8,marginTop:14}}>
+          <input style={{...S.input,flex:1}} value={newHabit} onChange={e=>setNewHabit(e.target.value)}
+            placeholder="e.g. Drink 2L of water" onKeyDown={e=>e.key==="Enter"&&addHabit()} />
+          <button style={S.btnSm} onClick={addHabit}>+ Add</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── CLIENT HABITS VIEW (client logs daily) ────────────────────────────────────
+function ClientHabitsView({ habits, habitLogs, onLog }) {
+  const today = new Date().toISOString().slice(0,10);
+  const todayLog = habitLogs[today] || {};
+  const [completions, setCompletions] = useState(todayLog);
+  const [saved, setSaved] = useState(false);
+  useEffect(()=>{ setCompletions(habitLogs[today]||{}); },[habitLogs, today]);
+
+  if (!habits || habits.length === 0) return (
+    <div style={{textAlign:"center",padding:"48px 0"}}>
+      <div style={{fontSize:32,marginBottom:12}}>✅</div>
+      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:24,color:C.text,marginBottom:8}}>No Habits Yet</div>
+      <div style={{color:C.muted,fontSize:14}}>Your coach will set your daily habits soon.</div>
+    </div>
+  );
+
+  const toggle = (id) => setCompletions(prev=>({...prev,[id]:!prev[id]}));
+  const doneCount = habits.filter(h=>completions[h.id]).length;
+
+  const handleSave = async () => {
+    await onLog(today, completions);
+    setSaved(true);
+    setTimeout(()=>setSaved(false),2000);
+  };
+
+  // Last 7 days for streak
+  const last7 = Array.from({length:7},(_,i)=>{
+    const d = new Date();
+    d.setDate(d.getDate()-i);
+    return d.toISOString().slice(0,10);
+  }).reverse();
+
+  return (
+    <div>
+      <SectionHeader title={`Today — ${today}`} />
+
+      {/* Progress ring */}
+      <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:16,padding:24,marginBottom:16,
+        backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(203,251,69,0.06),transparent 60%)",textAlign:"center"}}>
+        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:72,color:doneCount===habits.length?C.accent:C.text,lineHeight:1}}>
+          {doneCount}<span style={{fontSize:32,color:C.muted}}>/{habits.length}</span>
+        </div>
+        <div style={{fontSize:11,color:C.muted,textTransform:"uppercase",letterSpacing:"0.15em",fontWeight:700,marginTop:4}}>
+          {doneCount===habits.length?"All habits complete! 🎉":"Habits completed today"}
+        </div>
+        {/* Progress bar */}
+        <div style={{background:C.surface2,borderRadius:999,height:6,marginTop:16,overflow:"hidden"}}>
+          <div style={{height:"100%",background:`linear-gradient(90deg,${C.accent},#a8e800)`,borderRadius:999,
+            width:`${habits.length>0?(doneCount/habits.length)*100:0}%`,transition:"width .4s"}} />
+        </div>
+      </div>
+
+      {/* Habit checklist */}
+      <div style={{marginBottom:16}}>
+        {habits.map(h=>(
+          <div key={h.id}
+            style={{display:"flex",alignItems:"center",gap:14,background:C.surface,border:`1px solid ${completions[h.id]?C.accent+"40":C.line}`,
+              borderRadius:12,padding:"14px 16px",marginBottom:8,cursor:"pointer",transition:"all .2s",
+              opacity:completions[h.id]?0.7:1}}
+            onClick={()=>toggle(h.id)}>
+            <div style={{fontSize:22}}>{h.emoji}</div>
+            <div style={{flex:1,fontSize:14,fontWeight:700,color:C.text,textDecoration:completions[h.id]?"line-through":"none"}}>{h.label}</div>
+            <div style={{width:28,height:28,borderRadius:999,border:`2px solid ${completions[h.id]?C.accent:C.line2}`,
+              background:completions[h.id]?C.accent:"transparent",display:"flex",alignItems:"center",justifyContent:"center",
+              color:"#000",fontSize:14,fontWeight:800,transition:"all .2s"}}>
+              {completions[h.id]?"✓":""}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button style={{...S.btn,width:"100%",padding:14,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+        {saved?"✓ Saved!":"Save Today's Habits →"}
+      </button>
+
+      {/* 7-day streak view */}
+      <div style={{marginTop:24}}>
+        <SectionHeader title="Last 7 Days" />
+        <div style={{display:"flex",gap:8}}>
+          {last7.map(date=>{
+            const log = habitLogs[date]||{};
+            const done = habits.filter(h=>log[h.id]).length;
+            const pct = habits.length>0?done/habits.length:0;
+            const isToday = date===today;
+            return (
+              <div key={date} style={{flex:1,textAlign:"center"}}>
+                <div style={{fontSize:9,color:C.faint,fontWeight:700,marginBottom:6,textTransform:"uppercase",letterSpacing:"0.1em"}}>
+                  {new Date(date+"T12:00:00").toLocaleDateString("en",{weekday:"short"})}
+                </div>
+                <div style={{height:48,background:C.surface2,borderRadius:8,position:"relative",overflow:"hidden",border:`1px solid ${isToday?C.accent:C.line}`}}>
+                  <div style={{position:"absolute",bottom:0,left:0,right:0,height:`${pct*100}%`,
+                    background:pct===1?C.accent:`rgba(203,251,69,${0.3+pct*0.4})`,transition:"height .3s"}} />
+                </div>
+                <div style={{fontSize:10,color:pct===1?C.accent:C.muted,fontWeight:700,marginTop:4}}>
+                  {done}/{habits.length}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── SHARED COMPONENTS ─────────────────────────────────────────────────────────
+function Topbar({ title, subtitle, onLogout, left, right }) {
+  return (
+    <div style={S.topbar}>
+      <div style={S.topbarLeft}>
+        {left}
+        <div><div style={S.topbarTitle}>{title}</div>{subtitle&&<div style={S.topbarSub}>{subtitle}</div>}</div>
+      </div>
+      <div style={S.topbarRight}>
+        {right}
+        {onLogout&&<button style={S.btnGhost} onClick={onLogout}>Sign out</button>}
+      </div>
+    </div>
+  );
+}
+function TabBtn({ label, active, onClick }) {
+  return <button style={{...S.tabBtn,...(active?S.tabBtnActive:{})}} onClick={onClick}>{label}</button>;
+}
+function SectionHeader({ title, action }) {
+  return <div style={S.sectionHeader}><div style={S.sectionTitle}>{title}</div>{action}</div>;
+}
+function Field({ label, children }) {
+  return <div style={S.loginField}><label style={S.label}>{label}</label>{children}</div>;
+}
+function ClientCard({ client, programs, onClick, onDelete }) {
+  const count = programs.filter(p=>p.assignedTo.includes(client.id)).length;
+  return (
+    <div style={S.card} onClick={onClick}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+        <div style={S.cardAvatar}>{client.name.split(" ").map(n=>n[0]).join("")}</div>
+        <button style={{background:"transparent",border:"1px solid #ff6b6b",color:"#ff6b6b",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:11,fontWeight:700}}
+          onClick={e=>{e.stopPropagation();if(window.confirm("Remove "+client.name+"?"))onDelete(client.id);}}>✕ Remove</button>
+      </div>
+      <div style={S.cardName}>{client.name}</div>
+      <div style={S.cardMeta}>{client.goal}</div>
+      <div style={S.cardMeta}>{client.age}y · {client.weight}kg · {client.height}cm</div>
+      <div style={S.cardTag}>{count} program{count!==1?"s":""} assigned</div>
+    </div>
+  );
+}
+function ProgramCard({ program, clients, onClick, onDelete }) {
+  const count = (program.assignedTo||[]).length;
+  return (
+    <div style={S.card} onClick={onClick}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+        <div style={{...S.programDot,background:program.color,width:36,height:36}} />
+        {onDelete && <button style={{background:"transparent",border:"1px solid #ff6b6b",color:"#ff6b6b",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:11,fontWeight:700}}
+          onClick={e=>{e.stopPropagation();if(window.confirm("Delete "+program.name+"?"))onDelete(program.id);}}>✕ Delete</button>}
+      </div>
+      <div style={S.cardName}>{program.name}</div>
+      <div style={S.cardMeta}>{program.tag}</div>
+      <div style={S.cardMeta}>{program.days.length} days · {program.days.reduce((s,d)=>s+d.exercises.length,0)} exercises</div>
+      <div style={S.cardTag}>{count} client{count!==1?"s":""}</div>
+    </div>
+  );
+}
+function Stat({ label, value }) {
+  return (
+    <div style={S.statBox}>
+      <div style={S.statVal}>{value}</div>
+      <div style={S.statLabel}>{label}</div>
+    </div>
+  );
+}
+function Empty({ text, small }) {
+  return <div style={{...S.empty,fontSize:small?12:14}}>{text}</div>;
+}
+
+// ── STYLES ────────────────────────────────────────────────────────────────────
+
+
+
+// ── PROGRAM VIEW (client) ────────────────────────────────────────────────────
+function ProgramView({ program, clientId, workoutLog, onBack, onSelectDay }) {
+  const allEx = program.days.flatMap(d=>d.exercises);
+  const pbs = workoutLog.getPBs(clientId, allEx);
+  useEffect(()=>{
+    program.days.forEach(d => workoutLog.loadHistory(clientId, d.id));
+  }, [program.id]);
+  return (
+    <div style={S.app}>
+      <Topbar title={program.name} subtitle={program.tag} onLogout={null}
+        left={<button style={S.backBtn} onClick={onBack}>← Back</button>} />
+      <div style={S.content}>
+        <SectionHeader title="Training Days" />
+        <div style={S.dayGrid}>
+          {program.days.map((day,i)=>{
+            const history = workoutLog.getHistory(clientId, day.id);
+            const lastSession = history[history.length-1];
+            return (
+              <div key={day.id} style={S.dayTile} onClick={()=>onSelectDay(day)}>
+                <div style={{...S.dayTileAccent,background:DAY_COLORS[i%DAY_COLORS.length]}} />
+                <div style={S.dayTileName}>{day.label}</div>
+                <div style={S.dayTileCount}>{day.exercises.length} exercises</div>
+                {lastSession && <div style={{fontSize:10,color:C.muted,marginTop:4}}>Last: {fmt(lastSession.date)}</div>}
+                <div style={{color:DAY_COLORS[i%DAY_COLORS.length],fontSize:12,marginTop:8}}>Start →</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── DAY VIEW (workout + logger) ───────────────────────────────────────────────
+function DayView({ day, clientId, workoutLog, onBack }) {
+  useEffect(()=>{ workoutLog.loadHistory(clientId, day.id); },[]);
+  const initLogs = () => {
+    const l = {};
+    day.exercises.forEach(ex=>{
+      const count = parseInt(ex.sets)||3;
+      // Pre-fill with last session's weights if available
+      const history = workoutLog.getHistory(clientId, day.id);
+      const last = history[history.length-1];
+      l[ex.id] = Array.from({length:count},(_,i)=>({
+        weight: last?.sets[ex.id]?.[i]?.weight || "",
+        reps: "",
+        done: false,
+      }));
+    });
+    return l;
+  };
+  const [logs, setLogs] = useState(initLogs);
+  const [saved, setSaved] = useState(false);
+
+  const updateSet = (exId,si,field,val) => setLogs(prev=>{
+    const sets=[...prev[exId]]; sets[si]={...sets[si],[field]:val}; return {...prev,[exId]:sets};
+  });
+  const toggleSet = (exId,si) => setLogs(prev=>{
+    const sets=[...prev[exId]]; sets[si]={...sets[si],done:!sets[si].done}; return {...prev,[exId]:sets};
+  });
+
+  const exDone = (exId) => logs[exId]?.every(s=>s.done);
+  const total = day.exercises.length;
+  const completed = day.exercises.filter(ex=>exDone(ex.id)).length;
+
+  // Get PBs for this day's exercises
+  const pbs = workoutLog.getPBs(clientId, day.exercises);
+
+  const saveSession = () => {
+    workoutLog.saveSession(clientId, day.id, logs);
+    setSaved(true);
+    setTimeout(()=>setSaved(false), 3000);
+  };
+
+  return (
+    <div style={S.app}>
+      <Topbar title={day.label} subtitle={`${completed}/${total} exercises done`} onLogout={null}
+        left={<button style={S.backBtn} onClick={onBack}>← Back</button>}
+        right={<button style={{...S.btnSm,...(saved?{background:"#7BE0A0"}:{})}} onClick={saveSession}>
+          {saved?"✓ Saved!":"💾 Save Session"}
+        </button>} />
+      <div style={S.content}>
+        <div style={S.progressBar}>
+          <div style={{...S.progressFill,width:`${total>0?(completed/total)*100:0}%`}} />
+        </div>
+
+        {day.exercises.map((ex,i)=>{
+          const sets = logs[ex.id]||[];
+          const allDone = sets.every(s=>s.done);
+          const pb = pbs[ex.id];
+          const currentBest = Math.max(...sets.filter(s=>s.done&&s.weight).map(s=>parseFloat(s.weight)||0),0);
+          const isNewPB = currentBest > 0 && (!pb || currentBest > pb);
+          return (
+            <div key={ex.id} style={{...S.workoutCard,flexDirection:"column",opacity:allDone?0.65:1}}>
+              <div style={{display:"flex",alignItems:"flex-start",gap:12,marginBottom:12}}>
+                <span style={S.wcNum}>{i+1}</span>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <div style={{...S.wcName,textDecoration:allDone?"line-through":"none"}}>{ex.name}</div>
+                    {isNewPB && <span style={S.pbBadge}>🏆 New PB!</span>}
+                    {!isNewPB && pb && <span style={S.prevPB}>PB {pb}kg</span>}
+                  </div>
+                  <div style={S.wcMeta}>{ex.sets} sets · {ex.reps} reps · {ex.rest} rest</div>
+                  {ex.notes && <div style={S.wcNotes}>{ex.notes}</div>}
+                </div>
+                {allDone && <span style={{color:"#FFFFFF",fontSize:18}}>✓</span>}
+              </div>
+
+              <div style={S.setLogWrap}>
+                <div style={S.setLogHeader}>
+                  <span style={{flex:"0 0 36px"}}>Set</span>
+                  <span style={{flex:1}}>Weight (kg)</span>
+                  <span style={{flex:1}}>Reps</span>
+                  <span style={{flex:"0 0 40px"}}></span>
+                </div>
+                {sets.map((s,si)=>(
+                  <div key={si} style={{...S.setLogRow,background:s.done?"#FFFFFF10":"transparent"}}>
+                    <span style={{...S.setNum,color:s.done?"#FFFFFF":C.muted}}>{si+1}</span>
+                    <input style={{...S.setInput,borderColor:s.done?"#FFFFFF50":C.line2}} placeholder="—"
+                      value={s.weight} type="number" onChange={e=>updateSet(ex.id,si,"weight",e.target.value)} />
+                    <input style={{...S.setInput,borderColor:s.done?"#FFFFFF50":C.line2}} placeholder="—"
+                      value={s.reps} type="number" onChange={e=>updateSet(ex.id,si,"reps",e.target.value)} />
+                    <button style={{...S.checkBtn,width:32,height:32,fontSize:13,
+                      background:s.done?"#FFFFFF":"transparent",color:s.done?"#000":"#FFFFFF"}}
+                      onClick={()=>toggleSet(ex.id,si)}>{s.done?"✓":"○"}</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+
+        {completed===total && total>0 && (
+          <div style={S.doneMsg}>
+            🎉 Session complete!<br/>
+            <button style={{...S.btn,marginTop:12}} onClick={saveSession}>
+              {saved?"✓ Saved!":"Save this session →"}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── MODALS ────────────────────────────────────────────────────────────────────
+function NewClientModal({ onClose, onSave }) {
+  const [form, setForm] = useState({name:"",email:"",password:"",age:"",weight:"",height:"",goal:""});
+  const f=(k,v)=>setForm(p=>({...p,[k]:v}));
+  return (
+    <Modal title="New Client" onClose={onClose} onSave={()=>onSave({...form,age:+form.age,weight:+form.weight,height:+form.height})}>
+      <Field label="Name"><input style={S.input} value={form.name} onChange={e=>f("name",e.target.value)} /></Field>
+      <Field label="Email"><input style={S.input} value={form.email} onChange={e=>f("email",e.target.value)} type="email" /></Field>
+      <Field label="Password"><input style={S.input} value={form.password} onChange={e=>f("password",e.target.value)} /></Field>
+      <div style={{display:"flex",gap:8}}>
+        <Field label="Age"><input style={S.input} value={form.age} onChange={e=>f("age",e.target.value)} type="number" /></Field>
+        <Field label="Weight (kg)"><input style={S.input} value={form.weight} onChange={e=>f("weight",e.target.value)} type="number" /></Field>
+        <Field label="Height (cm)"><input style={S.input} value={form.height} onChange={e=>f("height",e.target.value)} type="number" /></Field>
+      </div>
+      <Field label="Goal"><input style={S.input} value={form.goal} onChange={e=>f("goal",e.target.value)} /></Field>
+    </Modal>
+  );
+}
+
+function NewProgramModal({ onClose, onSave }) {
+  const [form, setForm] = useState({name:"",tag:"",color:"#FFFFFF"});
+  const f=(k,v)=>setForm(p=>({...p,[k]:v}));
+  return (
+    <Modal title="New Program" onClose={onClose} onSave={()=>onSave(form)}>
+      <Field label="Program Name"><input style={S.input} value={form.name} onChange={e=>f("name",e.target.value)} /></Field>
+      <Field label="Tag (e.g. Beginner · 3 days/week)"><input style={S.input} value={form.tag} onChange={e=>f("tag",e.target.value)} /></Field>
+      <Field label="Accent Color">
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:4}}>
+          {DAY_COLORS.map(c=>(
+            <div key={c} style={{width:28,height:28,borderRadius:"50%",background:c,cursor:"pointer",
+              border:form.color===c?"2px solid #fff":"2px solid transparent"}} onClick={()=>f("color",c)} />
+          ))}
+        </div>
+      </Field>
+    </Modal>
+  );
+}
+
+function Modal({ title, onClose, onSave, children }) {
+  return (
+    <div style={S.overlay}>
+      <div style={S.modal}>
+        <div style={S.modalHeader}>
+          <div style={S.modalTitle}>{title}</div>
+          <button style={S.iconBtn} onClick={onClose}>✕</button>
+        </div>
+        <div style={S.modalBody}>{children}</div>
+        <div style={S.modalFooter}>
+          <button style={S.btnGhost} onClick={onClose}>Cancel</button>
+          <button style={S.btn} onClick={onSave}>Save →</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── NUTRITION ASSIGNER (coach assigns plan to client) ────────────────────────
+function NutritionAssigner({ nutrition, onSave, onMount }) {
+  useEffect(()=>{ if(onMount) onMount(); },[]);
+  const blank = { calories:0, protein:0, carbs:0, fat:0, notes:"", meals:[] };
+  const [form, setForm] = useState(nutrition || blank);
+  const [saved, setSaved] = useState(false);
+  const f = (k,v) => setForm(p=>({...p,[k]:v}));
+  useEffect(()=>{ if(nutrition) setForm(nutrition); },[nutrition]);
+
+  const addMeal = () => setForm(p=>({...p,meals:[...p.meals,{id:uid(),name:"New Meal",description:"",protein:0,carbs:0,fat:0}]}));
+  const updateMeal = (id,k,v) => setForm(p=>({...p,meals:p.meals.map(m=>m.id===id?{...m,[k]:v}:m)}));
+  const deleteMeal = (id) => setForm(p=>({...p,meals:p.meals.filter(m=>m.id!==id)}));
+
+  const handleSave = () => {
+    onSave(form);
+    setSaved(true);
+    setTimeout(()=>setSaved(false), 2000);
+  };
+
+  return (
+    <div>
+      <SectionHeader title="Nutrition Plan" action={
+        <button style={{...S.btn,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+          {saved ? "✓ Saved!" : "Assign Plan →"}
+        </button>
+      } />
+      <div style={S.macroGrid}>
+        {[["Calories","calories","kcal"],["Protein","protein","g"],["Carbs","carbs","g"],["Fat","fat","g"]].map(([label,key,unit])=>(
+          <div key={key} style={S.macroBox}>
+            <div style={S.macroLabel}>{label}</div>
+            <div style={{display:"flex",alignItems:"baseline",gap:4}}>
+              <input style={{...S.input,fontSize:22,fontWeight:800,color:C.accent,background:"transparent",border:"none",width:80,padding:0}}
+                type="number" value={form[key]} onChange={e=>f(key,+e.target.value)} />
+              <span style={{color:C.muted,fontSize:12}}>{unit}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <Field label="Coach Notes">
+        <textarea style={{...S.input,minHeight:72,resize:"vertical"}} value={form.notes} onChange={e=>f("notes",e.target.value)}
+          placeholder="e.g. Small surplus for lean gain. Carbs concentrated around training." />
+      </Field>
+      <SectionHeader title="Meal Plan" action={<button style={S.btnSm} onClick={addMeal}>+ Meal</button>} />
+      {form.meals.length===0 && <Empty text="No meals added yet. Click '+ Meal' to build the plan." />}
+      {form.meals.map(m=>(
+        <div key={m.id} style={S.mealEditorCard}>
+          <div style={{display:"flex",gap:8,marginBottom:8}}>
+            <input style={{...S.input,flex:2,fontWeight:700}} value={m.name} onChange={e=>updateMeal(m.id,"name",e.target.value)} placeholder="e.g. Breakfast" />
+            <button style={{...S.iconBtn,color:"#ff6b6b"}} onClick={()=>deleteMeal(m.id)}>✕</button>
+          </div>
+          <textarea style={{...S.input,minHeight:56,resize:"vertical",marginBottom:8}} value={m.description}
+            onChange={e=>updateMeal(m.id,"description",e.target.value)} placeholder="Describe foods and portions…" />
+          <div style={{display:"flex",gap:8}}>
+            {[["P (g)","protein"],["C (g)","carbs"],["F (g)","fat"]].map(([l,k])=>(
+              <div key={k} style={{flex:1}}>
+                <div style={{fontSize:10,color:C.muted,marginBottom:3,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em"}}>{l}</div>
+                <input style={{...S.input,textAlign:"center"}} type="number" value={m[k]} onChange={e=>updateMeal(m.id,k,+e.target.value)} />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── MEASUREMENTS PANEL ────────────────────────────────────────────────────────
+
+
+function MeasurementsPanel({ measurements, onSave, clientName }) {
+  const blank = MEASUREMENT_FIELDS.reduce((acc,f)=>({...acc,[f.key]:f.type==="date"?new Date().toISOString().slice(0,10):""}),{});
+  const [form, setForm] = useState(blank);
+  const [showForm, setShowForm] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const f = (k,v) => setForm(p=>({...p,[k]:v}));
+
+  const handleSave = () => {
+    const entry = {...form};
+    MEASUREMENT_FIELDS.forEach(field => { if(field.type==="number" && entry[field.key]) entry[field.key] = +entry[field.key]; });
+    onSave(entry);
+    setSaved(true);
+    setForm(blank);
+    setTimeout(()=>{ setSaved(false); setShowForm(false); }, 1500);
+  };
+
+  const sorted = [...measurements].sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  return (
+    <div>
+      <SectionHeader title={`Measurements (${measurements.length})`}
+        action={<button style={S.btnSm} onClick={()=>setShowForm(s=>!s)}>{showForm?"Cancel":"+ Add Entry"}</button>} />
+
+      {showForm && (
+        <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:20,marginBottom:20}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:12,marginBottom:16}}>
+            {MEASUREMENT_FIELDS.map(field=>(
+              <div key={field.key}>
+                <div style={{fontSize:10,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:5}}>
+                  {field.label}{field.unit?` (${field.unit})`:""}
+                </div>
+                <input style={{...S.input,padding:"8px 10px"}} type={field.type}
+                  value={form[field.key]} onChange={e=>f(field.key,e.target.value)} />
+              </div>
+            ))}
+          </div>
+          <button style={{...S.btn,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+            {saved?"✓ Saved!":"Save Measurements →"}
+          </button>
+        </div>
+      )}
+
+      {sorted.length===0 && !showForm && <Empty text="No measurements recorded yet. Click '+ Add Entry' to start tracking." />}
+
+      {sorted.length>0 && (
+        <>
+          {/* Latest snapshot */}
+          {sorted[0] && (
+            <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:20,marginBottom:16}}>
+              <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:14}}>
+                Latest — {sorted[0].date}
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(110px,1fr))",gap:12}}>
+                {MEASUREMENT_FIELDS.filter(f=>f.key!=="date"&&sorted[0][f.key]).map(field=>(
+                  <div key={field.key} style={{textAlign:"center",background:C.surface2,borderRadius:10,padding:"12px 8px"}}>
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,color:C.text,lineHeight:1}}>
+                      {sorted[0][field.key]}<span style={{fontSize:14,color:C.muted}}>{field.unit}</span>
+                    </div>
+                    <div style={{fontSize:9,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginTop:4}}>{field.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* History table */}
+          {sorted.length>1 && (
+            <>
+              <SectionHeader title="History" />
+              <div style={{overflowX:"auto"}}>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                  <thead>
+                    <tr style={{borderBottom:`1px solid ${C.line}`}}>
+                      {MEASUREMENT_FIELDS.map(f=>(
+                        <th key={f.key} style={{padding:"8px 10px",textAlign:"left",color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",fontSize:9,whiteSpace:"nowrap"}}>
+                          {f.label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sorted.map((row,i)=>(
+                      <tr key={i} style={{borderBottom:`1px solid ${C.line}`,opacity:i===0?1:0.7}}>
+                        {MEASUREMENT_FIELDS.map(f=>(
+                          <td key={f.key} style={{padding:"10px 10px",color:i===0?C.text:C.muted,whiteSpace:"nowrap",fontWeight:i===0?700:400}}>
+                            {row[f.key]||"—"}{row[f.key]&&f.unit?<span style={{color:C.faint,fontSize:10}}>{f.unit}</span>:""}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── CLIENT NUTRITION VIEW ────────────────────────────────────────────────────
+function ClientNutritionView({ nutrition }) {
+  if (!nutrition) return (
+    <div style={{textAlign:"center",padding:"48px 0"}}>
+      <div style={{fontSize:32,marginBottom:12}}>🥗</div>
+      <div style={{color:C.muted,fontSize:14}}>Your coach hasn't set a nutrition plan yet.</div>
+    </div>
+  );
+  const { calories, protein, carbs, fat, notes, meals } = nutrition;
+  const totP = meals.reduce((s,m)=>s+m.protein,0);
+  const totC = meals.reduce((s,m)=>s+m.carbs,0);
+  const totF = meals.reduce((s,m)=>s+m.fat,0);
+  return (
+    <div>
+      <SectionHeader title="Your Nutrition Plan" />
+      <div style={S.macroGrid}>
+        {[["Calories",calories,"kcal","#FFFFFF"],["Protein",protein,"g","#FFFFFF"],["Carbs",carbs,"g","#CCCCCC"],["Fat",fat,"g","#999999"]].map(([l,v,u,col])=>(
+          <div key={l} style={{...S.macroBox,borderColor:col+"33"}}>
+            <div style={{...S.macroLabel,color:col}}>{l}</div>
+            <div style={{fontSize:24,fontWeight:800,color:col}}>{v}<span style={{fontSize:13,fontWeight:400,color:C.muted,marginLeft:3}}>{u}</span></div>
+          </div>
+        ))}
+      </div>
+      {notes && <div style={S.coachNote}><span style={{color:"#FFFFFF",marginRight:6}}>📋</span>{notes}</div>}
+      <SectionHeader title="Meal Breakdown" />
+      {meals.map(m=>(
+        <div key={m.id} style={S.mealViewCard}>
+          <div style={S.mealName}>{m.name}</div>
+          <div style={S.mealDesc}>{m.description}</div>
+          <div style={S.mealMacros}>
+            <span style={{color:"#FFFFFF"}}>P {m.protein}g</span>
+            <span style={{color:"#CCCCCC"}}>C {m.carbs}g</span>
+            <span style={{color:"#999999"}}>F {m.fat}g</span>
+            <span style={{color:C.muted}}>{m.protein*4+m.carbs*4+m.fat*9} kcal</span>
+          </div>
+        </div>
+      ))}
+      <div style={S.mealTotal}>
+        Daily total from meals — P {totP}g · C {totC}g · F {totF}g · {totP*4+totC*4+totF*9} kcal
+      </div>
+    </div>
+  );
+}
+
+// ── CLIENT HISTORY VIEW ───────────────────────────────────────────────────────
+function ClientHistoryView({ clientId, programs, workoutLog }) {
+  const [selProg, setSelProg] = useState(programs[0]?.id||null);
+  const [selDay, setSelDay] = useState(null);
+  const prog = programs.find(p=>p.id===selProg);
+  useEffect(()=>setSelDay(null),[selProg]);
+  const day = prog?.days.find(d=>d.id===selDay);
+  const history = selDay ? workoutLog.getHistory(clientId, selDay) : [];
+  const allExercises = programs.flatMap(p=>p.days.flatMap(d=>d.exercises));
+  const pbs = workoutLog.getPBs(clientId, allExercises);
+  useEffect(()=>{ if(selDay) workoutLog.loadHistory(clientId, selDay); },[selDay]);
+
+  if (programs.length===0) return <Empty text="No programs assigned yet." />;
+  return (
+    <div>
+      <SectionHeader title="Your Workout History" />
+      {programs.length>1 && <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
+        {programs.map(p=><button key={p.id} style={{...S.tabBtn,...(selProg===p.id?S.tabBtnActive:{})}} onClick={()=>setSelProg(p.id)}>{p.name}</button>)}
+      </div>}
+      {prog && <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>
+        {prog.days.map((d,i)=>(
+          <button key={d.id} style={{...S.tabBtn,...(selDay===d.id?{...S.tabBtnActive,borderColor:DAY_COLORS[i%DAY_COLORS.length],color:DAY_COLORS[i%DAY_COLORS.length]}:{})}}
+            onClick={()=>setSelDay(selDay===d.id?null:d.id)}>{d.label}</button>
+        ))}
+      </div>}
+      {day && <>
+        {/* PBs */}
+        {day.exercises.some(ex=>pbs[ex.id]) && <>
+          <div style={{fontSize:11,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Personal Bests</div>
+          <div style={S.pbRow}>
+            {day.exercises.filter(ex=>pbs[ex.id]).map(ex=>(
+              <div key={ex.id} style={S.pbChip}>
+                <div style={S.pbVal}>{pbs[ex.id]}kg</div>
+                <div style={S.pbName}>{ex.name}</div>
+                <div style={S.pbLabel}>🏆 PB</div>
+              </div>
+            ))}
+          </div>
+        </>}
+        {history.length===0 && <Empty text="No sessions logged for this day yet. Complete a workout to see history." />}
+        {[...history].reverse().map((session,si)=>(
+          <div key={si} style={S.historySession}>
+            <div style={S.historyDate}>{fmt(session.date)}{si===0?" · Most Recent":""}</div>
+            {day.exercises.map(ex=>{
+              const sets = session.sets[ex.id]||[];
+              const doneSets = sets.filter(s=>s.done);
+              if(doneSets.length===0) return null;
+              const best = Math.max(...doneSets.map(s=>parseFloat(s.weight)||0));
+              return (
+                <div key={ex.id} style={S.historyEx}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                    <div style={S.historyExName}>{ex.name}</div>
+                    {pbs[ex.id]===best && best>0 && <span style={{fontSize:10,color:"#FFFFFF",fontWeight:700}}>🏆 PB</span>}
+                  </div>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:4}}>
+                    {doneSets.map((s,i)=>(
+                      <div key={i} style={S.historySetChip}>{s.weight||"–"}kg × {s.reps||"–"}</div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </>}
+      {!selDay && prog && <Empty text="Select a training day to view session history." />}
+    </div>
+  );
+}
+
+// ── WEEKLY CHECK-IN FORM (client fills in) ───────────────────────────────────
+function ClientCheckinForm({ checkins, onSave }) {
+  const getWeekStart = () => {
+    const d = new Date();
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(d.setDate(diff)).toISOString().slice(0,10);
+  };
+  const weekStart = getWeekStart();
+  const existing = checkins.find(c => c.week_start === weekStart) || {};
+
+  const [form, setForm] = useState({
+    week_start: weekStart,
+    sleep_quality: existing.sleep_quality || 5,
+    stress: existing.stress || 5,
+    energy: existing.energy || 5,
+    adherence: existing.adherence || 5,
+    water_intake: existing.water_intake || "",
+    steps: existing.steps || "",
+    notes: existing.notes || "",
+  });
+  const [saved, setSaved] = useState(false);
+  const f = (k,v) => setForm(p=>({...p,[k]:v}));
+
+  const handleSave = async () => {
+    await onSave(form);
+    setSaved(true);
+    setTimeout(()=>setSaved(false), 2000);
+  };
+
+  const SliderField = ({label, field, emoji}) => (
+    <div style={{background:C.surface2,borderRadius:12,padding:16,marginBottom:12}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+        <div style={{fontSize:13,fontWeight:700,color:C.text}}>{emoji} {label}</div>
+        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,color:C.accent,lineHeight:1}}>{form[field]}<span style={{fontSize:14,color:C.muted}}>/10</span></div>
+      </div>
+      <input type="range" min="1" max="10" value={form[field]}
+        onChange={e=>f(field,+e.target.value)}
+        style={{width:"100%",accentColor:C.accent,cursor:"pointer"}} />
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:C.faint,marginTop:4}}>
+        <span>Poor</span><span>Average</span><span>Excellent</span>
+      </div>
+    </div>
+  );
+
+  return (
+    <div>
+      <SectionHeader title={`Week of ${weekStart}`} />
+      <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:16,padding:20,marginBottom:16,
+        backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(203,251,69,0.05),transparent 60%)"}}>
+        <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:16}}>
+          Weekly Check-In
+        </div>
+        <SliderField label="Sleep Quality" field="sleep_quality" emoji="😴" />
+        <SliderField label="Stress Level" field="stress" emoji="🧠" />
+        <SliderField label="Energy Level" field="energy" emoji="⚡" />
+        <SliderField label="Training Adherence" field="adherence" emoji="🎯" />
+
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+          <div>
+            <div style={{fontSize:10,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:6}}>💧 Water Intake</div>
+            <input style={{...S.input}} value={form.water_intake} onChange={e=>f("water_intake",e.target.value)} placeholder="e.g. 2.5L" />
+          </div>
+          <div>
+            <div style={{fontSize:10,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:6}}>👟 Steps</div>
+            <input style={{...S.input}} value={form.steps} onChange={e=>f("steps",e.target.value)} placeholder="e.g. 8000" />
+          </div>
+        </div>
+
+        <div>
+          <div style={{fontSize:10,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:6}}>📝 Notes for your coach</div>
+          <textarea style={{...S.input,minHeight:100,resize:"vertical"}} value={form.notes}
+            onChange={e=>f("notes",e.target.value)} placeholder="How did the week go? Any struggles, wins, or feedback?" />
+        </div>
+
+        <button style={{...S.btn,width:"100%",marginTop:16,padding:"14px",...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+          {saved ? "✓ Submitted!" : "Submit Check-In →"}
+        </button>
+      </div>
+
+      {/* Past check-ins */}
+      {checkins.filter(c=>c.week_start!==weekStart).length > 0 && (
+        <>
+          <SectionHeader title="Past Check-Ins" />
+          {checkins.filter(c=>c.week_start!==weekStart).sort((a,b)=>b.week_start.localeCompare(a.week_start)).map((c,i)=>(
+            <div key={i} style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:16,marginBottom:10}}>
+              <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:12}}>Week of {c.week_start}</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:c.notes?12:0}}>
+                {[["😴","Sleep",c.sleep_quality],["🧠","Stress",c.stress],["⚡","Energy",c.energy],["🎯","Adherence",c.adherence]].map(([emoji,label,val])=>(
+                  <div key={label} style={{textAlign:"center",background:C.surface2,borderRadius:8,padding:"10px 6px"}}>
+                    <div style={{fontSize:10,marginBottom:2}}>{emoji}</div>
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:24,color:C.text,lineHeight:1}}>{val||"—"}</div>
+                    <div style={{fontSize:9,color:C.faint,marginTop:2,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em"}}>{label}</div>
+                  </div>
+                ))}
+              </div>
+              {c.notes && <div style={{fontSize:13,color:C.muted,borderTop:`1px solid ${C.line}`,paddingTop:10,lineHeight:1.6}}>{c.notes}</div>}
+            </div>
+          ))}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── COACH CHECK-IN VIEW ───────────────────────────────────────────────────────
+function CoachCheckinView({ checkins, clientName }) {
+  if (!checkins || checkins.length === 0) return (
+    <div style={{textAlign:"center",padding:"48px 0"}}>
+      <div style={{fontSize:32,marginBottom:12}}>📋</div>
+      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:24,color:C.text,marginBottom:8}}>No Check-ins Yet</div>
+      <div style={{color:C.muted,fontSize:14}}>{clientName} hasn't submitted a check-in yet.</div>
+    </div>
+  );
+
+  const sorted = [...checkins].sort((a,b)=>b.week_start.localeCompare(a.week_start));
+
+  return (
+    <div>
+      <SectionHeader title={`Check-ins (${checkins.length})`} />
+      {sorted.map((c,i)=>(
+        <div key={i} style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:20,marginBottom:12,
+          ...(i===0?{backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(203,251,69,0.05),transparent 60%)"}:{})}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+            <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em"}}>
+              Week of {c.week_start}
+            </div>
+            {i===0 && <span style={{fontSize:10,background:"rgba(203,251,69,0.1)",color:C.accent,border:`1px solid rgba(203,251,69,0.3)`,borderRadius:999,padding:"3px 10px",fontWeight:700}}>Latest</span>}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:12}}>
+            {[["😴","Sleep Quality",c.sleep_quality],["🧠","Stress",c.stress],["⚡","Energy",c.energy],["🎯","Adherence",c.adherence]].map(([emoji,label,val])=>{
+              const color = val>=8?"#7BE0A0":val>=5?C.accent:"#FF6B4A";
+              return (
+                <div key={label} style={{textAlign:"center",background:C.surface2,borderRadius:10,padding:12}}>
+                  <div style={{fontSize:12,marginBottom:4}}>{emoji}</div>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:30,color,lineHeight:1}}>{val||"—"}<span style={{fontSize:12,color:C.muted}}>/10</span></div>
+                  <div style={{fontSize:9,color:C.faint,marginTop:4,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em"}}>{label}</div>
+                </div>
+              );
+            })}
+          </div>
+          {(c.water_intake||c.steps) && (
+            <div style={{display:"flex",gap:12,marginBottom:c.notes?12:0}}>
+              {c.water_intake && <div style={{background:C.surface2,borderRadius:8,padding:"8px 14px",fontSize:13,color:C.muted}}>💧 {c.water_intake}</div>}
+              {c.steps && <div style={{background:C.surface2,borderRadius:8,padding:"8px 14px",fontSize:13,color:C.muted}}>👟 {c.steps} steps</div>}
+            </div>
+          )}
+          {c.notes && (
+            <div style={{background:C.surface2,borderRadius:10,padding:14,fontSize:13,color:C.muted,lineHeight:1.6,borderLeft:`3px solid ${C.accent}`}}>
+              <div style={{fontSize:10,color:C.accent,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Client Notes</div>
+              {c.notes}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── HABITS EDITOR (coach sets habits) ─────────────────────────────────────────
+function HabitsEditor({ habits, onSave, clientName }) {
+  const [list, setList] = useState(habits || []);
+  const [newHabit, setNewHabit] = useState("");
+  const [saved, setSaved] = useState(false);
+  useEffect(()=>{ setList(habits||[]); },[habits]);
+
+  const addHabit = () => {
+    if(!newHabit.trim()) return;
+    setList(prev=>[...prev,{id:uid(),label:newHabit.trim(),emoji:"✅"}]);
+    setNewHabit("");
+  };
+  const removeHabit = (id) => setList(prev=>prev.filter(h=>h.id!==id));
+  const updateEmoji = (id,emoji) => setList(prev=>prev.map(h=>h.id===id?{...h,emoji}:h));
+
+  const handleSave = async () => {
+    await onSave(list);
+    setSaved(true);
+    setTimeout(()=>setSaved(false),2000);
+  };
+
+  const EMOJIS = ["✅","💧","🏃","🥗","😴","📖","🧘","💊","🚶","⚡","🎯","🔥"];
+
+  return (
+    <div>
+      <SectionHeader title="Daily Habits" action={
+        <button style={{...S.btn,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+          {saved?"✓ Saved!":"Save Habits →"}
+        </button>
+      } />
+      <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:20,marginBottom:16}}>
+        <div style={{fontSize:10,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:14}}>
+          Set daily habits for {clientName}
+        </div>
+        {list.length===0 && <Empty text="No habits set yet. Add habits below." />}
+        {list.map(h=>(
+          <div key={h.id} style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,background:C.surface2,borderRadius:10,padding:"10px 14px"}}>
+            <select value={h.emoji} onChange={e=>updateEmoji(h.id,e.target.value)}
+              style={{background:"transparent",border:"none",fontSize:18,cursor:"pointer",outline:"none"}}>
+              {EMOJIS.map(e=><option key={e} value={e}>{e}</option>)}
+            </select>
+            <div style={{flex:1,fontSize:14,fontWeight:600,color:C.text}}>{h.label}</div>
+            <button style={{background:"transparent",border:"none",color:"#ff6b6b",cursor:"pointer",fontSize:16}} onClick={()=>removeHabit(h.id)}>✕</button>
+          </div>
+        ))}
+        <div style={{display:"flex",gap:8,marginTop:14}}>
+          <input style={{...S.input,flex:1}} value={newHabit} onChange={e=>setNewHabit(e.target.value)}
+            placeholder="e.g. Drink 2L of water" onKeyDown={e=>e.key==="Enter"&&addHabit()} />
+          <button style={S.btnSm} onClick={addHabit}>+ Add</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── CLIENT HABITS VIEW (client logs daily) ────────────────────────────────────
+function ClientHabitsView({ habits, habitLogs, onLog }) {
+  const today = new Date().toISOString().slice(0,10);
+  const todayLog = habitLogs[today] || {};
+  const [completions, setCompletions] = useState(todayLog);
+  const [saved, setSaved] = useState(false);
+  useEffect(()=>{ setCompletions(habitLogs[today]||{}); },[habitLogs, today]);
+
+  if (!habits || habits.length === 0) return (
+    <div style={{textAlign:"center",padding:"48px 0"}}>
+      <div style={{fontSize:32,marginBottom:12}}>✅</div>
+      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:24,color:C.text,marginBottom:8}}>No Habits Yet</div>
+      <div style={{color:C.muted,fontSize:14}}>Your coach will set your daily habits soon.</div>
+    </div>
+  );
+
+  const toggle = (id) => setCompletions(prev=>({...prev,[id]:!prev[id]}));
+  const doneCount = habits.filter(h=>completions[h.id]).length;
+
+  const handleSave = async () => {
+    await onLog(today, completions);
+    setSaved(true);
+    setTimeout(()=>setSaved(false),2000);
+  };
+
+  // Last 7 days for streak
+  const last7 = Array.from({length:7},(_,i)=>{
+    const d = new Date();
+    d.setDate(d.getDate()-i);
+    return d.toISOString().slice(0,10);
+  }).reverse();
+
+  return (
+    <div>
+      <SectionHeader title={`Today — ${today}`} />
+
+      {/* Progress ring */}
+      <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:16,padding:24,marginBottom:16,
+        backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(203,251,69,0.06),transparent 60%)",textAlign:"center"}}>
+        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:72,color:doneCount===habits.length?C.accent:C.text,lineHeight:1}}>
+          {doneCount}<span style={{fontSize:32,color:C.muted}}>/{habits.length}</span>
+        </div>
+        <div style={{fontSize:11,color:C.muted,textTransform:"uppercase",letterSpacing:"0.15em",fontWeight:700,marginTop:4}}>
+          {doneCount===habits.length?"All habits complete! 🎉":"Habits completed today"}
+        </div>
+        {/* Progress bar */}
+        <div style={{background:C.surface2,borderRadius:999,height:6,marginTop:16,overflow:"hidden"}}>
+          <div style={{height:"100%",background:`linear-gradient(90deg,${C.accent},#a8e800)`,borderRadius:999,
+            width:`${habits.length>0?(doneCount/habits.length)*100:0}%`,transition:"width .4s"}} />
+        </div>
+      </div>
+
+      {/* Habit checklist */}
+      <div style={{marginBottom:16}}>
+        {habits.map(h=>(
+          <div key={h.id}
+            style={{display:"flex",alignItems:"center",gap:14,background:C.surface,border:`1px solid ${completions[h.id]?C.accent+"40":C.line}`,
+              borderRadius:12,padding:"14px 16px",marginBottom:8,cursor:"pointer",transition:"all .2s",
+              opacity:completions[h.id]?0.7:1}}
+            onClick={()=>toggle(h.id)}>
+            <div style={{fontSize:22}}>{h.emoji}</div>
+            <div style={{flex:1,fontSize:14,fontWeight:700,color:C.text,textDecoration:completions[h.id]?"line-through":"none"}}>{h.label}</div>
+            <div style={{width:28,height:28,borderRadius:999,border:`2px solid ${completions[h.id]?C.accent:C.line2}`,
+              background:completions[h.id]?C.accent:"transparent",display:"flex",alignItems:"center",justifyContent:"center",
+              color:"#000",fontSize:14,fontWeight:800,transition:"all .2s"}}>
+              {completions[h.id]?"✓":""}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button style={{...S.btn,width:"100%",padding:14,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+        {saved?"✓ Saved!":"Save Today's Habits →"}
+      </button>
+
+      {/* 7-day streak view */}
+      <div style={{marginTop:24}}>
+        <SectionHeader title="Last 7 Days" />
+        <div style={{display:"flex",gap:8}}>
+          {last7.map(date=>{
+            const log = habitLogs[date]||{};
+            const done = habits.filter(h=>log[h.id]).length;
+            const pct = habits.length>0?done/habits.length:0;
+            const isToday = date===today;
+            return (
+              <div key={date} style={{flex:1,textAlign:"center"}}>
+                <div style={{fontSize:9,color:C.faint,fontWeight:700,marginBottom:6,textTransform:"uppercase",letterSpacing:"0.1em"}}>
+                  {new Date(date+"T12:00:00").toLocaleDateString("en",{weekday:"short"})}
+                </div>
+                <div style={{height:48,background:C.surface2,borderRadius:8,position:"relative",overflow:"hidden",border:`1px solid ${isToday?C.accent:C.line}`}}>
+                  <div style={{position:"absolute",bottom:0,left:0,right:0,height:`${pct*100}%`,
+                    background:pct===1?C.accent:`rgba(203,251,69,${0.3+pct*0.4})`,transition:"height .3s"}} />
+                </div>
+                <div style={{fontSize:10,color:pct===1?C.accent:C.muted,fontWeight:700,marginTop:4}}>
+                  {done}/{habits.length}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── CLIENT MEASUREMENTS VIEW ──────────────────────────────────────────────────
+function ClientMeasurementsView({ measurements }) {
+  if (!measurements || measurements.length === 0) return (
+    <div style={{textAlign:"center",padding:"48px 0"}}>
+      <div style={{fontSize:32,marginBottom:12}}>📏</div>
+      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:24,color:C.text,marginBottom:8}}>No Measurements Yet</div>
+      <div style={{color:C.muted,fontSize:14}}>Your coach will record your measurements soon.</div>
+    </div>
+  );
+  const sorted = [...measurements].sort((a,b)=>b.date.localeCompare(a.date));
+  const latest = sorted[0];
+  return (
+    <div>
+      <SectionHeader title="Your Measurements" />
+      <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:16,padding:20,marginBottom:16,backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(203,251,69,0.05),transparent 60%)"}}>
+        <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:14}}>Latest — {latest.date}</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(90px,1fr))",gap:10}}>
+          {MEASUREMENT_FIELDS.filter(f=>f.key!=="date"&&latest[f.key]).map(field=>(
+            <div key={field.key} style={{background:C.surface2,borderRadius:12,padding:"12px 8px",textAlign:"center"}}>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:26,color:C.text,lineHeight:1}}>{latest[field.key]}<span style={{fontSize:11,color:C.muted}}>{field.unit}</span></div>
+              <div style={{fontSize:9,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",marginTop:4}}>{field.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {sorted.length>1 && <>
+        <SectionHeader title="History" />
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+            <thead><tr style={{borderBottom:`1px solid ${C.line}`}}>
+              {MEASUREMENT_FIELDS.map(f=>(<th key={f.key} style={{padding:"8px 10px",textAlign:"left",color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",fontSize:9,whiteSpace:"nowrap"}}>{f.label}</th>))}
+            </tr></thead>
+            <tbody>{sorted.map((row,i)=>(<tr key={i} style={{borderBottom:`1px solid ${C.line}`}}>
+              {MEASUREMENT_FIELDS.map(f=>(<td key={f.key} style={{padding:"10px",color:i===0?C.text:C.muted,whiteSpace:"nowrap",fontWeight:i===0?700:400}}>{row[f.key]||"—"}{row[f.key]&&f.unit?<span style={{color:C.faint,fontSize:10}}>{f.unit}</span>:""}</td>))}
+            </tr>))}</tbody>
+          </table>
+        </div>
+      </>}
+    </div>
+  );
+}
+
+// ── CLIENT DASHBOARD ──────────────────────────────────────────────────────────
+function ClientDashboard({ client, assigned, nutrition, measurements, workoutLog, habits, habitLogs, checkins, onGoPrograms, onGoNutrition, onGoCheckin, onGoHabits }) {
+  const latest = measurements && measurements.length > 0 ? [...measurements].sort((a,b)=>b.date.localeCompare(a.date))[0] : null;
+  const allEx = assigned.flatMap(p=>p.days.flatMap(d=>d.exercises));
+  const pbs = workoutLog.getPBs(client.id, allEx);
+  const pbCount = Object.keys(pbs).length;
+
+  const recentSessions = [];
+  assigned.forEach(prog => {
+    prog.days.forEach(day => {
+      const hist = workoutLog.getHistory(client.id, day.id);
+      if (hist.length > 0) recentSessions.push({date:hist[hist.length-1].date,dayLabel:day.label,progName:prog.name,color:prog.color});
+    });
+  });
+  recentSessions.sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  const getWeekStart = () => { const d=new Date(); const day=d.getDay(); const diff=d.getDate()-day+(day===0?-6:1); return new Date(new Date().setDate(new Date().getDate()-new Date().getDay()+(new Date().getDay()===0?-6:1))).toISOString().slice(0,10); };
+  const hasCheckin = checkins && checkins.some(c=>c.week_start===getWeekStart());
+  const today = new Date().toISOString().slice(0,10);
+  const todayHabitLog = habitLogs[today]||{};
+  const habitsDone = (habits||[]).filter(h=>todayHabitLog[h.id]).length;
+
+  return (
+    <div>
+      {/* Hero stats */}
+      <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:16,padding:20,marginBottom:14,backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(203,251,69,0.06),transparent 60%)"}}>
+        <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.2em",marginBottom:14}}>Your Stats</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+          {[{val:client.weight+"kg",label:"Weight"},{val:client.height+"cm",label:"Height"},{val:assigned.length,label:"Programs"},{val:pbCount||"—",label:"Personal Bests"},{val:recentSessions.length||"—",label:"Days Trained"},{val:latest?.bodyfat?latest.bodyfat+"%":"—",label:"Body Fat"}].map(s=>(
+            <div key={s.label} style={{textAlign:"center"}}>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,color:C.text,lineHeight:1}}>{s.val}</div>
+              <div style={{fontSize:9,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginTop:3}}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Check-in nudge */}
+      {!hasCheckin && (
+        <div style={{background:"rgba(203,251,69,0.06)",border:"1px solid rgba(203,251,69,0.25)",borderRadius:14,padding:18,marginBottom:14,cursor:"pointer"}} onClick={onGoCheckin}>
+          <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:6}}>📋 Weekly Check-In Due</div>
+          <div style={{fontSize:13,color:C.muted,marginBottom:8}}>Your coach is waiting for your weekly update.</div>
+          <div style={{fontSize:12,color:C.accent,fontWeight:700}}>Submit now →</div>
+        </div>
+      )}
+
+      {/* Habits today */}
+      {habits && habits.length > 0 && (
+        <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:18,marginBottom:14,cursor:"pointer"}} onClick={onGoHabits}>
+          <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:10}}>Today's Habits</div>
+          <div style={{display:"flex",alignItems:"baseline",gap:6,marginBottom:8}}>
+            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:42,color:habitsDone===habits.length?C.accent:C.text,lineHeight:1}}>{habitsDone}</div>
+            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,color:C.muted}}>/ {habits.length}</div>
+          </div>
+          <div style={{background:C.surface2,borderRadius:999,height:5,overflow:"hidden"}}>
+            <div style={{height:"100%",background:`linear-gradient(90deg,${C.accent},#a8e800)`,borderRadius:999,width:`${habits.length>0?(habitsDone/habits.length)*100:0}%`,transition:"width .4s"}} />
+          </div>
+          <div style={{marginTop:8,fontSize:12,color:C.accent,fontWeight:700}}>Log habits →</div>
+        </div>
+      )}
+
+      {/* Programs */}
+      {assigned.length > 0 && (
+        <div style={{marginBottom:14}}>
+          <SectionHeader title="Active Programs" action={<button style={S.btnSm} onClick={onGoPrograms}>View All →</button>} />
+          <div style={S.grid}>{assigned.slice(0,2).map(p=>(
+            <div key={p.id} style={S.progCard} onClick={onGoPrograms}>
+              <div style={{...S.progAccent,background:p.color}} />
+              <div style={S.progName}>{p.name}</div>
+              <div style={S.progTag}>{p.tag}</div>
+              <div style={S.progDays}>{p.days.length} days · {p.days.reduce((s,d)=>s+d.exercises.length,0)} exercises</div>
+            </div>
+          ))}</div>
+        </div>
+      )}
+      {assigned.length===0 && (
+        <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:24,textAlign:"center",marginBottom:14}}>
+          <div style={{fontSize:32,marginBottom:8}}>💪</div>
+          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,color:C.text,marginBottom:6}}>No Programs Yet</div>
+          <div style={{fontSize:13,color:C.muted}}>Your coach will assign your program soon.</div>
+        </div>
+      )}
+
+      {/* Recent sessions */}
+      {recentSessions.length > 0 && (
+        <div style={{marginBottom:14}}>
+          <SectionHeader title="Recent Sessions" />
+          {recentSessions.slice(0,3).map((s,i)=>(
+            <div key={i} style={{...S.historySession,display:"flex",alignItems:"center",gap:12,marginBottom:8,padding:"12px 14px"}}>
+              <div style={{width:4,height:36,borderRadius:2,background:s.color,flexShrink:0}} />
+              <div style={{flex:1}}>
+                <div style={{fontWeight:700,fontSize:13}}>{s.dayLabel}</div>
+                <div style={{fontSize:11,color:C.muted,marginTop:2}}>{s.progName}</div>
+              </div>
+              <div style={{fontSize:11,color:C.faint,fontWeight:700}}>{fmt(s.date)}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Nutrition teaser */}
+      {nutrition && (
+        <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:18,cursor:"pointer"}} onClick={onGoNutrition}>
+          <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:10}}>Your Nutrition Plan</div>
+          <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
+            {[["Calories",nutrition.calories,"kcal"],["Protein",nutrition.protein,"g"],["Carbs",nutrition.carbs,"g"],["Fat",nutrition.fat,"g"]].map(([l,v,u])=>(
+              <div key={l} style={{textAlign:"center"}}>
+                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:26,color:C.text,lineHeight:1}}>{v||"—"}<span style={{fontSize:11,color:C.muted}}>{u}</span></div>
+                <div style={{fontSize:9,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",marginTop:3}}>{l}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{marginTop:10,fontSize:12,color:C.accent,fontWeight:700}}>View full plan →</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── CLIENT APP ────────────────────────────────────────────────────────────────
+function ClientApp({ client, programs, nutrition, workoutLog, loadNutrition, measurements, loadMeasurements, checkins, saveCheckin, loadCheckins, habits, saveHabitLog, habitLogs, loadHabitLogs, onLogout }) {
+  const [tab, setTab] = useState("dashboard");
+  const [activeProg, setActiveProg] = useState(null);
+  const [activeDay, setActiveDay] = useState(null);
+  const assigned = programs.filter(p=>p.assignedTo.includes(client.id));
+
+  useEffect(()=>{ if(loadNutrition) loadNutrition(); if(loadMeasurements) loadMeasurements(); if(loadCheckins) loadCheckins(); if(loadHabitLogs) loadHabitLogs(); },[]);
+
+  if (activeDay && activeProg) {
+    return <DayView day={activeDay} clientId={client.id} workoutLog={workoutLog} onBack={()=>setActiveDay(null)} />;
+  }
+  if (activeProg) {
+    const prog = programs.find(p=>p.id===activeProg);
+    return <ProgramView program={prog} clientId={client.id} workoutLog={workoutLog}
+      onBack={()=>setActiveProg(null)} onSelectDay={d=>setActiveDay(d)} />;
+  }
+
+  const tabs = [
+    {id:"dashboard",label:"Dashboard"},
+    {id:"programs",label:"Programs"},
+    {id:"nutrition",label:"Nutrition"},
+    {id:"measurements",label:"Measurements"},
+    {id:"checkin",label:"Check-In"},
+    {id:"habits",label:"Habits"},
+    {id:"history",label:"Log History"},
+  ];
+
+  return (
+    <div style={S.app}>
+      <div style={{...S.topbar,flexDirection:"column",alignItems:"flex-start",gap:0,padding:"16px 16px 0"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",marginBottom:14}}>
+          <div>
+            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:26,color:C.text,letterSpacing:"0.05em",lineHeight:1}}>
+              Hey, {client.name.split(" ")[0]} 👋
+            </div>
+            <div style={{fontSize:12,color:C.muted,marginTop:2}}>{client.goal}</div>
+          </div>
+          <button style={S.btnGhost} onClick={onLogout}>Sign out</button>
+        </div>
+        <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:12,width:"100%",scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}>
+          {tabs.map(t=>(
+            <button key={t.id} style={{...S.tabBtn,...(tab===t.id?S.tabBtnActive:{}),flexShrink:0}}
+              onClick={()=>setTab(t.id)}>{t.label}</button>
+          ))}
+        </div>
+      </div>
+      <div style={S.content}>
+        {tab==="dashboard" && <ClientDashboard client={client} assigned={assigned} nutrition={nutrition} measurements={measurements||[]} workoutLog={workoutLog} habits={habits||[]} habitLogs={habitLogs||{}} checkins={checkins||[]} onGoPrograms={()=>setTab("programs")} onGoNutrition={()=>setTab("nutrition")} onGoCheckin={()=>setTab("checkin")} onGoHabits={()=>setTab("habits")} />}
+        {tab==="programs" && <>
+          <SectionHeader title="Your Programs" />
+          {assigned.length===0 && <Empty text="Your coach hasn't assigned a program yet." />}
+          <div style={S.grid}>{assigned.map(p=>(
+            <div key={p.id} style={S.progCard} onClick={()=>setActiveProg(p.id)}>
+              <div style={{...S.progAccent,background:p.color}} />
+              <div style={S.progName}>{p.name}</div>
+              <div style={S.progTag}>{p.tag}</div>
+              <div style={S.progDays}>{p.days.length} days · {p.days.reduce((s,d)=>s+d.exercises.length,0)} exercises</div>
+              <div style={{...S.btnSm,marginTop:12,display:"inline-block"}}>Open →</div>
+            </div>
+          ))}</div>
+        </>}
+        {tab==="nutrition" && <ClientNutritionView nutrition={nutrition} />}
+        {tab==="measurements" && <ClientMeasurementsView measurements={measurements||[]} />}
+        {tab==="checkin" && <ClientCheckinForm checkins={checkins||[]} onSave={saveCheckin} />}
+        {tab==="habits" && <ClientHabitsView habits={habits||[]} habitLogs={habitLogs||{}} onLog={saveHabitLog} />}
+        {tab==="history" && <ClientHistoryView clientId={client.id} programs={assigned} workoutLog={workoutLog} />}
+      </div>
+    </div>
+  );
+}
+
+const MEASUREMENT_FIELDS = [
+  { key:"date", label:"Date", type:"date" },
+  { key:"age", label:"Age", type:"number", unit:"yrs" },
+  { key:"weight", label:"Weight", type:"number", unit:"kg" },
+  { key:"height", label:"Height", type:"number", unit:"cm" },
+  { key:"neck", label:"Neck", type:"number", unit:"cm" },
+  { key:"shoulders", label:"Shoulders", type:"number", unit:"cm" },
+  { key:"arms", label:"Arms", type:"number", unit:"cm" },
+  { key:"waist", label:"Waist", type:"number", unit:"cm" },
+  { key:"hips", label:"Hips", type:"number", unit:"cm" },
+  { key:"mid_thigh", label:"Mid-Thigh", type:"number", unit:"cm" },
+  { key:"calves", label:"Calves", type:"number", unit:"cm" },
+  { key:"bodyfat", label:"Body Fat", type:"number", unit:"%" },
+];
 
 // ── CLIENT DETAIL (coach view) ────────────────────────────────────────────────
 function ClientDetail({ client, programs, clients, updateClient, updateProgram, assignProgram, nutrition, saveNutrition, loadNutrition, measurements, saveMeasurement, loadMeasurements, checkins, loadCheckins, habits, saveHabits, loadHabits, workoutLog, onBack, onOpenProgram }) {
@@ -841,92 +2604,84 @@ function ExRow({ ex, index, color, onChange, onDelete }) {
   );
 }
 
-// ── CLIENT APP ────────────────────────────────────────────────────────────────
-function ClientApp({ client, programs, nutrition, workoutLog, loadNutrition, measurements, loadMeasurements, checkins, saveCheckin, loadCheckins, habits, saveHabitLog, habitLogs, loadHabitLogs, onLogout }) {
-  const [tab, setTab] = useState("dashboard");
-  const [activeProg, setActiveProg] = useState(null);
-  const [activeDay, setActiveDay] = useState(null);
-  const assigned = programs.filter(p=>p.assignedTo.includes(client.id));
-
-  useEffect(()=>{ if(loadNutrition) loadNutrition(); if(loadMeasurements) loadMeasurements(); if(loadCheckins) loadCheckins(); if(loadHabitLogs) loadHabitLogs(); },[]);
-
-  if (activeDay && activeProg) {
-    return <DayView day={activeDay} clientId={client.id} workoutLog={workoutLog} onBack={()=>setActiveDay(null)} />;
-  }
-  if (activeProg) {
-    const prog = programs.find(p=>p.id===activeProg);
-    return <ProgramView program={prog} clientId={client.id} workoutLog={workoutLog}
-      onBack={()=>setActiveProg(null)} onSelectDay={d=>setActiveDay(d)} />;
-  }
-
-  const tabs = [
-    {id:"dashboard",label:"Dashboard"},
-    {id:"programs",label:"Programs"},
-    {id:"nutrition",label:"Nutrition"},
-    {id:"measurements",label:"Measurements"},
-    {id:"checkin",label:"Check-In"},
-    {id:"habits",label:"Habits"},
-    {id:"history",label:"Log History"},
-  ];
-
+// ── PROGRAM BUILDER ───────────────────────────────────────────────────────────
+function ProgramBuilder({ program, onUpdate, onBack }) {
+  const [prog, setProg] = useState(program);
+  const save = (updated) => { setProg(updated); onUpdate(updated); };
+  const addDay = () => save({...prog,days:[...prog.days,{id:uid(),label:`Day ${prog.days.length+1}`,exercises:[]}]});
+  const updateDay = (dayId,updated) => save({...prog,days:prog.days.map(d=>d.id===dayId?updated:d)});
+  const deleteDay = (dayId) => save({...prog,days:prog.days.filter(d=>d.id!==dayId)});
   return (
     <div style={S.app}>
-      <div style={{...S.topbar,flexDirection:"column",alignItems:"flex-start",gap:0,padding:"16px 16px 0"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",marginBottom:14}}>
-          <div>
-            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:26,color:C.text,letterSpacing:"0.05em",lineHeight:1}}>
-              Hey, {client.name.split(" ")[0]} 👋
-            </div>
-            <div style={{fontSize:12,color:C.muted,marginTop:2}}>{client.goal}</div>
-          </div>
-          <button style={S.btnGhost} onClick={onLogout}>Sign out</button>
-        </div>
-        <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:12,width:"100%",scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}>
-          {tabs.map(t=>(
-            <button key={t.id} style={{...S.tabBtn,...(tab===t.id?S.tabBtnActive:{}),flexShrink:0}}
-              onClick={()=>setTab(t.id)}>{t.label}</button>
-          ))}
-        </div>
-      </div>
+      <Topbar title={prog.name} subtitle={prog.tag} onLogout={null}
+        left={<button style={S.backBtn} onClick={onBack}>← Back</button>}
+        right={<span style={{color:"#FFFFFF",fontSize:12}}>✓ Auto-saved</span>} />
       <div style={S.content}>
-        {tab==="dashboard" && <ClientDashboard client={client} assigned={assigned} nutrition={nutrition} measurements={measurements||[]} workoutLog={workoutLog} habits={habits||[]} habitLogs={habitLogs||{}} checkins={checkins||[]} onGoPrograms={()=>setTab("programs")} onGoNutrition={()=>setTab("nutrition")} onGoCheckin={()=>setTab("checkin")} onGoHabits={()=>setTab("habits")} />}
-        {tab==="programs" && <>
-          <SectionHeader title="Your Programs" />
-          {assigned.length===0 && <Empty text="Your coach hasn't assigned a program yet." />}
-          <div style={S.grid}>{assigned.map(p=>(
-            <div key={p.id} style={S.progCard} onClick={()=>setActiveProg(p.id)}>
-              <div style={{...S.progAccent,background:p.color}} />
-              <div style={S.progName}>{p.name}</div>
-              <div style={S.progTag}>{p.tag}</div>
-              <div style={S.progDays}>{p.days.length} days · {p.days.reduce((s,d)=>s+d.exercises.length,0)} exercises</div>
-              <div style={{...S.btnSm,marginTop:12,display:"inline-block"}}>Open →</div>
-            </div>
-          ))}</div>
-        </>}
-        {tab==="nutrition" && <ClientNutritionView nutrition={nutrition} />}
-        {tab==="measurements" && <ClientMeasurementsView measurements={measurements||[]} />}
-        {tab==="checkin" && <ClientCheckinForm checkins={checkins||[]} onSave={saveCheckin} />}
-        {tab==="habits" && <ClientHabitsView habits={habits||[]} habitLogs={habitLogs||{}} onLog={saveHabitLog} />}
-        {tab==="history" && <ClientHistoryView clientId={client.id} programs={assigned} workoutLog={workoutLog} />}
+        <SectionHeader title={`Training Days (${prog.days.length})`} action={<button style={S.btnSm} onClick={addDay}>+ Add Day</button>} />
+        {prog.days.length===0 && <Empty text="No days yet. Add your first training day." />}
+        {prog.days.map((day,di)=>(
+          <DayBlock key={day.id} day={day} color={DAY_COLORS[di%DAY_COLORS.length]}
+            onChange={u=>updateDay(day.id,u)} onDelete={()=>deleteDay(day.id)} />
+        ))}
       </div>
     </div>
   );
 }
 
-const MEASUREMENT_FIELDS = [
-  { key:"date", label:"Date", type:"date" },
-  { key:"age", label:"Age", type:"number", unit:"yrs" },
-  { key:"weight", label:"Weight", type:"number", unit:"kg" },
-  { key:"height", label:"Height", type:"number", unit:"cm" },
-  { key:"neck", label:"Neck", type:"number", unit:"cm" },
-  { key:"shoulders", label:"Shoulders", type:"number", unit:"cm" },
-  { key:"arms", label:"Arms", type:"number", unit:"cm" },
-  { key:"waist", label:"Waist", type:"number", unit:"cm" },
-  { key:"hips", label:"Hips", type:"number", unit:"cm" },
-  { key:"mid_thigh", label:"Mid-Thigh", type:"number", unit:"cm" },
-  { key:"calves", label:"Calves", type:"number", unit:"cm" },
-  { key:"bodyfat", label:"Body Fat", type:"number", unit:"%" },
-];
+function DayBlock({ day, color, onChange, onDelete }) {
+  const [open, setOpen] = useState(true);
+  const [editLabel, setEditLabel] = useState(false);
+  const [labelVal, setLabelVal] = useState(day.label);
+  const addEx = () => onChange({...day,exercises:[...day.exercises,{id:uid(),name:"New Exercise",sets:3,reps:"10–12",rest:"60s",notes:""}]});
+  const updateEx = (exId,field,val) => onChange({...day,exercises:day.exercises.map(e=>e.id===exId?{...e,[field]:val}:e)});
+  const deleteEx = (exId) => onChange({...day,exercises:day.exercises.filter(e=>e.id!==exId)});
+  const saveLabel = () => { onChange({...day,label:labelVal}); setEditLabel(false); };
+  return (
+    <div style={{...S.dayBlock,borderLeft:`3px solid ${color}`}}>
+      <div style={S.dayHeader} onClick={()=>setOpen(o=>!o)}>
+        <div style={S.dayLeft}>
+          <span style={{color,fontSize:18,marginRight:8}}>▸</span>
+          {editLabel
+            ? <input style={{...S.input,padding:"4px 8px",fontSize:14,width:260}} value={labelVal}
+                onChange={e=>setLabelVal(e.target.value)} onBlur={saveLabel} onKeyDown={e=>e.key==="Enter"&&saveLabel()}
+                onClick={e=>e.stopPropagation()} autoFocus />
+            : <span style={S.dayTitle} onClick={e=>{e.stopPropagation();setEditLabel(true)}}>{day.label}</span>
+          }
+          <span style={S.exCount}>{day.exercises.length} exercises</span>
+        </div>
+        <div style={{display:"flex",gap:8}} onClick={e=>e.stopPropagation()}>
+          <button style={S.iconBtn} onClick={addEx}>+ Exercise</button>
+          <button style={{...S.iconBtn,color:"#ff6b6b"}} onClick={onDelete}>✕</button>
+        </div>
+      </div>
+      {open && <div style={S.exList}>
+        {day.exercises.length===0 && <Empty text="No exercises." small />}
+        {day.exercises.map((ex,i)=>(
+          <ExRow key={ex.id} ex={ex} index={i+1} color={color}
+            onChange={(f,v)=>updateEx(ex.id,f,v)} onDelete={()=>deleteEx(ex.id)} />
+        ))}
+      </div>}
+    </div>
+  );
+}
+
+function ExRow({ ex, index, color, onChange, onDelete }) {
+  return (
+    <div style={S.exRow}>
+      <span style={{...S.exNum,color}}>{index}</span>
+      <div style={S.exFields}>
+        <input style={{...S.exInput,flex:3}} value={ex.name} onChange={e=>onChange("name",e.target.value)} placeholder="Exercise name" />
+        <input style={{...S.exInput,flex:1}} value={ex.sets} onChange={e=>onChange("sets",e.target.value)} placeholder="Sets" />
+        <input style={{...S.exInput,flex:1.5}} value={ex.reps} onChange={e=>onChange("reps",e.target.value)} placeholder="Reps" />
+        <input style={{...S.exInput,flex:1}} value={ex.rest} onChange={e=>onChange("rest",e.target.value)} placeholder="Rest" />
+        <input style={{...S.exInput,flex:3}} value={ex.notes} onChange={e=>onChange("notes",e.target.value)} placeholder="Notes…" />
+      </div>
+      <button style={{...S.iconBtn,color:"#ff6b6b",padding:"4px 6px"}} onClick={onDelete}>✕</button>
+    </div>
+  );
+}
+
+// ── CLIENT APP ────────────────────────────────────────────────────────────────
 
 // ── CLIENT DASHBOARD ──────────────────────────────────────────────────────────
 function ClientDashboard({ client, assigned, nutrition, measurements, workoutLog, habits, habitLogs, checkins, onGoPrograms, onGoNutrition, onGoCheckin, onGoHabits }) {
@@ -1962,132 +3717,259 @@ function Empty({ text, small }) {
 }
 
 // ── STYLES ────────────────────────────────────────────────────────────────────
-const C = {
-  bg:"#080809", surface:"#0f0f12", surface2:"#16161b",
-  line:"rgba(255,255,255,.06)", line2:"rgba(255,255,255,.12)",
-  text:"#F0EDE6", muted:"#7a7a85", faint:"#4a4a55", accent:"#D4F53C",
-  glute:"#FF6B4A", quad:"#5BC0FF", ham:"#7BE0A0", abd:"#F4B740",
-  back:"#B88CFF", sh:"#FF9F45", cf:"#4FD1C5",
-};
 
-const S = {
-  app:{ boxSizing:"border-box", overflowX:"hidden", background:"#080809", backgroundImage:"radial-gradient(900px 500px at 85% -5%,rgba(255,107,74,.08),transparent 60%),radial-gradient(800px 500px at -10% 10%,rgba(203,251,69,.05),transparent 55%)", minHeight:"100vh", color:C.text, fontFamily:"'Manrope',system-ui,sans-serif" },
-  loginWrap:{ background:"radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0b0b0d 70%)", minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center" },
-  loginCard:{ background:C.surface, border:`1px solid ${C.line2}`, borderRadius:16, padding:48, width:"100%", maxWidth:480 },
-  loginLogo:{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, marginBottom:28 },
-  logoMark:{ width:44, height:44, background:"#FFFFFF", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:16, color:"#000", flexShrink:0 },
-  logoTitle:{ fontWeight:800, fontSize:18, color:C.text },
-  logoSub:{ fontSize:12, color:C.muted },
-  loginField:{ marginBottom:14 },
-  label:{ fontSize:11, fontWeight:600, color:C.muted, textTransform:"uppercase", letterSpacing:1, display:"block", marginBottom:5 },
-  input:{ width:"100%", background:"rgba(22,22,27,0.8)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:10, color:C.text, padding:"11px 14px", fontSize:14, outline:"none", boxSizing:"border-box", transition:"border-color .2s" },
-  btn:{ background:C.accent, color:"#080809", border:"none", borderRadius:10, padding:"11px 22px", fontWeight:800, fontSize:13, cursor:"pointer", fontFamily:"'Manrope',sans-serif", letterSpacing:"0.06em", textTransform:"uppercase", transition:"opacity .15s" },
-  btnSm:{ background:"#FFFFFF", color:"#000", border:"none", borderRadius:6, padding:"6px 14px", fontWeight:700, fontSize:12, cursor:"pointer" },
-  btnGhost:{ background:"transparent", color:C.muted, border:"1px solid rgba(255,255,255,0.1)", borderRadius:999, padding:"7px 18px", fontWeight:600, fontSize:11, cursor:"pointer", textTransform:"uppercase", letterSpacing:"0.08em", transition:"border-color .2s" },
-  error:{ color:"#ff6b6b", fontSize:13, marginBottom:8 },
-  loginHint:{ marginTop:20, fontSize:11, color:C.faint, lineHeight:1.7, textAlign:"center" },
 
-  topbar:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 20px", borderBottom:`1px solid ${C.line}`, background:C.surface, position:"sticky", top:0, zIndex:10, gap:12, flexWrap:"wrap" },
-  topbarLeft:{ display:"flex", alignItems:"center", gap:12 },
-  topbarRight:{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" },
-  topbarTitle:{ fontWeight:400, fontSize:22, color:C.text, fontFamily:"'Bebas Neue',sans-serif", letterSpacing:"0.06em" },
-  topbarSub:{ fontSize:11, color:C.muted, marginTop:1 },
-  backBtn:{ background:"transparent", color:C.muted, border:"none", cursor:"pointer", fontSize:13, padding:"6px 10px", borderRadius:6 },
 
-  content:{ padding:"20px 18px", maxWidth:920, margin:"0 auto" },
-  sectionHeader:{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14, marginTop:20 },
-  sectionTitle:{ fontWeight:700, fontSize:10, color:C.faint, textTransform:"uppercase", letterSpacing:"0.25em" },
+// ── COACH APP ────────────────────────────────────────────────────────────────
+function CoachApp({ clients, programs, nutrition, addClient, updateClient, removeClient, addProgram, updateProgram, assignProgram, deleteProgram, saveNutrition, loadNutrition, measurements, saveMeasurement, loadMeasurements, checkins, loadCheckins, habits, saveHabits, loadHabits, workoutLog, onLogout }) {
+  const [tab, setTab] = useState("clients");
+  const [activeClient, setActiveClient] = useState(null);
+  const [activeProgram, setActiveProgram] = useState(null);
+  const [showNewClient, setShowNewClient] = useState(false);
+  const [showNewProgram, setShowNewProgram] = useState(false);
 
-  grid:{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(min(220px,100%),1fr))", gap:12 },
-  card:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:12, padding:16, cursor:"pointer" },
-  cardAvatar:{ width:40, height:40, background:"#FFFFFF22", border:"1px solid #FFFFFF44", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700, fontSize:14, color:"#FFFFFF", marginBottom:10 },
-  cardName:{ fontWeight:800, fontSize:15, marginBottom:6, letterSpacing:"-0.02em", lineHeight:1.2 },
-  cardMeta:{ fontSize:12, color:C.muted, marginBottom:2 },
-  cardTag:{ fontSize:11, color:"#FFFFFF", marginTop:8, fontWeight:600 },
+  if (activeProgram) {
+    const prog = programs.find(p => p.id === activeProgram);
+    return <ProgramBuilder program={prog} onUpdate={updateProgram} onBack={()=>setActiveProgram(null)} />;
+  }
+  if (activeClient) {
+    const c = clients.find(c => c.id === activeClient);
+    return <ClientDetail client={c} programs={programs} clients={clients}
+      updateClient={updateClient} updateProgram={updateProgram} assignProgram={assignProgram}
+      nutrition={nutrition[c.id]} saveNutrition={(n)=>saveNutrition(c.id,n)} loadNutrition={()=>loadNutrition(c.id)}
+      measurements={measurements[c.id]||[]} saveMeasurement={(d)=>saveMeasurement(c.id,d)} loadMeasurements={()=>loadMeasurements(c.id)}
+      checkins={checkins[c.id]||[]} loadCheckins={()=>loadCheckins(c.id)}
+      habits={habits[c.id]||[]} saveHabits={(h)=>saveHabits(c.id,h)} loadHabits={()=>loadHabits(c.id)}
+      workoutLog={workoutLog}
+      onBack={()=>setActiveClient(null)} onOpenProgram={setActiveProgram} />;
+  }
+  return (
+    <div style={S.app}>
+      <Topbar title={<img src={LOGO_B64} alt="CoachedByNickhee" style={{height:28,objectFit:"contain"}} />} subtitle="" onLogout={onLogout}
+        right={<div style={{display:"flex",gap:8}}>
+          <TabBtn label="Clients" active={tab==="clients"} onClick={()=>setTab("clients")} />
+          <TabBtn label="Programs" active={tab==="programs"} onClick={()=>setTab("programs")} />
+        </div>} />
+      <div style={S.content}>
+        {tab==="clients" && <>
+          <SectionHeader title={`Clients (${clients.length})`} action={<button style={S.btnSm} onClick={()=>setShowNewClient(true)}>+ New Client</button>} />
+          <div style={S.grid}>{clients.map(c=><ClientCard key={c.id} client={c} programs={programs} onClick={()=>setActiveClient(c.id)} onDelete={id=>{if(window.confirm("Remove "+c.name+"?"))removeClient(id);}} />)}</div>
+        </>}
+        {tab==="programs" && <>
+          <SectionHeader title={`Programs (${programs.length})`} action={<button style={S.btnSm} onClick={()=>setShowNewProgram(true)}>+ New Program</button>} />
+          <div style={S.grid}>{programs.map(p=><ProgramCard key={p.id} program={p} clients={clients} onClick={()=>setActiveProgram(p.id)} onDelete={deleteProgram} />)}</div>
+        </>}
+      </div>
+      {showNewClient && <NewClientModal onClose={()=>setShowNewClient(false)}
+        onSave={c=>{addClient(c);setShowNewClient(false);}} />}
+      {showNewProgram && <NewProgramModal onClose={()=>setShowNewProgram(false)}
+        onSave={p=>{addProgram(p);setShowNewProgram(false);}} />}
+    </div>
+  );
+}
 
-  statsRow:{ display:"flex", gap:8, marginBottom:4, flexWrap:"wrap" },
-  statBox:{ flex:1, background:"rgba(15,15,18,0.8)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:14, padding:"16px 8px", textAlign:"center" },
-  statVal:{ fontSize:18, fontWeight:800, color:"#FFFFFF" },
-  statLabel:{ fontSize:9, color:C.faint, marginTop:2, textTransform:"uppercase", letterSpacing:"0.12em", fontWeight:700 },
+// ── CLIENT DETAIL (coach view) ────────────────────────────────────────────────
+function ClientDetail({ client, programs, clients, updateClient, updateProgram, assignProgram, nutrition, saveNutrition, loadNutrition, measurements, saveMeasurement, loadMeasurements, checkins, loadCheckins, habits, saveHabits, loadHabits, workoutLog, onBack, onOpenProgram }) {
+  const [tab, setTab] = useState("programs");
+  const [showEdit, setShowEdit] = useState(false);
+  const assigned = programs.filter(p=>p.assignedTo.includes(client.id));
+  const unassigned = programs.filter(p=>!p.assignedTo.includes(client.id));
 
-  programDot:{ width:12, height:12, borderRadius:"50%", marginBottom:6 },
-  progCard:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:16, padding:18, cursor:"pointer", transition:"all .2s" },
-  progAccent:{ height:3, borderRadius:0, marginBottom:14, marginLeft:-16, marginRight:-16, marginTop:-16, width:"calc(100% + 32px)" },
-  progName:{ fontWeight:400, fontSize:22, marginBottom:6, fontFamily:"'Bebas Neue',sans-serif", letterSpacing:"0.04em", lineHeight:1 },
-  progTag:{ fontSize:12, color:C.muted, marginBottom:4 },
-  progDays:{ fontSize:12, color:C.faint },
+  const doAssignProgram = (pid) => {
+    assignProgram(pid, client.id);
+  };
 
-  dayGrid:{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(min(150px,100%),1fr))", gap:12 },
-  dayTile:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:16, padding:16, cursor:"pointer", transition:"border-color .2s" },
-  dayTileAccent:{ height:3, borderRadius:2, marginBottom:12 },
-  dayTileName:{ fontWeight:400, fontSize:20, marginBottom:6, fontFamily:"'Bebas Neue',sans-serif", letterSpacing:"0.04em", lineHeight:1 },
-  dayTileCount:{ fontSize:12, color:C.muted },
+  // Collect all exercises across all assigned programs for PB lookup
+  const allExercises = assigned.flatMap(p=>p.days.flatMap(d=>d.exercises));
+  const pbs = workoutLog.getPBs(client.id, allExercises);
 
-  dayBlock:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:16, marginBottom:12, overflow:"hidden" },
-  dayHeader:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 14px", cursor:"pointer" },
-  dayLeft:{ display:"flex", alignItems:"center", gap:6, flex:1 },
-  dayTitle:{ fontWeight:800, fontSize:14, cursor:"text", letterSpacing:"-0.01em" },
-  exCount:{ fontSize:11, color:C.muted, marginLeft:6 },
-  iconBtn:{ background:"transparent", color:C.muted, border:"none", cursor:"pointer", fontSize:12, padding:"4px 10px", borderRadius:6, fontWeight:600 },
-  exList:{ padding:"0 14px 14px" },
-  exRow:{ display:"flex", alignItems:"center", gap:8, marginBottom:8 },
-  exNum:{ fontWeight:800, fontSize:13, width:18, flexShrink:0 },
-  exFields:{ display:"flex", gap:6, flex:1, flexWrap:"wrap", minWidth:0 },
-  exInput:{ background:C.surface2, border:`1px solid ${C.line2}`, borderRadius:6, color:C.text, padding:"6px 8px", fontSize:12, minWidth:60 },
+  return (
+    <div style={S.app}>
+      <Topbar title={client.name} subtitle={client.goal} onLogout={null}
+        left={<button style={S.backBtn} onClick={onBack}>← Back</button>}
+        right={<div style={{display:"flex",gap:8}}>
+          <button style={S.btnGhost} onClick={()=>setShowEdit(true)}>✏️ Edit</button>
+          <TabBtn label="Programs" active={tab==="programs"} onClick={()=>setTab("programs")} />
+          <TabBtn label="Nutrition" active={tab==="nutrition"} onClick={()=>setTab("nutrition")} />
+          <TabBtn label="Measurements" active={tab==="measurements"} onClick={()=>{setTab("measurements");loadMeasurements();}} />
+          <TabBtn label="Check-ins" active={tab==="checkins"} onClick={()=>{setTab("checkins");loadCheckins();}} />
+          <TabBtn label="Habits" active={tab==="habits"} onClick={()=>{setTab("habits");loadHabits();}} />
+          <TabBtn label="Log History" active={tab==="history"} onClick={()=>setTab("history")} />
+        </div>} />
+      <div style={S.content}>
+        <div style={S.statsRow}>
+          <Stat label="Age" value={client.age+"y"} /><Stat label="Weight" value={client.weight+"kg"} />
+          <Stat label="Height" value={client.height+"cm"} /><Stat label="Programs" value={assigned.length} />
+        </div>
 
-  workoutCard:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:"14px 16px", marginBottom:10, display:"flex", alignItems:"flex-start", gap:12, transition:"opacity .2s" },
-  wcNum:{ width:24, height:24, background:"#FFFFFF22", borderRadius:6, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:"#FFFFFF", flexShrink:0, marginTop:2 },
-  wcName:{ fontWeight:800, fontSize:15, marginBottom:3, letterSpacing:"-0.01em" },
-  wcMeta:{ fontSize:12, color:C.muted },
-  wcNotes:{ fontSize:11, color:C.faint, marginTop:4, fontStyle:"italic" },
-  checkBtn:{ border:"1px solid #FFFFFF", borderRadius:8, width:36, height:36, cursor:"pointer", fontWeight:700, fontSize:16, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" },
+        {tab==="programs" && <>
+          <SectionHeader title="Assigned Programs" />
+          {assigned.length===0 && <Empty text="No programs assigned yet." />}
+          <div style={S.grid}>{assigned.map(p=>(
+            <div key={p.id} style={{position:"relative"}}>
+              <ProgramCard program={p} clients={clients} onClick={()=>onOpenProgram(p.id)} />
+              <button style={{position:"absolute",top:10,right:10,background:"transparent",border:"1px solid #ff6b6b",color:"#ff6b6b",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:11,fontWeight:700,zIndex:2}}
+                onClick={e=>{e.stopPropagation();if(window.confirm("Remove this program from "+client.name+"?"))updateProgram({...p,assignedTo:p.assignedTo.filter(id=>id!==client.id)});}}>✕ Remove</button>
+            </div>
+          ))}</div>
+          {unassigned.length>0 && <>
+            <SectionHeader title="Assign a Program" />
+            <div style={S.grid}>{unassigned.map(p=>(
+              <div key={p.id} style={S.assignCard}>
+                <div style={{...S.programDot,background:p.color}} />
+                <div style={S.assignName}>{p.name}</div>
+                <button style={S.btnSm} onClick={()=>doAssignProgram(p.id)}>Assign →</button>
+              </div>
+            ))}</div>
+          </>}
+        </>}
 
-  setLogWrap:{ borderTop:"1px solid rgba(255,255,255,.07)", paddingTop:10, marginTop:4 },
-  setLogHeader:{ display:"flex", alignItems:"center", gap:8, marginBottom:6, fontSize:10, fontWeight:700, color:"#65656e", textTransform:"uppercase", letterSpacing:0.8, padding:"0 2px" },
-  setLogRow:{ display:"flex", alignItems:"center", gap:8, marginBottom:6, borderRadius:6, padding:"4px 2px", transition:"background .2s" },
-  setNum:{ flex:"0 0 36px", fontSize:12, fontWeight:700, textAlign:"center" },
-  setInput:{ flex:1, background:"rgba(22,22,27,0.8)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:10, color:C.text, padding:"9px 8px", fontSize:14, textAlign:"center", outline:"none", minWidth:0, transition:"border-color .2s", fontFamily:"'Manrope',sans-serif", fontWeight:700 },
+        {tab==="nutrition" && <NutritionAssigner nutrition={nutrition} onSave={saveNutrition} onMount={loadNutrition} />}
 
-  progressBar:{ height:3, background:"rgba(255,255,255,0.06)", borderRadius:2, marginBottom:20, overflow:"hidden" },
-  progressFill:{ height:"100%", background:"#FFFFFF", borderRadius:2, transition:"width .4s" },
-  doneMsg:{ textAlign:"center", padding:"24px 0", color:"#FFFFFF", fontWeight:700, fontSize:16 },
+        {tab==="history" && <CoachLogHistory clientId={client.id} programs={assigned} workoutLog={workoutLog} pbs={pbs} />}
+        {tab==="measurements" && <MeasurementsPanel measurements={measurements} onSave={saveMeasurement} clientName={client.name} />}
+        {tab==="checkins" && <CoachCheckinView checkins={checkins} clientName={client.name} />}
+        {tab==="habits" && <HabitsEditor habits={habits} onSave={saveHabits} clientName={client.name} />}
+      </div>
+      {showEdit && <EditClientModal client={client} onClose={()=>setShowEdit(false)}
+        onSave={updated=>{updateClient(client.id,updated);setShowEdit(false);}} />}
+    </div>
+  );
+}
 
-  pbBadge:{ fontSize:10, background:"#FFFFFF20", color:"#FFFFFF", border:"1px solid #FFFFFF40", borderRadius:4, padding:"2px 6px", fontWeight:700 },
-  prevPB:{ fontSize:10, color:C.faint, fontWeight:600 },
-  pbRow:{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:16 },
-  pbChip:{ background:"#FFFFFF10", border:"1px solid #FFFFFF30", borderRadius:8, padding:"8px 12px", textAlign:"center" },
-  pbVal:{ fontSize:22, fontWeight:400, color:C.accent, fontFamily:"'Bebas Neue',sans-serif" },
-  pbName:{ fontSize:10, color:C.muted, marginTop:2, maxWidth:100, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" },
-  pbLabel:{ fontSize:9, color:"#FFFFFF", fontWeight:700, marginTop:2 },
+// ── EDIT CLIENT MODAL ─────────────────────────────────────────────────────────
+function EditClientModal({ client, onClose, onSave }) {
+  const [form, setForm] = useState({name:client.name,email:client.email,age:client.age,weight:client.weight,height:client.height,goal:client.goal});
+  const f=(k,v)=>setForm(p=>({...p,[k]:v}));
+  return (
+    <Modal title="Edit Client" onClose={onClose} onSave={()=>onSave(form)}>
+      <Field label="Name"><input style={S.input} value={form.name} onChange={e=>f("name",e.target.value)} /></Field>
+      <Field label="Email"><input style={S.input} value={form.email} onChange={e=>f("email",e.target.value)} type="email" /></Field>
+      <div style={{display:"flex",gap:8}}>
+        <Field label="Age"><input style={S.input} value={form.age} onChange={e=>f("age",+e.target.value)} type="number" /></Field>
+        <Field label="Weight (kg)"><input style={S.input} value={form.weight} onChange={e=>f("weight",+e.target.value)} type="number" /></Field>
+        <Field label="Height (cm)"><input style={S.input} value={form.height} onChange={e=>f("height",+e.target.value)} type="number" /></Field>
+      </div>
+      <Field label="Goal"><input style={S.input} value={form.goal} onChange={e=>f("goal",e.target.value)} /></Field>
+    </Modal>
+  );
+}
 
-  historySession:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:"14px 16px", marginBottom:10 },
-  historyDate:{ fontSize:11, fontWeight:700, color:"#FFFFFF", marginBottom:10, textTransform:"uppercase", letterSpacing:0.5 },
-  historyEx:{ marginBottom:10 },
-  historyExName:{ fontSize:13, fontWeight:700, color:C.text },
-  historySetChip:{ background:C.surface2, border:`1px solid ${C.line}`, borderRadius:999, padding:"3px 10px", fontSize:11, color:C.muted, fontWeight:700 },
+// ── COACH LOG HISTORY ────────────────────────────────────────────────────────
+function CoachLogHistory({ clientId, programs, workoutLog, pbs }) {
+  const [selProg, setSelProg] = useState(programs[0]?.id || null);
+  const [selDay, setSelDay] = useState(null);
+  const prog = programs.find(p=>p.id===selProg);
 
-  assignCard:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:14, padding:14, display:"flex", alignItems:"center", gap:10 },
-  assignName:{ flex:1, fontSize:13, fontWeight:600 },
+  useEffect(()=>{ setSelDay(null); },[selProg]);
 
-  macroGrid:{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(min(120px,100%),1fr))", gap:10, marginBottom:16 },
-  macroBox:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:"12px 14px" },
-  macroLabel:{ fontSize:9, color:C.faint, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.15em", marginBottom:6 },
+  const day = prog?.days.find(d=>d.id===selDay);
+  const history = selDay ? workoutLog.getHistory(clientId, selDay) : [];
+  useEffect(()=>{ if(selDay) workoutLog.loadHistory(clientId, selDay); },[selDay]);
 
-  mealEditorCard:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:14, marginBottom:10 },
-  mealViewCard:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:14, marginBottom:10 },
-  mealName:{ fontWeight:800, fontSize:15, marginBottom:4, letterSpacing:"-0.01em" },
-  mealDesc:{ fontSize:13, color:C.muted, marginBottom:8, lineHeight:1.5 },
-  mealMacros:{ display:"flex", gap:12, fontSize:12, fontWeight:600 },
-  mealTotal:{ fontSize:11, color:C.faint, textAlign:"center", padding:"12px 0", borderTop:`1px solid ${C.line}`, marginTop:8 },
-  coachNote:{ background:"#FFFFFF10", border:"1px solid #FFFFFF20", borderRadius:8, padding:"10px 14px", fontSize:13, color:C.muted, marginBottom:16, lineHeight:1.5 },
+  if (programs.length===0) return <Empty text="No programs assigned — assign a program first." />;
 
-  overlay:{ position:"fixed", inset:0, background:"rgba(0,0,0,.85)", backdropFilter:"blur(8px)", WebkitBackdropFilter:"blur(8px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:100 },
-  modal:{ background:"#0f0f12", border:"1px solid rgba(255,255,255,0.1)", borderRadius:20, width:"calc(100% - 32px)", maxWidth:440, maxHeight:"90vh", overflow:"auto", margin:"0 auto", boxShadow:"0 40px 80px rgba(0,0,0,0.8)" },
-  modalHeader:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 20px", borderBottom:`1px solid ${C.line}` },
-  modalTitle:{ fontWeight:700, fontSize:15 },
-  modalBody:{ padding:"20px 20px 0" },
-  modalFooter:{ display:"flex", justifyContent:"flex-end", gap:8, padding:20 },
-  empty:{ color:C.faint, textAlign:"center", padding:"24px 0" },
-  tabBtn:{ background:"transparent", color:C.faint, border:"1px solid rgba(255,255,255,0.08)", borderRadius:999, padding:"7px 14px", cursor:"pointer", fontSize:10, fontWeight:700, whiteSpace:"nowrap", textTransform:"uppercase", letterSpacing:"0.1em", transition:"all .2s" },
-  tabBtnActive:{ background:"#FFFFFF20", color:"#FFFFFF", borderColor:"#FFFFFF40" },
-};
+  return (
+    <div>
+      <SectionHeader title="Workout Log History" />
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>
+        {programs.map(p=><button key={p.id} style={{...S.tabBtn,...(selProg===p.id?S.tabBtnActive:{})}} onClick={()=>setSelProg(p.id)}>{p.name}</button>)}
+      </div>
+      {prog && <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>
+        {prog.days.map((d,i)=>(
+          <button key={d.id} style={{...S.tabBtn,...(selDay===d.id?{...S.tabBtnActive,borderColor:DAY_COLORS[i%DAY_COLORS.length],color:DAY_COLORS[i%DAY_COLORS.length]}:{})}}
+            onClick={()=>setSelDay(selDay===d.id?null:d.id)}>{d.label}</button>
+        ))}
+      </div>}
+      {day && <>
+        {/* Personal Bests for this day */}
+        <div style={S.pbRow}>
+          {day.exercises.filter(ex=>pbs[ex.id]).map(ex=>(
+            <div key={ex.id} style={S.pbChip}>
+              <div style={S.pbVal}>{pbs[ex.id]}kg</div>
+              <div style={S.pbName}>{ex.name}</div>
+              <div style={S.pbLabel}>PB</div>
+            </div>
+          ))}
+        </div>
+        {history.length===0 && <Empty text="No sessions logged yet for this day." />}
+        {[...history].reverse().map((session,si)=>(
+          <div key={si} style={S.historySession}>
+            <div style={S.historyDate}>{fmt(session.date)}</div>
+            {day.exercises.map(ex=>{
+              const sets = session.sets[ex.id]||[];
+              const doneSets = sets.filter(s=>s.done);
+              if(doneSets.length===0) return null;
+              return (
+                <div key={ex.id} style={S.historyEx}>
+                  <div style={S.historyExName}>{ex.name}</div>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:4}}>
+                    {doneSets.map((s,i)=>(
+                      <div key={i} style={S.historySetChip}>{s.weight||"–"}kg × {s.reps||"–"}</div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </>}
+      {!selDay && prog && <Empty text="Select a training day above to view session history." />}
+    </div>
+  );
+}
+
+// ── NUTRITION EDITOR (coach) ──────────────────────────────────────────────────
+function NutritionEditor({ nutrition, onSave, client, onMount }) {
+  const blank = { calories:0, protein:0, carbs:0, fat:0, notes:"", meals:[] };
+  const [form, setForm] = useState(nutrition || blank);
+  useEffect(()=>{ if(onMount) onMount(); },[]);
+  const f = (k,v) => setForm(p=>({...p,[k]:v}));
+
+  const addMeal = () => setForm(p=>({...p,meals:[...p.meals,{id:uid(),name:"New Meal",description:"",protein:0,carbs:0,fat:0}]}));
+  const updateMeal = (id,k,v) => setForm(p=>({...p,meals:p.meals.map(m=>m.id===id?{...m,[k]:v}:m)}));
+  const deleteMeal = (id) => setForm(p=>({...p,meals:p.meals.filter(m=>m.id!==id)}));
+
+  return (
+    <div>
+      <SectionHeader title="Nutrition Plan" action={<button style={S.btn} onClick={()=>onSave(form)}>Save Plan</button>} />
+      <div style={S.macroGrid}>
+        {[["Calories","calories","kcal"],["Protein","protein","g"],["Carbs","carbs","g"],["Fat","fat","g"]].map(([label,key,unit])=>(
+          <div key={key} style={S.macroBox}>
+            <div style={S.macroLabel}>{label}</div>
+            <div style={{display:"flex",alignItems:"baseline",gap:4}}>
+              <input style={{...S.input,fontSize:22,fontWeight:800,color:"#FFFFFF",background:"transparent",border:"none",width:80,padding:0}}
+                type="number" value={form[key]} onChange={e=>f(key,+e.target.value)} />
+              <span style={{color:C.muted,fontSize:12}}>{unit}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <Field label="Coach Notes">
+        <textarea style={{...S.input,minHeight:72,resize:"vertical"}} value={form.notes} onChange={e=>f("notes",e.target.value)} />
+      </Field>
+      <SectionHeader title="Meal Plan" action={<button style={S.btnSm} onClick={addMeal}>+ Meal</button>} />
+      {form.meals.length===0 && <Empty text="No meals added yet." />}
+      {form.meals.map(m=>(
+        <div key={m.id} style={S.mealEditorCard}>
+          <div style={{display:"flex",gap:8,marginBottom:8}}>
+            <input style={{...S.input,flex:2,fontWeight:700}} value={m.name} onChange={e=>updateMeal(m.id,"name",e.target.value)} placeholder="Meal name" />
+            <button style={{...S.iconBtn,color:"#ff6b6b"}} onClick={()=>deleteMeal(m.id)}>✕</button>
+          </div>
+          <textarea style={{...S.input,minHeight:56,resize:"vertical",marginBottom:8}} value={m.description}
+            onChange={e=>updateMeal(m.id,"description",e.target.value)} placeholder="Description…" />
+          <div style={{display:"flex",gap:8}}>
+            {[["P","protein"],["C","carbs"],["F","fat"]].map(([l,k])=>(
+              <div key={k} style={{flex:1}}>
+                <div style={{fontSize:10,color:C.muted,marginBottom:3}}>{l} (g)</div>
+                <input style={{...S.input,textAlign:"center"}} type="number" value={m[k]} onChange={e=>updateMeal(m.id,k,+e.target.value)} />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── App Root ─────────────────────────────────────────────────────────────────
