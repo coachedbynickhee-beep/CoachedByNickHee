@@ -118,6 +118,7 @@ export default function App() {
   const [clients, setClients] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [nutrition, setNutrition] = useState({});
+  const [measurements, setMeasurements] = useState({});
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const workoutLog = useWorkoutLog();
@@ -217,12 +218,28 @@ export default function App() {
     } catch(e) { console.error("Error loading nutrition:", e); }
   };
 
+  const saveMeasurement = async (clientId, data) => {
+    try {
+      await sb.post("measurements", {...data, client_id: clientId});
+      setMeasurements(prev => ({...prev, [clientId]: [...(prev[clientId]||[]), data]}));
+    } catch(e) { console.error("Error saving measurement:", e); }
+  };
+
+  const loadMeasurements = async (clientId) => {
+    if (measurements[clientId]) return;
+    try {
+      const result = await sb.get("measurements", `?client_id=eq.${clientId}&order=date.desc`);
+      if (result) setMeasurements(prev => ({...prev, [clientId]: result}));
+    } catch(e) { console.error("Error loading measurements:", e); }
+  };
+
   if (!user) return <Login onLogin={login} />;
   if (user.role === "coach") return (
     <CoachApp clients={clients} programs={programs} nutrition={nutrition}
       addClient={addClient} updateClient={updateClient} removeClient={removeClient}
       addProgram={addProgram} updateProgram={updateProgram} assignProgram={assignProgram}
       saveNutrition={saveNutrition} loadNutrition={loadNutrition}
+      measurements={measurements} saveMeasurement={saveMeasurement} loadMeasurements={loadMeasurements}
       workoutLog={workoutLog} onLogout={logout} />
   );
   const clientData = clients.find(c => c.id === user.id);
@@ -286,6 +303,7 @@ function Login({ onLogin }) {
           pointerEvents:"none",
         }} />
 
+
         {/* Content */}
         <div style={{position:"relative", zIndex:2}}>
           {/* Kicker */}
@@ -328,20 +346,20 @@ function Login({ onLogin }) {
       <div style={{
         flex:"0 0 45%", display:"flex", flexDirection:"column",
         justifyContent:"center", padding:"48px",
-        borderLeft:"1px solid rgba(255,255,255,0.06)",
+        
         background:"#0d0d0f",
       }}>
         {/* Logo */}
-        <div style={{marginBottom:40}}>
-          <img src={LOGO_B64} alt="CoachedByNickhee" style={{width:"100%", maxWidth:280, objectFit:"contain"}} />
+        <div style={{marginBottom:44}}>
+          <img src={LOGO_B64} alt="CoachedByNickhee" style={{width:"100%", maxWidth:"100%", objectFit:"contain", display:"block", border:"none", outline:"none", background:"transparent"}} />
         </div>
 
         {/* Welcome text */}
         <div style={{marginBottom:32}}>
-          <div style={{fontFamily:"'Bebas Neue',sans-serif", fontSize:32, color:"#ECEAE3", letterSpacing:"0.05em", marginBottom:6}}>
+          <div style={{fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:"#ECEAE3", letterSpacing:"0.05em", marginBottom:6}}>
             Welcome Back
           </div>
-          <div style={{fontSize:13, color:"#8f8f99"}}>Sign in to access your coaching dashboard.</div>
+          <div style={{fontSize:13, color:"#8f8f99", lineHeight:1.6}}>Sign in to access your personal coaching dashboard.</div>
         </div>
 
         {/* Form */}
@@ -380,7 +398,7 @@ function Login({ onLogin }) {
 }
 
 // ── COACH APP ────────────────────────────────────────────────────────────────
-function CoachApp({ clients, programs, nutrition, addClient, updateClient, removeClient, addProgram, updateProgram, assignProgram, saveNutrition, loadNutrition, workoutLog, onLogout }) {
+function CoachApp({ clients, programs, nutrition, addClient, updateClient, removeClient, addProgram, updateProgram, assignProgram, saveNutrition, loadNutrition, measurements, saveMeasurement, loadMeasurements, workoutLog, onLogout }) {
   const [tab, setTab] = useState("clients");
   const [activeClient, setActiveClient] = useState(null);
   const [activeProgram, setActiveProgram] = useState(null);
@@ -396,6 +414,7 @@ function CoachApp({ clients, programs, nutrition, addClient, updateClient, remov
     return <ClientDetail client={c} programs={programs} clients={clients}
       updateClient={updateClient} updateProgram={updateProgram} assignProgram={assignProgram}
       nutrition={nutrition[c.id]} saveNutrition={(n)=>saveNutrition(c.id,n)} loadNutrition={()=>loadNutrition(c.id)}
+      measurements={measurements[c.id]||[]} saveMeasurement={(d)=>saveMeasurement(c.id,d)} loadMeasurements={()=>loadMeasurements(c.id)}
       workoutLog={workoutLog}
       onBack={()=>setActiveClient(null)} onOpenProgram={setActiveProgram} />;
   }
@@ -425,7 +444,7 @@ function CoachApp({ clients, programs, nutrition, addClient, updateClient, remov
 }
 
 // ── CLIENT DETAIL (coach view) ────────────────────────────────────────────────
-function ClientDetail({ client, programs, clients, updateClient, updateProgram, assignProgram, nutrition, saveNutrition, loadNutrition, workoutLog, onBack, onOpenProgram }) {
+function ClientDetail({ client, programs, clients, updateClient, updateProgram, assignProgram, nutrition, saveNutrition, loadNutrition, measurements, saveMeasurement, loadMeasurements, workoutLog, onBack, onOpenProgram }) {
   const [tab, setTab] = useState("programs");
   const [showEdit, setShowEdit] = useState(false);
   const assigned = programs.filter(p=>p.assignedTo.includes(client.id));
@@ -448,6 +467,7 @@ function ClientDetail({ client, programs, clients, updateClient, updateProgram, 
           <TabBtn label="Programs" active={tab==="programs"} onClick={()=>setTab("programs")} />
           <TabBtn label="Nutrition" active={tab==="nutrition"} onClick={()=>setTab("nutrition")} />
           <TabBtn label="Log History" active={tab==="history"} onClick={()=>setTab("history")} />
+          <TabBtn label="Measurements" active={tab==="measurements"} onClick={()=>{setTab("measurements");loadMeasurements();}} />
         </div>} />
       <div style={S.content}>
         <div style={S.statsRow}>
@@ -471,9 +491,10 @@ function ClientDetail({ client, programs, clients, updateClient, updateProgram, 
           </>}
         </>}
 
-        {tab==="nutrition" && <NutritionEditor nutrition={nutrition} onSave={saveNutrition} client={client} onMount={loadNutrition} />}
+        {tab==="nutrition" && <NutritionAssigner nutrition={nutrition} onSave={saveNutrition} onMount={loadNutrition} />}
 
         {tab==="history" && <CoachLogHistory clientId={client.id} programs={assigned} workoutLog={workoutLog} pbs={pbs} />}
+        {tab==="measurements" && <MeasurementsPanel measurements={measurements} onSave={saveMeasurement} clientName={client.name} />}
       </div>
       {showEdit && <EditClientModal client={client} onClose={()=>setShowEdit(false)}
         onSave={updated=>{updateClient(client.id,updated);setShowEdit(false);}} />}
@@ -1061,6 +1082,189 @@ function Modal({ title, onClose, onSave, children }) {
           <button style={S.btn} onClick={onSave}>Save →</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── NUTRITION ASSIGNER (coach assigns plan to client) ────────────────────────
+function NutritionAssigner({ nutrition, onSave, onMount }) {
+  useEffect(()=>{ if(onMount) onMount(); },[]);
+  const blank = { calories:0, protein:0, carbs:0, fat:0, notes:"", meals:[] };
+  const [form, setForm] = useState(nutrition || blank);
+  const [saved, setSaved] = useState(false);
+  const f = (k,v) => setForm(p=>({...p,[k]:v}));
+  useEffect(()=>{ if(nutrition) setForm(nutrition); },[nutrition]);
+
+  const addMeal = () => setForm(p=>({...p,meals:[...p.meals,{id:uid(),name:"New Meal",description:"",protein:0,carbs:0,fat:0}]}));
+  const updateMeal = (id,k,v) => setForm(p=>({...p,meals:p.meals.map(m=>m.id===id?{...m,[k]:v}:m)}));
+  const deleteMeal = (id) => setForm(p=>({...p,meals:p.meals.filter(m=>m.id!==id)}));
+
+  const handleSave = () => {
+    onSave(form);
+    setSaved(true);
+    setTimeout(()=>setSaved(false), 2000);
+  };
+
+  return (
+    <div>
+      <SectionHeader title="Nutrition Plan" action={
+        <button style={{...S.btn,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+          {saved ? "✓ Saved!" : "Assign Plan →"}
+        </button>
+      } />
+      <div style={S.macroGrid}>
+        {[["Calories","calories","kcal"],["Protein","protein","g"],["Carbs","carbs","g"],["Fat","fat","g"]].map(([label,key,unit])=>(
+          <div key={key} style={S.macroBox}>
+            <div style={S.macroLabel}>{label}</div>
+            <div style={{display:"flex",alignItems:"baseline",gap:4}}>
+              <input style={{...S.input,fontSize:22,fontWeight:800,color:C.accent,background:"transparent",border:"none",width:80,padding:0}}
+                type="number" value={form[key]} onChange={e=>f(key,+e.target.value)} />
+              <span style={{color:C.muted,fontSize:12}}>{unit}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <Field label="Coach Notes">
+        <textarea style={{...S.input,minHeight:72,resize:"vertical"}} value={form.notes} onChange={e=>f("notes",e.target.value)}
+          placeholder="e.g. Small surplus for lean gain. Carbs concentrated around training." />
+      </Field>
+      <SectionHeader title="Meal Plan" action={<button style={S.btnSm} onClick={addMeal}>+ Meal</button>} />
+      {form.meals.length===0 && <Empty text="No meals added yet. Click '+ Meal' to build the plan." />}
+      {form.meals.map(m=>(
+        <div key={m.id} style={S.mealEditorCard}>
+          <div style={{display:"flex",gap:8,marginBottom:8}}>
+            <input style={{...S.input,flex:2,fontWeight:700}} value={m.name} onChange={e=>updateMeal(m.id,"name",e.target.value)} placeholder="e.g. Breakfast" />
+            <button style={{...S.iconBtn,color:"#ff6b6b"}} onClick={()=>deleteMeal(m.id)}>✕</button>
+          </div>
+          <textarea style={{...S.input,minHeight:56,resize:"vertical",marginBottom:8}} value={m.description}
+            onChange={e=>updateMeal(m.id,"description",e.target.value)} placeholder="Describe foods and portions…" />
+          <div style={{display:"flex",gap:8}}>
+            {[["P (g)","protein"],["C (g)","carbs"],["F (g)","fat"]].map(([l,k])=>(
+              <div key={k} style={{flex:1}}>
+                <div style={{fontSize:10,color:C.muted,marginBottom:3,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em"}}>{l}</div>
+                <input style={{...S.input,textAlign:"center"}} type="number" value={m[k]} onChange={e=>updateMeal(m.id,k,+e.target.value)} />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── MEASUREMENTS PANEL ────────────────────────────────────────────────────────
+const MEASUREMENT_FIELDS = [
+  { key:"date", label:"Date", type:"date" },
+  { key:"age", label:"Age", type:"number", unit:"yrs" },
+  { key:"weight", label:"Weight", type:"number", unit:"kg" },
+  { key:"height", label:"Height", type:"number", unit:"cm" },
+  { key:"neck", label:"Neck", type:"number", unit:"cm" },
+  { key:"shoulders", label:"Shoulders", type:"number", unit:"cm" },
+  { key:"arms", label:"Arms", type:"number", unit:"cm" },
+  { key:"waist", label:"Waist", type:"number", unit:"cm" },
+  { key:"hips", label:"Hips", type:"number", unit:"cm" },
+  { key:"mid_thigh", label:"Mid-Thigh", type:"number", unit:"cm" },
+  { key:"calves", label:"Calves", type:"number", unit:"cm" },
+  { key:"bodyfat", label:"Body Fat", type:"number", unit:"%" },
+];
+
+function MeasurementsPanel({ measurements, onSave, clientName }) {
+  const blank = MEASUREMENT_FIELDS.reduce((acc,f)=>({...acc,[f.key]:f.type==="date"?new Date().toISOString().slice(0,10):""}),{});
+  const [form, setForm] = useState(blank);
+  const [showForm, setShowForm] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const f = (k,v) => setForm(p=>({...p,[k]:v}));
+
+  const handleSave = () => {
+    const entry = {...form};
+    MEASUREMENT_FIELDS.forEach(field => { if(field.type==="number" && entry[field.key]) entry[field.key] = +entry[field.key]; });
+    onSave(entry);
+    setSaved(true);
+    setForm(blank);
+    setTimeout(()=>{ setSaved(false); setShowForm(false); }, 1500);
+  };
+
+  const sorted = [...measurements].sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  return (
+    <div>
+      <SectionHeader title={`Measurements (${measurements.length})`}
+        action={<button style={S.btnSm} onClick={()=>setShowForm(s=>!s)}>{showForm?"Cancel":"+ Add Entry"}</button>} />
+
+      {showForm && (
+        <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:20,marginBottom:20}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:12,marginBottom:16}}>
+            {MEASUREMENT_FIELDS.map(field=>(
+              <div key={field.key}>
+                <div style={{fontSize:10,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:5}}>
+                  {field.label}{field.unit?` (${field.unit})`:""}
+                </div>
+                <input style={{...S.input,padding:"8px 10px"}} type={field.type}
+                  value={form[field.key]} onChange={e=>f(field.key,e.target.value)} />
+              </div>
+            ))}
+          </div>
+          <button style={{...S.btn,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+            {saved?"✓ Saved!":"Save Measurements →"}
+          </button>
+        </div>
+      )}
+
+      {sorted.length===0 && !showForm && <Empty text="No measurements recorded yet. Click '+ Add Entry' to start tracking." />}
+
+      {sorted.length>0 && (
+        <>
+          {/* Latest snapshot */}
+          {sorted[0] && (
+            <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:20,marginBottom:16}}>
+              <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:14}}>
+                Latest — {sorted[0].date}
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(110px,1fr))",gap:12}}>
+                {MEASUREMENT_FIELDS.filter(f=>f.key!=="date"&&sorted[0][f.key]).map(field=>(
+                  <div key={field.key} style={{textAlign:"center",background:C.surface2,borderRadius:10,padding:"12px 8px"}}>
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,color:C.text,lineHeight:1}}>
+                      {sorted[0][field.key]}<span style={{fontSize:14,color:C.muted}}>{field.unit}</span>
+                    </div>
+                    <div style={{fontSize:9,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginTop:4}}>{field.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* History table */}
+          {sorted.length>1 && (
+            <>
+              <SectionHeader title="History" />
+              <div style={{overflowX:"auto"}}>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                  <thead>
+                    <tr style={{borderBottom:`1px solid ${C.line}`}}>
+                      {MEASUREMENT_FIELDS.map(f=>(
+                        <th key={f.key} style={{padding:"8px 10px",textAlign:"left",color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",fontSize:9,whiteSpace:"nowrap"}}>
+                          {f.label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sorted.map((row,i)=>(
+                      <tr key={i} style={{borderBottom:`1px solid ${C.line}`,opacity:i===0?1:0.7}}>
+                        {MEASUREMENT_FIELDS.map(f=>(
+                          <td key={f.key} style={{padding:"10px 10px",color:i===0?C.text:C.muted,whiteSpace:"nowrap",fontWeight:i===0?700:400}}>
+                            {row[f.key]||"—"}{row[f.key]&&f.unit?<span style={{color:C.faint,fontSize:10}}>{f.unit}</span>:""}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 }
