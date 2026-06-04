@@ -191,6 +191,13 @@ export default function App() {
     } catch(e) { console.error("Error updating program:", e); }
   };
 
+  const deleteProgram = async (progId) => {
+    try {
+      await sb.delete("programs", `?id=eq.${progId}`);
+      setPrograms(prev => prev.filter(p => p.id !== progId));
+    } catch(e) { alert("Error deleting program: " + e.message); }
+  };
+
   const assignProgram = async (programId, clientId) => {
     const prog = programs.find(p => p.id === programId);
     if (!prog) return;
@@ -237,7 +244,7 @@ export default function App() {
   if (user.role === "coach") return (
     <CoachApp clients={clients} programs={programs} nutrition={nutrition}
       addClient={addClient} updateClient={updateClient} removeClient={removeClient}
-      addProgram={addProgram} updateProgram={updateProgram} assignProgram={assignProgram}
+      addProgram={addProgram} updateProgram={updateProgram} assignProgram={assignProgram} deleteProgram={deleteProgram}
       saveNutrition={saveNutrition} loadNutrition={loadNutrition}
       measurements={measurements} saveMeasurement={saveMeasurement} loadMeasurements={loadMeasurements}
       workoutLog={workoutLog} onLogout={logout} />
@@ -245,7 +252,9 @@ export default function App() {
   const clientData = clients.find(c => c.id === user.id);
   return <ClientApp client={clientData} programs={programs}
     nutrition={nutrition[user.id]} workoutLog={workoutLog}
-    loadNutrition={() => loadNutrition(user.id)} onLogout={logout} />;
+    loadNutrition={() => loadNutrition(user.id)}
+    measurements={measurements[user.id]||[]} loadMeasurements={() => loadMeasurements(user.id)}
+    onLogout={logout} />;
 }
 
 // ── LOGIN ────────────────────────────────────────────────────────────────────
@@ -398,7 +407,7 @@ function Login({ onLogin }) {
 }
 
 // ── COACH APP ────────────────────────────────────────────────────────────────
-function CoachApp({ clients, programs, nutrition, addClient, updateClient, removeClient, addProgram, updateProgram, assignProgram, saveNutrition, loadNutrition, measurements, saveMeasurement, loadMeasurements, workoutLog, onLogout }) {
+function CoachApp({ clients, programs, nutrition, addClient, updateClient, removeClient, addProgram, updateProgram, assignProgram, deleteProgram, saveNutrition, loadNutrition, measurements, saveMeasurement, loadMeasurements, workoutLog, onLogout }) {
   const [tab, setTab] = useState("clients");
   const [activeClient, setActiveClient] = useState(null);
   const [activeProgram, setActiveProgram] = useState(null);
@@ -432,7 +441,7 @@ function CoachApp({ clients, programs, nutrition, addClient, updateClient, remov
         </>}
         {tab==="programs" && <>
           <SectionHeader title={`Programs (${programs.length})`} action={<button style={S.btnSm} onClick={()=>setShowNewProgram(true)}>+ New Program</button>} />
-          <div style={S.grid}>{programs.map(p=><ProgramCard key={p.id} program={p} clients={clients} onClick={()=>setActiveProgram(p.id)} />)}</div>
+          <div style={S.grid}>{programs.map(p=><ProgramCard key={p.id} program={p} clients={clients} onClick={()=>setActiveProgram(p.id)} onDelete={deleteProgram} />)}</div>
         </>}
       </div>
       {showNewClient && <NewClientModal onClose={()=>setShowNewClient(false)}
@@ -1309,11 +1318,15 @@ function ClientCard({ client, programs, onClick, onDelete }) {
     </div>
   );
 }
-function ProgramCard({ program, clients, onClick }) {
+function ProgramCard({ program, clients, onClick, onDelete }) {
   const count = (program.assignedTo||[]).length;
   return (
     <div style={S.card} onClick={onClick}>
-      <div style={{...S.programDot,background:program.color,width:36,height:36,marginBottom:10}} />
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+        <div style={{...S.programDot,background:program.color,width:36,height:36}} />
+        {onDelete && <button style={{background:"transparent",border:"1px solid #ff6b6b",color:"#ff6b6b",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:11,fontWeight:700}}
+          onClick={e=>{e.stopPropagation();if(window.confirm("Delete "+program.name+"?"))onDelete(program.id);}}>✕ Delete</button>}
+      </div>
       <div style={S.cardName}>{program.name}</div>
       <div style={S.cardMeta}>{program.tag}</div>
       <div style={S.cardMeta}>{program.days.length} days · {program.days.reduce((s,d)=>s+d.exercises.length,0)} exercises</div>
