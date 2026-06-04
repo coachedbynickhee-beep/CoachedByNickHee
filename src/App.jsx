@@ -1,5 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 
+// Inject fonts
+if (typeof document !== "undefined") {
+  const link = document.createElement("link");
+  link.href = "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&display=swap";
+  link.rel = "stylesheet";
+  document.head.appendChild(link);
+}
+
 // ── Supabase Client ───────────────────────────────────────────────────────────
 const SUPABASE_URL = "https://jzievdnzlntbtjoitcgc.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6aWV2ZG56bG50YnRqb2l0Y2djIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1MDcwMzIsImV4cCI6MjA5NjA4MzAzMn0.6xaC_SijPt2SUVX4Lc8FuqaMVpkwP1l-PdW32yXOdGk";
@@ -40,7 +48,7 @@ const SEED_PROGRAMS = [];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const uid = () => Math.random().toString(36).slice(2, 9);
-const DAY_COLORS = ["#FFFFFF","#DDDDDD","#BBBBBB","#AAAAAA","#CCCCCC","#EEEEEE","#888888"];
+const DAY_COLORS = ["#FF6B4A","#5BC0FF","#7BE0A0","#F4B740","#B88CFF","#FF9F45","#4FD1C5"];
 const fmt = (d) => new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
 const todayKey = () => new Date().toISOString().slice(0,10);
 
@@ -136,7 +144,7 @@ export default function App() {
     if (email === COACH.email && password === COACH.password) {
       setUser({ role:"coach" }); return true;
     }
-    const matches = await sb.get("clients", `?email=eq.${encodeURIComponent(email)}&password=eq.${encodeURIComponent(password)}`);
+    const matches = await sb.get("clients", `?email=eq.${encodeURIComponent(email)}&client_password=eq.${encodeURIComponent(password)}`);
     if (matches && matches.length > 0) {
       setUser({ role:"client", id:matches[0].id }); return true;
     }
@@ -147,7 +155,7 @@ export default function App() {
   // Wrapped setters that sync to Supabase
   const addClient = async (clientData) => {
     try {
-      const result = await sb.post("clients", clientData);
+      const toSave = {...clientData, client_password: clientData.password}; delete toSave.password; const result = await sb.post("clients", toSave);
       if (result && result[0]) setClients(prev => [...prev, result[0]]);
     } catch(e) { alert("Error saving client: " + e.message); }
   };
@@ -235,17 +243,137 @@ function Login({ onLogin }) {
     if (!onLogin(email, password)) setError("Invalid email or password.");
     setLoading(false);
   };
+
+  const stats = [
+    { val:"500+", label:"Sessions Logged" },
+    { val:"12", label:"Programs Built" },
+    { val:"100%", label:"Custom Plans" },
+  ];
+
+  const quotes = [
+    "Re-establishing limitations, one rep at a time.",
+    "Your body is capable. Your mind decides.",
+    "Progress is built in the dark, shown in the light.",
+  ];
+
   return (
-    <div style={S.loginWrap}>
-      <div style={S.loginCard}>
-        <div style={S.loginLogo}>
-          <img src={LOGO_B64} alt="CoachedByNickhee" style={{width:"100%",maxWidth:420,marginBottom:16,objectFit:"contain"}} />
+    <div style={{display:"flex", minHeight:"100vh", background:"#0b0b0d", fontFamily:"'Manrope',system-ui,sans-serif"}}>
+      
+      {/* LEFT — Visual Panel */}
+      <div style={{
+        flex:"0 0 55%", position:"relative", overflow:"hidden",
+        background:"#0b0b0d",
+        display:"flex", flexDirection:"column", justifyContent:"flex-end",
+        padding:"48px",
+      }}>
+        {/* Background image via Unsplash (free, no auth needed) */}
+        <div style={{
+          position:"absolute", inset:0,
+          backgroundImage:"url(https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1200&q=80)",
+          backgroundSize:"cover", backgroundPosition:"center top",
+          filter:"brightness(0.35)",
+        }} />
+        {/* Gradient overlay */}
+        <div style={{
+          position:"absolute", inset:0,
+          background:"linear-gradient(to top, #0b0b0d 30%, rgba(11,11,13,0.2) 70%, rgba(11,11,13,0.5) 100%)",
+        }} />
+        {/* Accent glow */}
+        <div style={{
+          position:"absolute", top:"-20%", right:"-10%",
+          width:"60%", height:"60%",
+          background:"radial-gradient(circle, rgba(203,251,69,0.08) 0%, transparent 70%)",
+          pointerEvents:"none",
+        }} />
+
+        {/* Content */}
+        <div style={{position:"relative", zIndex:2}}>
+          {/* Kicker */}
+          <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:16}}>
+            <div style={{width:28, height:2, background:"#CBFB45"}} />
+            <span style={{fontSize:11, letterSpacing:"0.3em", textTransform:"uppercase", color:"#CBFB45", fontWeight:700}}>
+              Elite Coaching Platform
+            </span>
+          </div>
+
+          {/* Headline */}
+          <div style={{
+            fontFamily:"'Bebas Neue',sans-serif", fontSize:"clamp(48px,7vw,80px)",
+            lineHeight:0.9, textTransform:"uppercase", color:"#ECEAE3",
+            marginBottom:20,
+          }}>
+            Re-Establish<br/>
+            <span style={{color:"#CBFB45"}}>Your</span><br/>
+            Limits
+          </div>
+
+          {/* Quote */}
+          <p style={{color:"#8f8f99", fontSize:14, maxWidth:"42ch", lineHeight:1.6, marginBottom:32}}>
+            {quotes[0]}
+          </p>
+
+          {/* Stats row */}
+          <div style={{display:"flex", gap:32}}>
+            {stats.map(s=>(
+              <div key={s.val}>
+                <div style={{fontFamily:"'Bebas Neue',sans-serif", fontSize:36, color:"#CBFB45", lineHeight:1}}>{s.val}</div>
+                <div style={{fontSize:10, textTransform:"uppercase", letterSpacing:"0.15em", color:"#65656e", fontWeight:700, marginTop:4}}>{s.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
-        <Field label="Email"><input style={S.input} value={email} onChange={e=>setEmail(e.target.value)} placeholder="your@email.com" type="email" onKeyDown={e=>e.key==="Enter"&&submit()} /></Field>
-        <Field label="Password"><input style={S.input} value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" type="password" onKeyDown={e=>e.key==="Enter"&&submit()} /></Field>
-        {error && <div style={S.error}>{error}</div>}
-        <button style={{...S.btn,width:"100%",marginTop:8}} onClick={submit} disabled={loading}>{loading?"Signing in…":"Sign In →"}</button>
-        <div style={S.loginHint}>Contact your coach if you need login details.</div>
+      </div>
+
+      {/* RIGHT — Login Form */}
+      <div style={{
+        flex:"0 0 45%", display:"flex", flexDirection:"column",
+        justifyContent:"center", padding:"48px",
+        borderLeft:"1px solid rgba(255,255,255,0.06)",
+        background:"#0d0d0f",
+      }}>
+        {/* Logo */}
+        <div style={{marginBottom:40}}>
+          <img src={LOGO_B64} alt="CoachedByNickhee" style={{width:"100%", maxWidth:280, objectFit:"contain"}} />
+        </div>
+
+        {/* Welcome text */}
+        <div style={{marginBottom:32}}>
+          <div style={{fontFamily:"'Bebas Neue',sans-serif", fontSize:32, color:"#ECEAE3", letterSpacing:"0.05em", marginBottom:6}}>
+            Welcome Back
+          </div>
+          <div style={{fontSize:13, color:"#8f8f99"}}>Sign in to access your coaching dashboard.</div>
+        </div>
+
+        {/* Form */}
+        <div style={{marginBottom:14}}>
+          <label style={{fontSize:10, fontWeight:700, color:"#65656e", textTransform:"uppercase", letterSpacing:"0.15em", display:"block", marginBottom:6}}>Email</label>
+          <input style={{...S.input, fontSize:15}} value={email} onChange={e=>setEmail(e.target.value)}
+            placeholder="your@email.com" type="email" onKeyDown={e=>e.key==="Enter"&&submit()} />
+        </div>
+        <div style={{marginBottom:8}}>
+          <label style={{fontSize:10, fontWeight:700, color:"#65656e", textTransform:"uppercase", letterSpacing:"0.15em", display:"block", marginBottom:6}}>Password</label>
+          <input style={{...S.input, fontSize:15}} value={password} onChange={e=>setPassword(e.target.value)}
+            placeholder="••••••••" type="password" onKeyDown={e=>e.key==="Enter"&&submit()} />
+        </div>
+
+        {error && <div style={{color:"#ff6b6b", fontSize:13, marginBottom:8, fontWeight:600}}>{error}</div>}
+
+        <button style={{
+          ...S.btn, width:"100%", marginTop:16, padding:"14px 20px",
+          fontSize:15, letterSpacing:"0.1em", textTransform:"uppercase",
+        }} onClick={submit} disabled={loading}>
+          {loading ? "Signing in…" : "Sign In →"}
+        </button>
+
+        <div style={{marginTop:32, fontSize:12, color:"#65656e", lineHeight:1.7}}>
+          Contact your coach if you need login details.
+        </div>
+
+        {/* Bottom accent */}
+        <div style={{marginTop:"auto", paddingTop:48, display:"flex", alignItems:"center", gap:10}}>
+          <div style={{width:20, height:1, background:"rgba(255,255,255,0.1)"}} />
+          <span style={{fontSize:10, color:"#65656e", letterSpacing:"0.2em", textTransform:"uppercase"}}>CoachedByNickHee</span>
+        </div>
       </div>
     </div>
   );
@@ -1002,12 +1130,16 @@ function Empty({ text, small }) {
 }
 
 // ── STYLES ────────────────────────────────────────────────────────────────────
-const C = { bg:"#080808", surface:"#111111", surface2:"#1a1a1a",
-  line:"rgba(255,255,255,.1)", line2:"rgba(255,255,255,.2)",
-  text:"#F5F5F5", muted:"#999999", faint:"#555555", accent:"#FFFFFF" };
+const C = {
+  bg:"#0b0b0d", surface:"#141418", surface2:"#1b1b21",
+  line:"rgba(255,255,255,.08)", line2:"rgba(255,255,255,.16)",
+  text:"#ECEAE3", muted:"#8f8f99", faint:"#65656e", accent:"#CBFB45",
+  glute:"#FF6B4A", quad:"#5BC0FF", ham:"#7BE0A0", abd:"#F4B740",
+  back:"#B88CFF", sh:"#FF9F45", cf:"#4FD1C5",
+};
 
 const S = {
-  app:{ background:"linear-gradient(160deg,#0f0f0f 0%,#080808 100%)", minHeight:"100vh", color:C.text, fontFamily:"system-ui,sans-serif" },
+  app:{ background:"#0b0b0d", backgroundImage:"radial-gradient(900px 500px at 85% -5%,rgba(255,107,74,.08),transparent 60%),radial-gradient(800px 500px at -10% 10%,rgba(203,251,69,.05),transparent 55%)", minHeight:"100vh", color:C.text, fontFamily:"'Manrope',system-ui,sans-serif" },
   loginWrap:{ background:"radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0b0b0d 70%)", minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center" },
   loginCard:{ background:C.surface, border:`1px solid ${C.line2}`, borderRadius:16, padding:48, width:"100%", maxWidth:480 },
   loginLogo:{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, marginBottom:28 },
@@ -1017,52 +1149,52 @@ const S = {
   loginField:{ marginBottom:14 },
   label:{ fontSize:11, fontWeight:600, color:C.muted, textTransform:"uppercase", letterSpacing:1, display:"block", marginBottom:5 },
   input:{ width:"100%", background:C.surface2, border:`1px solid ${C.line2}`, borderRadius:8, color:C.text, padding:"10px 12px", fontSize:14, outline:"none", boxSizing:"border-box" },
-  btn:{ background:"#FFFFFF", color:"#000", border:"none", borderRadius:8, padding:"10px 20px", fontWeight:700, fontSize:14, cursor:"pointer" },
+  btn:{ background:C.accent, color:"#0b0b0d", border:"none", borderRadius:8, padding:"10px 20px", fontWeight:800, fontSize:14, cursor:"pointer", fontFamily:"'Manrope',sans-serif", letterSpacing:"0.02em" },
   btnSm:{ background:"#FFFFFF", color:"#000", border:"none", borderRadius:6, padding:"6px 14px", fontWeight:700, fontSize:12, cursor:"pointer" },
-  btnGhost:{ background:"transparent", color:C.muted, border:`1px solid ${C.line2}`, borderRadius:8, padding:"8px 16px", fontWeight:600, fontSize:13, cursor:"pointer" },
+  btnGhost:{ background:"transparent", color:C.muted, border:`1px solid ${C.line}`, borderRadius:999, padding:"7px 16px", fontWeight:700, fontSize:12, cursor:"pointer", textTransform:"uppercase", letterSpacing:"0.05em" },
   error:{ color:"#ff6b6b", fontSize:13, marginBottom:8 },
   loginHint:{ marginTop:20, fontSize:11, color:C.faint, lineHeight:1.7, textAlign:"center" },
 
   topbar:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 20px", borderBottom:`1px solid ${C.line}`, background:C.surface, position:"sticky", top:0, zIndex:10, gap:12, flexWrap:"wrap" },
   topbarLeft:{ display:"flex", alignItems:"center", gap:12 },
   topbarRight:{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" },
-  topbarTitle:{ fontWeight:800, fontSize:16, color:C.text },
+  topbarTitle:{ fontWeight:400, fontSize:20, color:C.text, fontFamily:"'Bebas Neue',sans-serif", letterSpacing:"0.05em" },
   topbarSub:{ fontSize:11, color:C.muted, marginTop:1 },
   backBtn:{ background:"transparent", color:C.muted, border:"none", cursor:"pointer", fontSize:13, padding:"6px 10px", borderRadius:6 },
 
   content:{ padding:"20px 16px", maxWidth:900, margin:"0 auto" },
   sectionHeader:{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14, marginTop:20 },
-  sectionTitle:{ fontWeight:700, fontSize:14, color:C.text },
+  sectionTitle:{ fontWeight:800, fontSize:13, color:C.text, textTransform:"uppercase", letterSpacing:"0.15em" },
 
   grid:{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))", gap:12 },
   card:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:12, padding:16, cursor:"pointer" },
   cardAvatar:{ width:40, height:40, background:"#FFFFFF22", border:"1px solid #FFFFFF44", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700, fontSize:14, color:"#FFFFFF", marginBottom:10 },
-  cardName:{ fontWeight:700, fontSize:14, marginBottom:4 },
+  cardName:{ fontWeight:800, fontSize:15, marginBottom:4, letterSpacing:"-0.01em" },
   cardMeta:{ fontSize:12, color:C.muted, marginBottom:2 },
   cardTag:{ fontSize:11, color:"#FFFFFF", marginTop:8, fontWeight:600 },
 
   statsRow:{ display:"flex", gap:10, marginBottom:4 },
-  statBox:{ flex:1, background:"linear-gradient(160deg,#181818,#0f0f0f)", border:"1px solid rgba(255,255,255,0.09)", borderRadius:12, padding:"14px 8px", textAlign:"center" },
+  statBox:{ flex:1, background:C.surface, border:`1px solid ${C.line}`, borderRadius:12, padding:"14px 8px", textAlign:"center" },
   statVal:{ fontSize:18, fontWeight:800, color:"#FFFFFF" },
-  statLabel:{ fontSize:10, color:C.muted, marginTop:2, textTransform:"uppercase", letterSpacing:0.5 },
+  statLabel:{ fontSize:9, color:C.faint, marginTop:2, textTransform:"uppercase", letterSpacing:"0.12em", fontWeight:700 },
 
   programDot:{ width:12, height:12, borderRadius:"50%", marginBottom:6 },
-  progCard:{ background:"linear-gradient(160deg,#181818,#0f0f0f)", border:"1px solid rgba(255,255,255,0.09)", borderRadius:14, padding:16, cursor:"pointer" },
-  progAccent:{ height:3, borderRadius:2, marginBottom:12 },
-  progName:{ fontWeight:700, fontSize:14, marginBottom:4 },
+  progCard:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:15, padding:16, cursor:"pointer" },
+  progAccent:{ height:3, borderRadius:0, marginBottom:14, marginLeft:-16, marginRight:-16, marginTop:-16, width:"calc(100% + 32px)" },
+  progName:{ fontWeight:400, fontSize:20, marginBottom:4, fontFamily:"'Bebas Neue',sans-serif", letterSpacing:"0.03em" },
   progTag:{ fontSize:12, color:C.muted, marginBottom:4 },
   progDays:{ fontSize:12, color:C.faint },
 
   dayGrid:{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:12 },
-  dayTile:{ background:"linear-gradient(160deg,#181818,#0f0f0f)", border:"1px solid rgba(255,255,255,0.09)", borderRadius:14, padding:16, cursor:"pointer" },
+  dayTile:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:15, padding:16, cursor:"pointer" },
   dayTileAccent:{ height:3, borderRadius:2, marginBottom:12 },
-  dayTileName:{ fontWeight:700, fontSize:13, marginBottom:4 },
+  dayTileName:{ fontWeight:400, fontSize:18, marginBottom:4, fontFamily:"'Bebas Neue',sans-serif", letterSpacing:"0.05em" },
   dayTileCount:{ fontSize:12, color:C.muted },
 
-  dayBlock:{ background:"linear-gradient(160deg,#181818,#0f0f0f)", borderRadius:12, marginBottom:12, overflow:"hidden" },
+  dayBlock:{ background:C.surface, borderRadius:15, marginBottom:12, overflow:"hidden" },
   dayHeader:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 14px", cursor:"pointer" },
   dayLeft:{ display:"flex", alignItems:"center", gap:6, flex:1 },
-  dayTitle:{ fontWeight:700, fontSize:14, cursor:"text" },
+  dayTitle:{ fontWeight:800, fontSize:14, cursor:"text", letterSpacing:"-0.01em" },
   exCount:{ fontSize:11, color:C.muted, marginLeft:6 },
   iconBtn:{ background:"transparent", color:C.muted, border:"none", cursor:"pointer", fontSize:12, padding:"4px 10px", borderRadius:6, fontWeight:600 },
   exList:{ padding:"0 14px 14px" },
@@ -1073,7 +1205,7 @@ const S = {
 
   workoutCard:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:10, padding:"14px 16px", marginBottom:10, display:"flex", alignItems:"flex-start", gap:12, transition:"opacity .2s" },
   wcNum:{ width:24, height:24, background:"#FFFFFF22", borderRadius:6, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:"#FFFFFF", flexShrink:0, marginTop:2 },
-  wcName:{ fontWeight:700, fontSize:14, marginBottom:3 },
+  wcName:{ fontWeight:800, fontSize:15, marginBottom:3, letterSpacing:"-0.01em" },
   wcMeta:{ fontSize:12, color:C.muted },
   wcNotes:{ fontSize:11, color:C.faint, marginTop:4, fontStyle:"italic" },
   checkBtn:{ border:"1px solid #FFFFFF", borderRadius:8, width:36, height:36, cursor:"pointer", fontWeight:700, fontSize:16, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" },
@@ -1082,7 +1214,7 @@ const S = {
   setLogHeader:{ display:"flex", alignItems:"center", gap:8, marginBottom:6, fontSize:10, fontWeight:700, color:"#65656e", textTransform:"uppercase", letterSpacing:0.8, padding:"0 2px" },
   setLogRow:{ display:"flex", alignItems:"center", gap:8, marginBottom:6, borderRadius:6, padding:"4px 2px", transition:"background .2s" },
   setNum:{ flex:"0 0 36px", fontSize:12, fontWeight:700, textAlign:"center" },
-  setInput:{ flex:1, background:"#1b1b21", border:"1px solid", borderRadius:6, color:"#ECEAE3", padding:"6px 8px", fontSize:13, textAlign:"center", outline:"none", minWidth:0, transition:"border-color .2s" },
+  setInput:{ flex:1, background:C.surface2, border:`1px solid ${C.line2}`, borderRadius:8, color:C.text, padding:"8px 8px", fontSize:14, textAlign:"center", outline:"none", minWidth:0, transition:"border-color .2s", fontFamily:"'Manrope',sans-serif", fontWeight:700 },
 
   progressBar:{ height:4, background:C.line2, borderRadius:2, marginBottom:20, overflow:"hidden" },
   progressFill:{ height:"100%", background:"#FFFFFF", borderRadius:2, transition:"width .4s" },
@@ -1092,7 +1224,7 @@ const S = {
   prevPB:{ fontSize:10, color:C.faint, fontWeight:600 },
   pbRow:{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:16 },
   pbChip:{ background:"#FFFFFF10", border:"1px solid #FFFFFF30", borderRadius:8, padding:"8px 12px", textAlign:"center" },
-  pbVal:{ fontSize:18, fontWeight:800, color:"#FFFFFF" },
+  pbVal:{ fontSize:22, fontWeight:400, color:C.accent, fontFamily:"'Bebas Neue',sans-serif" },
   pbName:{ fontSize:10, color:C.muted, marginTop:2, maxWidth:100, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" },
   pbLabel:{ fontSize:9, color:"#FFFFFF", fontWeight:700, marginTop:2 },
 
@@ -1100,30 +1232,30 @@ const S = {
   historyDate:{ fontSize:11, fontWeight:700, color:"#FFFFFF", marginBottom:10, textTransform:"uppercase", letterSpacing:0.5 },
   historyEx:{ marginBottom:10 },
   historyExName:{ fontSize:13, fontWeight:700, color:C.text },
-  historySetChip:{ background:C.surface2, border:`1px solid ${C.line2}`, borderRadius:6, padding:"3px 10px", fontSize:12, color:C.muted },
+  historySetChip:{ background:C.surface2, border:`1px solid ${C.line}`, borderRadius:999, padding:"3px 10px", fontSize:11, color:C.muted, fontWeight:700 },
 
-  assignCard:{ background:"linear-gradient(160deg,#181818,#0f0f0f)", border:"1px solid rgba(255,255,255,0.09)", borderRadius:12, padding:14, display:"flex", alignItems:"center", gap:10 },
+  assignCard:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:12, padding:14, display:"flex", alignItems:"center", gap:10 },
   assignName:{ flex:1, fontSize:13, fontWeight:600 },
 
   macroGrid:{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginBottom:16 },
   macroBox:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:10, padding:"12px 14px" },
-  macroLabel:{ fontSize:10, color:C.muted, fontWeight:700, textTransform:"uppercase", letterSpacing:0.8, marginBottom:6 },
+  macroLabel:{ fontSize:9, color:C.faint, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.15em", marginBottom:6 },
 
-  mealEditorCard:{ background:"linear-gradient(160deg,#181818,#0f0f0f)", border:"1px solid rgba(255,255,255,0.09)", borderRadius:10, padding:14, marginBottom:10 },
-  mealViewCard:{ background:"linear-gradient(160deg,#181818,#0f0f0f)", border:"1px solid rgba(255,255,255,0.09)", borderRadius:10, padding:14, marginBottom:10 },
-  mealName:{ fontWeight:700, fontSize:14, marginBottom:4 },
+  mealEditorCard:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:10, padding:14, marginBottom:10 },
+  mealViewCard:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:10, padding:14, marginBottom:10 },
+  mealName:{ fontWeight:800, fontSize:15, marginBottom:4, letterSpacing:"-0.01em" },
   mealDesc:{ fontSize:13, color:C.muted, marginBottom:8, lineHeight:1.5 },
   mealMacros:{ display:"flex", gap:12, fontSize:12, fontWeight:600 },
   mealTotal:{ fontSize:11, color:C.faint, textAlign:"center", padding:"12px 0", borderTop:`1px solid ${C.line}`, marginTop:8 },
   coachNote:{ background:"#FFFFFF10", border:"1px solid #FFFFFF20", borderRadius:8, padding:"10px 14px", fontSize:13, color:C.muted, marginBottom:16, lineHeight:1.5 },
 
   overlay:{ position:"fixed", inset:0, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:100 },
-  modal:{ background:"linear-gradient(160deg,#1c1c1c,#0f0f0f)", border:"1px solid rgba(255,255,255,0.15)", borderRadius:18, width:"100%", maxWidth:420, maxHeight:"90vh", overflow:"auto" },
+  modal:{ background:C.surface, border:`1px solid ${C.line2}`, borderRadius:16, width:"100%", maxWidth:420, maxHeight:"90vh", overflow:"auto" },
   modalHeader:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 20px", borderBottom:`1px solid ${C.line}` },
   modalTitle:{ fontWeight:700, fontSize:15 },
   modalBody:{ padding:"20px 20px 0" },
   modalFooter:{ display:"flex", justifyContent:"flex-end", gap:8, padding:20 },
   empty:{ color:C.faint, textAlign:"center", padding:"24px 0" },
-  tabBtn:{ background:"transparent", color:C.muted, border:`1px solid ${C.line}`, borderRadius:6, padding:"6px 14px", cursor:"pointer", fontSize:12, fontWeight:600 },
+  tabBtn:{ background:"transparent", color:C.muted, border:`1px solid ${C.line}`, borderRadius:999, padding:"8px 16px", cursor:"pointer", fontSize:12, fontWeight:700, whiteSpace:"nowrap", textTransform:"uppercase", letterSpacing:"0.05em" },
   tabBtnActive:{ background:"#FFFFFF20", color:"#FFFFFF", borderColor:"#FFFFFF40" },
 };
