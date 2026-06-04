@@ -369,14 +369,14 @@ function Login({ onLogin }) {
         {/* Background image via Unsplash (free, no auth needed) */}
         <div style={{
           position:"absolute", inset:0,
-          backgroundImage:"url(https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1200&q=80)",
+          backgroundImage:"url(https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=1200&q=80)",
           backgroundSize:"cover", backgroundPosition:"center top",
-          filter:"brightness(0.35)",
+          filter:"brightness(0.28) contrast(1.1)",
         }} />
         {/* Gradient overlay */}
         <div style={{
           position:"absolute", inset:0,
-          background:"linear-gradient(to top, #0b0b0d 30%, rgba(11,11,13,0.2) 70%, rgba(11,11,13,0.5) 100%)",
+          background:"linear-gradient(to top, #0b0b0d 35%, rgba(11,11,13,0.15) 65%, rgba(11,11,13,0.6) 100%)",
         }} />
         {/* Accent glow */}
         <div style={{
