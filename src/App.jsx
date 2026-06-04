@@ -431,7 +431,7 @@ function Login({ onLogin }) {
 
           {/* Headline */}
           <div style={{
-            fontFamily:"'Bebas Neue',sans-serif", fontSize:"clamp(32px,7vw,80px)",
+            fontFamily:"'Bebas Neue',sans-serif", fontSize:"clamp(36px,7vw,88px)",
             lineHeight:0.9, textTransform:"uppercase", color:"#ECEAE3",
             marginBottom:16,
           }}>
@@ -461,7 +461,7 @@ function Login({ onLogin }) {
       <div style={{
         flex:"1", display:"flex", flexDirection:"column",
         justifyContent:"center", padding: isMobile?"24px":"48px",
-        background:"#0d0d0f",
+        background:"#09090b",
         minHeight: isMobile?"auto":"100vh",
       }}>
         {/* Logo */}
@@ -1961,15 +1961,15 @@ function Empty({ text, small }) {
 
 // ── STYLES ────────────────────────────────────────────────────────────────────
 const C = {
-  bg:"#0b0b0d", surface:"#141418", surface2:"#1b1b21",
-  line:"rgba(255,255,255,.08)", line2:"rgba(255,255,255,.16)",
-  text:"#ECEAE3", muted:"#8f8f99", faint:"#65656e", accent:"#CBFB45",
+  bg:"#080809", surface:"#0f0f12", surface2:"#16161b",
+  line:"rgba(255,255,255,.06)", line2:"rgba(255,255,255,.12)",
+  text:"#F0EDE6", muted:"#7a7a85", faint:"#4a4a55", accent:"#D4F53C",
   glute:"#FF6B4A", quad:"#5BC0FF", ham:"#7BE0A0", abd:"#F4B740",
   back:"#B88CFF", sh:"#FF9F45", cf:"#4FD1C5",
 };
 
 const S = {
-  app:{ boxSizing:"border-box", overflowX:"hidden", background:"#0b0b0d", backgroundImage:"radial-gradient(900px 500px at 85% -5%,rgba(255,107,74,.08),transparent 60%),radial-gradient(800px 500px at -10% 10%,rgba(203,251,69,.05),transparent 55%)", minHeight:"100vh", color:C.text, fontFamily:"'Manrope',system-ui,sans-serif" },
+  app:{ boxSizing:"border-box", overflowX:"hidden", background:"#080809", backgroundImage:"radial-gradient(900px 500px at 85% -5%,rgba(255,107,74,.08),transparent 60%),radial-gradient(800px 500px at -10% 10%,rgba(203,251,69,.05),transparent 55%)", minHeight:"100vh", color:C.text, fontFamily:"'Manrope',system-ui,sans-serif" },
   loginWrap:{ background:"radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0b0b0d 70%)", minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center" },
   loginCard:{ background:C.surface, border:`1px solid ${C.line2}`, borderRadius:16, padding:48, width:"100%", maxWidth:480 },
   loginLogo:{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, marginBottom:28 },
@@ -1978,50 +1978,50 @@ const S = {
   logoSub:{ fontSize:12, color:C.muted },
   loginField:{ marginBottom:14 },
   label:{ fontSize:11, fontWeight:600, color:C.muted, textTransform:"uppercase", letterSpacing:1, display:"block", marginBottom:5 },
-  input:{ width:"100%", background:C.surface2, border:`1px solid ${C.line2}`, borderRadius:8, color:C.text, padding:"10px 12px", fontSize:14, outline:"none", boxSizing:"border-box" },
-  btn:{ background:C.accent, color:"#0b0b0d", border:"none", borderRadius:8, padding:"10px 20px", fontWeight:800, fontSize:14, cursor:"pointer", fontFamily:"'Manrope',sans-serif", letterSpacing:"0.02em" },
+  input:{ width:"100%", background:"rgba(22,22,27,0.8)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:10, color:C.text, padding:"11px 14px", fontSize:14, outline:"none", boxSizing:"border-box", transition:"border-color .2s" },
+  btn:{ background:C.accent, color:"#080809", border:"none", borderRadius:10, padding:"11px 22px", fontWeight:800, fontSize:13, cursor:"pointer", fontFamily:"'Manrope',sans-serif", letterSpacing:"0.06em", textTransform:"uppercase", transition:"opacity .15s" },
   btnSm:{ background:"#FFFFFF", color:"#000", border:"none", borderRadius:6, padding:"6px 14px", fontWeight:700, fontSize:12, cursor:"pointer" },
-  btnGhost:{ background:"transparent", color:C.muted, border:`1px solid ${C.line}`, borderRadius:999, padding:"7px 16px", fontWeight:700, fontSize:12, cursor:"pointer", textTransform:"uppercase", letterSpacing:"0.05em" },
+  btnGhost:{ background:"transparent", color:C.muted, border:"1px solid rgba(255,255,255,0.1)", borderRadius:999, padding:"7px 18px", fontWeight:600, fontSize:11, cursor:"pointer", textTransform:"uppercase", letterSpacing:"0.08em", transition:"border-color .2s" },
   error:{ color:"#ff6b6b", fontSize:13, marginBottom:8 },
   loginHint:{ marginTop:20, fontSize:11, color:C.faint, lineHeight:1.7, textAlign:"center" },
 
   topbar:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 20px", borderBottom:`1px solid ${C.line}`, background:C.surface, position:"sticky", top:0, zIndex:10, gap:12, flexWrap:"wrap" },
   topbarLeft:{ display:"flex", alignItems:"center", gap:12 },
   topbarRight:{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" },
-  topbarTitle:{ fontWeight:400, fontSize:20, color:C.text, fontFamily:"'Bebas Neue',sans-serif", letterSpacing:"0.05em" },
+  topbarTitle:{ fontWeight:400, fontSize:22, color:C.text, fontFamily:"'Bebas Neue',sans-serif", letterSpacing:"0.06em" },
   topbarSub:{ fontSize:11, color:C.muted, marginTop:1 },
   backBtn:{ background:"transparent", color:C.muted, border:"none", cursor:"pointer", fontSize:13, padding:"6px 10px", borderRadius:6 },
 
-  content:{ padding:"16px 14px", maxWidth:900, margin:"0 auto" },
+  content:{ padding:"20px 18px", maxWidth:920, margin:"0 auto" },
   sectionHeader:{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14, marginTop:20 },
-  sectionTitle:{ fontWeight:800, fontSize:13, color:C.text, textTransform:"uppercase", letterSpacing:"0.15em" },
+  sectionTitle:{ fontWeight:700, fontSize:10, color:C.faint, textTransform:"uppercase", letterSpacing:"0.25em" },
 
   grid:{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(min(220px,100%),1fr))", gap:12 },
   card:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:12, padding:16, cursor:"pointer" },
   cardAvatar:{ width:40, height:40, background:"#FFFFFF22", border:"1px solid #FFFFFF44", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700, fontSize:14, color:"#FFFFFF", marginBottom:10 },
-  cardName:{ fontWeight:800, fontSize:15, marginBottom:4, letterSpacing:"-0.01em" },
+  cardName:{ fontWeight:800, fontSize:15, marginBottom:6, letterSpacing:"-0.02em", lineHeight:1.2 },
   cardMeta:{ fontSize:12, color:C.muted, marginBottom:2 },
   cardTag:{ fontSize:11, color:"#FFFFFF", marginTop:8, fontWeight:600 },
 
   statsRow:{ display:"flex", gap:8, marginBottom:4, flexWrap:"wrap" },
-  statBox:{ flex:1, background:C.surface, border:`1px solid ${C.line}`, borderRadius:12, padding:"14px 8px", textAlign:"center" },
+  statBox:{ flex:1, background:"rgba(15,15,18,0.8)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:14, padding:"16px 8px", textAlign:"center" },
   statVal:{ fontSize:18, fontWeight:800, color:"#FFFFFF" },
   statLabel:{ fontSize:9, color:C.faint, marginTop:2, textTransform:"uppercase", letterSpacing:"0.12em", fontWeight:700 },
 
   programDot:{ width:12, height:12, borderRadius:"50%", marginBottom:6 },
-  progCard:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:15, padding:16, cursor:"pointer" },
+  progCard:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:16, padding:18, cursor:"pointer", transition:"all .2s" },
   progAccent:{ height:3, borderRadius:0, marginBottom:14, marginLeft:-16, marginRight:-16, marginTop:-16, width:"calc(100% + 32px)" },
-  progName:{ fontWeight:400, fontSize:20, marginBottom:4, fontFamily:"'Bebas Neue',sans-serif", letterSpacing:"0.03em" },
+  progName:{ fontWeight:400, fontSize:22, marginBottom:6, fontFamily:"'Bebas Neue',sans-serif", letterSpacing:"0.04em", lineHeight:1 },
   progTag:{ fontSize:12, color:C.muted, marginBottom:4 },
   progDays:{ fontSize:12, color:C.faint },
 
   dayGrid:{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(min(150px,100%),1fr))", gap:12 },
-  dayTile:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:15, padding:16, cursor:"pointer" },
+  dayTile:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:16, padding:16, cursor:"pointer", transition:"border-color .2s" },
   dayTileAccent:{ height:3, borderRadius:2, marginBottom:12 },
-  dayTileName:{ fontWeight:400, fontSize:18, marginBottom:4, fontFamily:"'Bebas Neue',sans-serif", letterSpacing:"0.05em" },
+  dayTileName:{ fontWeight:400, fontSize:20, marginBottom:6, fontFamily:"'Bebas Neue',sans-serif", letterSpacing:"0.04em", lineHeight:1 },
   dayTileCount:{ fontSize:12, color:C.muted },
 
-  dayBlock:{ background:C.surface, borderRadius:15, marginBottom:12, overflow:"hidden" },
+  dayBlock:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:16, marginBottom:12, overflow:"hidden" },
   dayHeader:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 14px", cursor:"pointer" },
   dayLeft:{ display:"flex", alignItems:"center", gap:6, flex:1 },
   dayTitle:{ fontWeight:800, fontSize:14, cursor:"text", letterSpacing:"-0.01em" },
@@ -2033,7 +2033,7 @@ const S = {
   exFields:{ display:"flex", gap:6, flex:1, flexWrap:"wrap", minWidth:0 },
   exInput:{ background:C.surface2, border:`1px solid ${C.line2}`, borderRadius:6, color:C.text, padding:"6px 8px", fontSize:12, minWidth:60 },
 
-  workoutCard:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:10, padding:"14px 16px", marginBottom:10, display:"flex", alignItems:"flex-start", gap:12, transition:"opacity .2s" },
+  workoutCard:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:"14px 16px", marginBottom:10, display:"flex", alignItems:"flex-start", gap:12, transition:"opacity .2s" },
   wcNum:{ width:24, height:24, background:"#FFFFFF22", borderRadius:6, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:"#FFFFFF", flexShrink:0, marginTop:2 },
   wcName:{ fontWeight:800, fontSize:15, marginBottom:3, letterSpacing:"-0.01em" },
   wcMeta:{ fontSize:12, color:C.muted },
@@ -2044,9 +2044,9 @@ const S = {
   setLogHeader:{ display:"flex", alignItems:"center", gap:8, marginBottom:6, fontSize:10, fontWeight:700, color:"#65656e", textTransform:"uppercase", letterSpacing:0.8, padding:"0 2px" },
   setLogRow:{ display:"flex", alignItems:"center", gap:8, marginBottom:6, borderRadius:6, padding:"4px 2px", transition:"background .2s" },
   setNum:{ flex:"0 0 36px", fontSize:12, fontWeight:700, textAlign:"center" },
-  setInput:{ flex:1, background:C.surface2, border:`1px solid ${C.line2}`, borderRadius:8, color:C.text, padding:"8px 8px", fontSize:14, textAlign:"center", outline:"none", minWidth:0, transition:"border-color .2s", fontFamily:"'Manrope',sans-serif", fontWeight:700 },
+  setInput:{ flex:1, background:"rgba(22,22,27,0.8)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:10, color:C.text, padding:"9px 8px", fontSize:14, textAlign:"center", outline:"none", minWidth:0, transition:"border-color .2s", fontFamily:"'Manrope',sans-serif", fontWeight:700 },
 
-  progressBar:{ height:4, background:C.line2, borderRadius:2, marginBottom:20, overflow:"hidden" },
+  progressBar:{ height:3, background:"rgba(255,255,255,0.06)", borderRadius:2, marginBottom:20, overflow:"hidden" },
   progressFill:{ height:"100%", background:"#FFFFFF", borderRadius:2, transition:"width .4s" },
   doneMsg:{ textAlign:"center", padding:"24px 0", color:"#FFFFFF", fontWeight:700, fontSize:16 },
 
@@ -2058,34 +2058,34 @@ const S = {
   pbName:{ fontSize:10, color:C.muted, marginTop:2, maxWidth:100, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" },
   pbLabel:{ fontSize:9, color:"#FFFFFF", fontWeight:700, marginTop:2 },
 
-  historySession:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:10, padding:"14px 16px", marginBottom:10 },
+  historySession:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:"14px 16px", marginBottom:10 },
   historyDate:{ fontSize:11, fontWeight:700, color:"#FFFFFF", marginBottom:10, textTransform:"uppercase", letterSpacing:0.5 },
   historyEx:{ marginBottom:10 },
   historyExName:{ fontSize:13, fontWeight:700, color:C.text },
   historySetChip:{ background:C.surface2, border:`1px solid ${C.line}`, borderRadius:999, padding:"3px 10px", fontSize:11, color:C.muted, fontWeight:700 },
 
-  assignCard:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:12, padding:14, display:"flex", alignItems:"center", gap:10 },
+  assignCard:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:14, padding:14, display:"flex", alignItems:"center", gap:10 },
   assignName:{ flex:1, fontSize:13, fontWeight:600 },
 
   macroGrid:{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(min(120px,100%),1fr))", gap:10, marginBottom:16 },
-  macroBox:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:10, padding:"12px 14px" },
+  macroBox:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:"12px 14px" },
   macroLabel:{ fontSize:9, color:C.faint, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.15em", marginBottom:6 },
 
-  mealEditorCard:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:10, padding:14, marginBottom:10 },
-  mealViewCard:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:10, padding:14, marginBottom:10 },
+  mealEditorCard:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:14, marginBottom:10 },
+  mealViewCard:{ background:"rgba(15,15,18,0.9)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:14, marginBottom:10 },
   mealName:{ fontWeight:800, fontSize:15, marginBottom:4, letterSpacing:"-0.01em" },
   mealDesc:{ fontSize:13, color:C.muted, marginBottom:8, lineHeight:1.5 },
   mealMacros:{ display:"flex", gap:12, fontSize:12, fontWeight:600 },
   mealTotal:{ fontSize:11, color:C.faint, textAlign:"center", padding:"12px 0", borderTop:`1px solid ${C.line}`, marginTop:8 },
   coachNote:{ background:"#FFFFFF10", border:"1px solid #FFFFFF20", borderRadius:8, padding:"10px 14px", fontSize:13, color:C.muted, marginBottom:16, lineHeight:1.5 },
 
-  overlay:{ position:"fixed", inset:0, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:100 },
-  modal:{ background:C.surface, border:`1px solid ${C.line2}`, borderRadius:16, width:"calc(100% - 32px)", maxWidth:420, maxHeight:"90vh", overflow:"auto", margin:"0 auto" },
+  overlay:{ position:"fixed", inset:0, background:"rgba(0,0,0,.85)", backdropFilter:"blur(8px)", WebkitBackdropFilter:"blur(8px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:100 },
+  modal:{ background:"#0f0f12", border:"1px solid rgba(255,255,255,0.1)", borderRadius:20, width:"calc(100% - 32px)", maxWidth:440, maxHeight:"90vh", overflow:"auto", margin:"0 auto", boxShadow:"0 40px 80px rgba(0,0,0,0.8)" },
   modalHeader:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 20px", borderBottom:`1px solid ${C.line}` },
   modalTitle:{ fontWeight:700, fontSize:15 },
   modalBody:{ padding:"20px 20px 0" },
   modalFooter:{ display:"flex", justifyContent:"flex-end", gap:8, padding:20 },
   empty:{ color:C.faint, textAlign:"center", padding:"24px 0" },
-  tabBtn:{ background:"transparent", color:C.muted, border:`1px solid ${C.line}`, borderRadius:999, padding:"7px 12px", cursor:"pointer", fontSize:11, fontWeight:700, whiteSpace:"nowrap", textTransform:"uppercase", letterSpacing:"0.03em" },
+  tabBtn:{ background:"transparent", color:C.faint, border:"1px solid rgba(255,255,255,0.08)", borderRadius:999, padding:"7px 14px", cursor:"pointer", fontSize:10, fontWeight:700, whiteSpace:"nowrap", textTransform:"uppercase", letterSpacing:"0.1em", transition:"all .2s" },
   tabBtnActive:{ background:"#FFFFFF20", color:"#FFFFFF", borderColor:"#FFFFFF40" },
 };
