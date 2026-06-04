@@ -551,10 +551,10 @@ function ClientDetail({ client, programs, clients, updateClient, updateProgram, 
           <button style={S.btnGhost} onClick={()=>setShowEdit(true)}>✏️ Edit</button>
           <TabBtn label="Programs" active={tab==="programs"} onClick={()=>setTab("programs")} />
           <TabBtn label="Nutrition" active={tab==="nutrition"} onClick={()=>setTab("nutrition")} />
-          <TabBtn label="Log History" active={tab==="history"} onClick={()=>setTab("history")} />
           <TabBtn label="Measurements" active={tab==="measurements"} onClick={()=>{setTab("measurements");loadMeasurements();}} />
           <TabBtn label="Check-ins" active={tab==="checkins"} onClick={()=>{setTab("checkins");loadCheckins();}} />
           <TabBtn label="Habits" active={tab==="habits"} onClick={()=>{setTab("habits");loadHabits();}} />
+          <TabBtn label="Log History" active={tab==="history"} onClick={()=>setTab("history")} />
         </div>} />
       <div style={S.content}>
         <div style={S.statsRow}>
@@ -565,7 +565,13 @@ function ClientDetail({ client, programs, clients, updateClient, updateProgram, 
         {tab==="programs" && <>
           <SectionHeader title="Assigned Programs" />
           {assigned.length===0 && <Empty text="No programs assigned yet." />}
-          <div style={S.grid}>{assigned.map(p=><ProgramCard key={p.id} program={p} clients={clients} onClick={()=>onOpenProgram(p.id)} />)}</div>
+          <div style={S.grid}>{assigned.map(p=>(
+            <div key={p.id} style={{position:"relative"}}>
+              <ProgramCard program={p} clients={clients} onClick={()=>onOpenProgram(p.id)} />
+              <button style={{position:"absolute",top:10,right:10,background:"transparent",border:"1px solid #ff6b6b",color:"#ff6b6b",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:11,fontWeight:700,zIndex:2}}
+                onClick={e=>{e.stopPropagation();if(window.confirm("Remove this program from "+client.name+"?"))updateProgram({...p,assignedTo:p.assignedTo.filter(id=>id!==client.id)});}}>✕ Remove</button>
+            </div>
+          ))}</div>
           {unassigned.length>0 && <>
             <SectionHeader title="Assign a Program" />
             <div style={S.grid}>{unassigned.map(p=>(
