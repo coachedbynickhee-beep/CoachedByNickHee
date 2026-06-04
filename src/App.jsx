@@ -913,6 +913,21 @@ function ClientApp({ client, programs, nutrition, workoutLog, loadNutrition, mea
   );
 }
 
+const MEASUREMENT_FIELDS = [
+  { key:"date", label:"Date", type:"date" },
+  { key:"age", label:"Age", type:"number", unit:"yrs" },
+  { key:"weight", label:"Weight", type:"number", unit:"kg" },
+  { key:"height", label:"Height", type:"number", unit:"cm" },
+  { key:"neck", label:"Neck", type:"number", unit:"cm" },
+  { key:"shoulders", label:"Shoulders", type:"number", unit:"cm" },
+  { key:"arms", label:"Arms", type:"number", unit:"cm" },
+  { key:"waist", label:"Waist", type:"number", unit:"cm" },
+  { key:"hips", label:"Hips", type:"number", unit:"cm" },
+  { key:"mid_thigh", label:"Mid-Thigh", type:"number", unit:"cm" },
+  { key:"calves", label:"Calves", type:"number", unit:"cm" },
+  { key:"bodyfat", label:"Body Fat", type:"number", unit:"%" },
+];
+
 // ── CLIENT DASHBOARD ──────────────────────────────────────────────────────────
 function ClientDashboard({ client, assigned, nutrition, measurements, workoutLog, habits, habitLogs, checkins, onGoPrograms, onGoNutrition, onGoCheckin, onGoHabits }) {
   const latest = measurements && measurements.length > 0 ? [...measurements].sort((a,b)=>b.date.localeCompare(a.date))[0] : null;
@@ -1456,20 +1471,7 @@ function NutritionAssigner({ nutrition, onSave, onMount }) {
 }
 
 // ── MEASUREMENTS PANEL ────────────────────────────────────────────────────────
-const MEASUREMENT_FIELDS = [
-  { key:"date", label:"Date", type:"date" },
-  { key:"age", label:"Age", type:"number", unit:"yrs" },
-  { key:"weight", label:"Weight", type:"number", unit:"kg" },
-  { key:"height", label:"Height", type:"number", unit:"cm" },
-  { key:"neck", label:"Neck", type:"number", unit:"cm" },
-  { key:"shoulders", label:"Shoulders", type:"number", unit:"cm" },
-  { key:"arms", label:"Arms", type:"number", unit:"cm" },
-  { key:"waist", label:"Waist", type:"number", unit:"cm" },
-  { key:"hips", label:"Hips", type:"number", unit:"cm" },
-  { key:"mid_thigh", label:"Mid-Thigh", type:"number", unit:"cm" },
-  { key:"calves", label:"Calves", type:"number", unit:"cm" },
-  { key:"bodyfat", label:"Body Fat", type:"number", unit:"%" },
-];
+
 
 function MeasurementsPanel({ measurements, onSave, clientName }) {
   const blank = MEASUREMENT_FIELDS.reduce((acc,f)=>({...acc,[f.key]:f.type==="date"?new Date().toISOString().slice(0,10):""}),{});
