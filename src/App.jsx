@@ -1039,28 +1039,6 @@ function ClientHabitsView({ habits, habitLogs, onLog }) {
       <div style={S.cardTag}>{count} program{count!==1?"s":""} assigned</div>
     </div>
   );
-  const count = (program.assignedTo||[]).length;
-  return (
-    <div style={S.card} onClick={onClick}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
-        <div style={{...S.programDot,background:program.color,width:36,height:36}} />
-        {onDelete && <button style={{background:"transparent",border:"1px solid #ff6b6b",color:"#ff6b6b",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:11,fontWeight:700}}
-          onClick={e=>{e.stopPropagation();if(window.confirm("Delete "+program.name+"?"))onDelete(program.id);}}>✕ Delete</button>}
-      </div>
-      <div style={S.cardName}>{program.name}</div>
-      <div style={S.cardMeta}>{program.tag}</div>
-      <div style={S.cardMeta}>{program.days.length} days · {program.days.reduce((s,d)=>s+d.exercises.length,0)} exercises</div>
-      <div style={S.cardTag}>{count} client{count!==1?"s":""}</div>
-    </div>
-  );
-  return (
-    <div style={S.statBox}>
-      <div style={S.statVal}>{value}</div>
-      <div style={S.statLabel}>{label}</div>
-    </div>
-  );
-  return <div style={{...S.empty,fontSize:small?12:14}}>{text}</div>;
-}
 
 // ── STYLES ────────────────────────────────────────────────────────────────────
 
