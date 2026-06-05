@@ -551,7 +551,6 @@ function NutritionAssigner({ nutrition, onSave, onMount }) {
 
 // ── MEASUREMENTS PANEL ────────────────────────────────────────────────────────
 
-
 function MeasurementsPanel({ measurements, onSave, clientName }) {
   const blank = MEASUREMENT_FIELDS.reduce((acc,f)=>({...acc,[f.key]:f.type==="date"?new Date().toISOString().slice(0,10):""}),{});
   const [form, setForm] = useState(blank);
@@ -875,29 +874,6 @@ function ClientHabitsView({ habits, habitLogs, onLog }) {
   const [saved, setSaved] = useState(false);
   useEffect(()=>{ setCompletions(habitLogs[today]||{}); },[habitLogs, today]);
 
-  // Calculate streak for each habit
-  const getStreak = (habitId) => {
-    let streak = 0;
-    const d = new Date();
-    while (true) {
-      const dateStr = d.toISOString().slice(0,10);
-      const log = dateStr === today ? completions : (habitLogs[dateStr] || {});
-      if (log[habitId]) { streak++; d.setDate(d.getDate() - 1); }
-      else break;
-    }
-    return streak;
-  };
-
-  const getBestStreak = (habitId) => {
-    let best = 0, current = 0;
-    const dates = Object.keys(habitLogs).sort();
-    dates.forEach(date => {
-      if ((habitLogs[date]||{})[habitId]) { current++; best = Math.max(best, current); }
-      else current = 0;
-    });
-    return best;
-  };
-
   if (!habits || habits.length === 0) return (
     <div style={{textAlign:"center",padding:"48px 0"}}>
       <div style={{fontSize:32,marginBottom:12}}>✅</div>
@@ -944,35 +920,21 @@ function ClientHabitsView({ habits, habitLogs, onLog }) {
 
       {/* Habit checklist */}
       <div style={{marginBottom:16}}>
-        {habits.map(h=>{
-          const streak = getStreak(h.id);
-          const best = getBestStreak(h.id);
-          return (
-            <div key={h.id}
-              style={{background:C.surface,border:`1px solid ${completions[h.id]?"rgba(203,251,69,0.3)":C.line}`,
-                borderRadius:14,padding:"14px 16px",marginBottom:8,cursor:"pointer",transition:"all .2s",
-                opacity:completions[h.id]?0.75:1,
-                boxShadow:completions[h.id]?"0 0 0 1px rgba(203,251,69,0.15)":"none"}}
-              onClick={()=>toggle(h.id)}>
-              <div style={{display:"flex",alignItems:"center",gap:14}}>
-                <div style={{fontSize:22}}>{h.emoji}</div>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:14,fontWeight:700,color:C.text,textDecoration:completions[h.id]?"line-through":"none",marginBottom:3}}>{h.label}</div>
-                  <div style={{display:"flex",gap:10,alignItems:"center"}}>
-                    {streak > 0 && <span style={{fontSize:11,color:"#FF6B4A",fontWeight:700}}>🔥 {streak} day{streak!==1?"s":""} streak</span>}
-                    {best > streak && <span style={{fontSize:10,color:C.faint,fontWeight:600}}>Best: {best}</span>}
-                    {streak === 0 && <span style={{fontSize:11,color:C.faint}}>Start your streak today</span>}
-                  </div>
-                </div>
-                <div style={{width:28,height:28,borderRadius:999,border:`2px solid ${completions[h.id]?"#CBFB45":C.line2}`,
-                  background:completions[h.id]?"#CBFB45":"transparent",display:"flex",alignItems:"center",justifyContent:"center",
-                  color:"#000",fontSize:14,fontWeight:800,transition:"all .2s",flexShrink:0}}>
-                  {completions[h.id]?"✓":""}
-                </div>
-              </div>
+        {habits.map(h=>(
+          <div key={h.id}
+            style={{display:"flex",alignItems:"center",gap:14,background:C.surface,border:`1px solid ${completions[h.id]?C.accent+"40":C.line}`,
+              borderRadius:12,padding:"14px 16px",marginBottom:8,cursor:"pointer",transition:"all .2s",
+              opacity:completions[h.id]?0.7:1}}
+            onClick={()=>toggle(h.id)}>
+            <div style={{fontSize:22}}>{h.emoji}</div>
+            <div style={{flex:1,fontSize:14,fontWeight:700,color:C.text,textDecoration:completions[h.id]?"line-through":"none"}}>{h.label}</div>
+            <div style={{width:28,height:28,borderRadius:999,border:`2px solid ${completions[h.id]?C.accent:C.line2}`,
+              background:completions[h.id]?C.accent:"transparent",display:"flex",alignItems:"center",justifyContent:"center",
+              color:"#000",fontSize:14,fontWeight:800,transition:"all .2s"}}>
+              {completions[h.id]?"✓":""}
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
 
       <button style={{...S.btn,width:"100%",padding:14,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
@@ -1009,7 +971,7 @@ function ClientHabitsView({ habits, habitLogs, onLog }) {
   );
 }
 
-// ── SHARED COMPONENTS ─────────────────────────────────────────────────────────) {
+// ── SHARED COMPONENTS ────────────────────────────────────────────────────────) {
   return (
     <div style={S.topbar}>
       <div style={S.topbarLeft}>
@@ -1039,6 +1001,28 @@ function ClientHabitsView({ habits, habitLogs, onLog }) {
       <div style={S.cardTag}>{count} program{count!==1?"s":""} assigned</div>
     </div>
   );
+  const count = (program.assignedTo||[]).length;
+  return (
+    <div style={S.card} onClick={onClick}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+        <div style={{...S.programDot,background:program.color,width:36,height:36}} />
+        {onDelete && <button style={{background:"transparent",border:"1px solid #ff6b6b",color:"#ff6b6b",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:11,fontWeight:700}}
+          onClick={e=>{e.stopPropagation();if(window.confirm("Delete "+program.name+"?"))onDelete(program.id);}}>✕ Delete</button>}
+      </div>
+      <div style={S.cardName}>{program.name}</div>
+      <div style={S.cardMeta}>{program.tag}</div>
+      <div style={S.cardMeta}>{program.days.length} days · {program.days.reduce((s,d)=>s+d.exercises.length,0)} exercises</div>
+      <div style={S.cardTag}>{count} client{count!==1?"s":""}</div>
+    </div>
+  );
+  return (
+    <div style={S.statBox}>
+      <div style={S.statVal}>{value}</div>
+      <div style={S.statLabel}>{label}</div>
+    </div>
+  );
+  return <div style={{...S.empty,fontSize:small?12:14}}>{text}</div>;
+}
 
 // ── STYLES ────────────────────────────────────────────────────────────────────
 
@@ -1207,7 +1191,6 @@ function NewClientModal({ onClose, onSave }) {
     </Modal>
   );
 }
-
 function NewProgramModal({ onClose, onSave }) {
   const [form, setForm] = useState({name:"",tag:"",color:"#FFFFFF"});
   const f=(k,v)=>setForm(p=>({...p,[k]:v}));
@@ -1226,7 +1209,6 @@ function NewProgramModal({ onClose, onSave }) {
     </Modal>
   );
 }
-
 function Modal({ title, onClose, onSave, children }) {
   return (
     <div style={S.overlay}>
@@ -1245,7 +1227,7 @@ function Modal({ title, onClose, onSave, children }) {
   );
 }
 
-// ── NUTRITION ASSIGNER (coach assigns plan to client) ────────────────────────) {
+// ── NUTRITION ASSIGNER (coach assigns plan to client) ───────────────────────) {
   useEffect(()=>{ if(onMount) onMount(); },[]);
   const blank = { calories:0, protein:0, carbs:0, fat:0, notes:"", meals:[] };
   const [form, setForm] = useState(nutrition || blank);
@@ -1310,8 +1292,106 @@ function Modal({ title, onClose, onSave, children }) {
   );
 }
 
-// ── MEASUREMENTS PANEL ────────────────────────────────────────────────────────
+// ── MEASUREMENTS PANEL ────────────────────────────────────────────────────────) {
+  const blank = MEASUREMENT_FIELDS.reduce((acc,f)=>({...acc,[f.key]:f.type==="date"?new Date().toISOString().slice(0,10):""}),{});
+  const [form, setForm] = useState(blank);
+  const [showForm, setShowForm] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const f = (k,v) => setForm(p=>({...p,[k]:v}));
 
+  const handleSave = () => {
+    const entry = {...form};
+    MEASUREMENT_FIELDS.forEach(field => { if(field.type==="number" && entry[field.key]) entry[field.key] = +entry[field.key]; });
+    onSave(entry);
+    setSaved(true);
+    setForm(blank);
+    setTimeout(()=>{ setSaved(false); setShowForm(false); }, 1500);
+  };
+
+  const sorted = [...measurements].sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  return (
+    <div>
+      <SectionHeader title={`Measurements (${measurements.length})`}
+        action={<button style={S.btnSm} onClick={()=>setShowForm(s=>!s)}>{showForm?"Cancel":"+ Add Entry"}</button>} />
+
+      {showForm && (
+        <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:20,marginBottom:20}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:12,marginBottom:16}}>
+            {MEASUREMENT_FIELDS.map(field=>(
+              <div key={field.key}>
+                <div style={{fontSize:10,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:5}}>
+                  {field.label}{field.unit?` (${field.unit})`:""}
+                </div>
+                <input style={{...S.input,padding:"8px 10px"}} type={field.type}
+                  value={form[field.key]} onChange={e=>f(field.key,e.target.value)} />
+              </div>
+            ))}
+          </div>
+          <button style={{...S.btn,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+            {saved?"✓ Saved!":"Save Measurements →"}
+          </button>
+        </div>
+      )}
+
+      {sorted.length===0 && !showForm && <Empty text="No measurements recorded yet. Click '+ Add Entry' to start tracking." />}
+
+      {sorted.length>0 && (
+        <>
+          {/* Latest snapshot */}
+          {sorted[0] && (
+            <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:20,marginBottom:16}}>
+              <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:14}}>
+                Latest — {sorted[0].date}
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(110px,1fr))",gap:12}}>
+                {MEASUREMENT_FIELDS.filter(f=>f.key!=="date"&&sorted[0][f.key]).map(field=>(
+                  <div key={field.key} style={{textAlign:"center",background:C.surface2,borderRadius:10,padding:"12px 8px"}}>
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,color:C.text,lineHeight:1}}>
+                      {sorted[0][field.key]}<span style={{fontSize:14,color:C.muted}}>{field.unit}</span>
+                    </div>
+                    <div style={{fontSize:9,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginTop:4}}>{field.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* History table */}
+          {sorted.length>1 && (
+            <>
+              <SectionHeader title="History" />
+              <div style={{overflowX:"auto"}}>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                  <thead>
+                    <tr style={{borderBottom:`1px solid ${C.line}`}}>
+                      {MEASUREMENT_FIELDS.map(f=>(
+                        <th key={f.key} style={{padding:"8px 10px",textAlign:"left",color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",fontSize:9,whiteSpace:"nowrap"}}>
+                          {f.label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sorted.map((row,i)=>(
+                      <tr key={i} style={{borderBottom:`1px solid ${C.line}`,opacity:i===0?1:0.7}}>
+                        {MEASUREMENT_FIELDS.map(f=>(
+                          <td key={f.key} style={{padding:"10px 10px",color:i===0?C.text:C.muted,whiteSpace:"nowrap",fontWeight:i===0?700:400}}>
+                            {row[f.key]||"—"}{row[f.key]&&f.unit?<span style={{color:C.faint,fontSize:10}}>{f.unit}</span>:""}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
 
 // ── CLIENT NUTRITION VIEW ────────────────────────────────────────────────────
 function ClientNutritionView({ nutrition }) {
@@ -1402,7 +1482,7 @@ function ClientHistoryView({ clientId, programs, workoutLog }) {
             <div style={S.historyDate}>{fmt(session.date)}{si===0?" · Most Recent":""}</div>
             {day.exercises.map(ex=>{
               const sets = session.sets[ex.id]||[];
-              const doneSets = sets.filter(s=>s.done);
+              const doneSets = sets.filter(s=>s.done===true||s.done==="true"||s.weight);
               if(doneSets.length===0) return null;
               const best = Math.max(...doneSets.map(s=>parseFloat(s.weight)||0));
               return (
@@ -1427,7 +1507,7 @@ function ClientHistoryView({ clientId, programs, workoutLog }) {
   );
 }
 
-// ── WEEKLY CHECK-IN FORM (client fills in) ───────────────────────────────────) {
+// ── WEEKLY CHECK-IN FORM (client fills in) ──────────────────────────────────) {
   const getWeekStart = () => {
     const d = new Date();
     const day = d.getDay();
@@ -1531,7 +1611,7 @@ function ClientHistoryView({ clientId, programs, workoutLog }) {
   );
 }
 
-// ── COACH CHECK-IN VIEW ───────────────────────────────────────────────────────) {
+// ── COACH CHECK-IN VIEW ──────────────────────────────────────────────────────) {
   if (!checkins || checkins.length === 0) return (
     <div style={{textAlign:"center",padding:"48px 0"}}>
       <div style={{fontSize:32,marginBottom:12}}>📋</div>
@@ -1584,7 +1664,7 @@ function ClientHistoryView({ clientId, programs, workoutLog }) {
   );
 }
 
-// ── HABITS EDITOR (coach sets habits) ─────────────────────────────────────────) {
+// ── HABITS EDITOR (coach sets habits) ────────────────────────────────────────) {
   const [list, setList] = useState(habits || []);
   const [newHabit, setNewHabit] = useState("");
   const [saved, setSaved] = useState(false);
@@ -1645,29 +1725,6 @@ function ClientHistoryView({ clientId, programs, workoutLog }) {
   const [saved, setSaved] = useState(false);
   useEffect(()=>{ setCompletions(habitLogs[today]||{}); },[habitLogs, today]);
 
-  // Calculate streak for each habit
-  const getStreak = (habitId) => {
-    let streak = 0;
-    const d = new Date();
-    while (true) {
-      const dateStr = d.toISOString().slice(0,10);
-      const log = dateStr === today ? completions : (habitLogs[dateStr] || {});
-      if (log[habitId]) { streak++; d.setDate(d.getDate() - 1); }
-      else break;
-    }
-    return streak;
-  };
-
-  const getBestStreak = (habitId) => {
-    let best = 0, current = 0;
-    const dates = Object.keys(habitLogs).sort();
-    dates.forEach(date => {
-      if ((habitLogs[date]||{})[habitId]) { current++; best = Math.max(best, current); }
-      else current = 0;
-    });
-    return best;
-  };
-
   if (!habits || habits.length === 0) return (
     <div style={{textAlign:"center",padding:"48px 0"}}>
       <div style={{fontSize:32,marginBottom:12}}>✅</div>
@@ -1714,35 +1771,21 @@ function ClientHistoryView({ clientId, programs, workoutLog }) {
 
       {/* Habit checklist */}
       <div style={{marginBottom:16}}>
-        {habits.map(h=>{
-          const streak = getStreak(h.id);
-          const best = getBestStreak(h.id);
-          return (
-            <div key={h.id}
-              style={{background:C.surface,border:`1px solid ${completions[h.id]?"rgba(203,251,69,0.3)":C.line}`,
-                borderRadius:14,padding:"14px 16px",marginBottom:8,cursor:"pointer",transition:"all .2s",
-                opacity:completions[h.id]?0.75:1,
-                boxShadow:completions[h.id]?"0 0 0 1px rgba(203,251,69,0.15)":"none"}}
-              onClick={()=>toggle(h.id)}>
-              <div style={{display:"flex",alignItems:"center",gap:14}}>
-                <div style={{fontSize:22}}>{h.emoji}</div>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:14,fontWeight:700,color:C.text,textDecoration:completions[h.id]?"line-through":"none",marginBottom:3}}>{h.label}</div>
-                  <div style={{display:"flex",gap:10,alignItems:"center"}}>
-                    {streak > 0 && <span style={{fontSize:11,color:"#FF6B4A",fontWeight:700}}>🔥 {streak} day{streak!==1?"s":""} streak</span>}
-                    {best > streak && <span style={{fontSize:10,color:C.faint,fontWeight:600}}>Best: {best}</span>}
-                    {streak === 0 && <span style={{fontSize:11,color:C.faint}}>Start your streak today</span>}
-                  </div>
-                </div>
-                <div style={{width:28,height:28,borderRadius:999,border:`2px solid ${completions[h.id]?"#CBFB45":C.line2}`,
-                  background:completions[h.id]?"#CBFB45":"transparent",display:"flex",alignItems:"center",justifyContent:"center",
-                  color:"#000",fontSize:14,fontWeight:800,transition:"all .2s",flexShrink:0}}>
-                  {completions[h.id]?"✓":""}
-                </div>
-              </div>
+        {habits.map(h=>(
+          <div key={h.id}
+            style={{display:"flex",alignItems:"center",gap:14,background:C.surface,border:`1px solid ${completions[h.id]?C.accent+"40":C.line}`,
+              borderRadius:12,padding:"14px 16px",marginBottom:8,cursor:"pointer",transition:"all .2s",
+              opacity:completions[h.id]?0.7:1}}
+            onClick={()=>toggle(h.id)}>
+            <div style={{fontSize:22}}>{h.emoji}</div>
+            <div style={{flex:1,fontSize:14,fontWeight:700,color:C.text,textDecoration:completions[h.id]?"line-through":"none"}}>{h.label}</div>
+            <div style={{width:28,height:28,borderRadius:999,border:`2px solid ${completions[h.id]?C.accent:C.line2}`,
+              background:completions[h.id]?C.accent:"transparent",display:"flex",alignItems:"center",justifyContent:"center",
+              color:"#000",fontSize:14,fontWeight:800,transition:"all .2s"}}>
+              {completions[h.id]?"✓":""}
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
 
       <button style={{...S.btn,width:"100%",padding:14,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
@@ -1822,24 +1865,6 @@ function ClientMeasurementsView({ measurements }) {
 }
 
 // ── CLIENT DASHBOARD ──────────────────────────────────────────────────────────
-function StreakMilestoneBanner(habits, habitLogs) {
-  const today = new Date().toISOString().slice(0,10);
-  const log = habitLogs[today]||{};
-  let maxStreak = 0;
-  habits.forEach(h => {
-    let s = 0; const d = new Date();
-    while(true) {
-      const ds = d.toISOString().slice(0,10);
-      const l = ds===today?log:(habitLogs[ds]||{});
-      if(l[h.id]){s++;d.setDate(d.getDate()-1);}else break;
-    }
-    maxStreak = Math.max(maxStreak, s);
-  });
-  if (maxStreak >= 30) return <div style={{background:"linear-gradient(135deg,rgba(212,245,60,0.12),rgba(168,232,0,0.08))",border:"1px solid rgba(212,245,60,0.3)",borderRadius:14,padding:"14px 18px",marginBottom:14,display:"flex",alignItems:"center",gap:12}}><div style={{fontSize:28}}>👑</div><div><div style={{fontWeight:800,fontSize:14,color:"#D4F53C",marginBottom:2}}>30-Day Legend!</div><div style={{fontSize:12,color:"#7a7a85"}}>A full month of consistency. Incredible.</div></div></div>;
-  if (maxStreak >= 7) return <div style={{background:"linear-gradient(135deg,rgba(255,107,74,0.15),rgba(255,159,69,0.1))",border:"1px solid rgba(255,107,74,0.3)",borderRadius:14,padding:"14px 18px",marginBottom:14,display:"flex",alignItems:"center",gap:12}}><div style={{fontSize:28}}>🔥</div><div><div style={{fontWeight:800,fontSize:14,color:"#FF6B4A",marginBottom:2}}>7-Day Streak!</div><div style={{fontSize:12,color:"#7a7a85"}}>You're on fire — one week straight!</div></div></div>;
-  return null;
-}
-
 function ClientDashboard({ client, assigned, nutrition, measurements, workoutLog, habits, habitLogs, checkins, onGoPrograms, onGoNutrition, onGoCheckin, onGoHabits }) {
   const latest = measurements && measurements.length > 0 ? [...measurements].sort((a,b)=>b.date.localeCompare(a.date))[0] : null;
   const allEx = assigned.flatMap(p=>p.days.flatMap(d=>d.exercises));
@@ -1884,9 +1909,6 @@ function ClientDashboard({ client, assigned, nutrition, measurements, workoutLog
           <div style={{fontSize:12,color:C.accent,fontWeight:700}}>Submit now →</div>
         </div>
       )}
-
-      {/* Streak milestone banner */}
-      {habits && habits.length > 0 && StreakMilestoneBanner(habits, habitLogs)}
 
       {/* Habits today */}
       {habits && habits.length > 0 && (
@@ -2178,7 +2200,7 @@ function CoachLogHistory({ clientId, programs, workoutLog, pbs }) {
             <div style={S.historyDate}>{fmt(session.date)}</div>
             {day.exercises.map(ex=>{
               const sets = session.sets[ex.id]||[];
-              const doneSets = sets.filter(s=>s.done);
+              const doneSets = sets.filter(s=>s.done===true||s.done==="true"||s.weight);
               if(doneSets.length===0) return null;
               return (
                 <div key={ex.id} style={S.historyEx}>
@@ -2275,8 +2297,7 @@ function ProgramBuilder({ program, onUpdate, onBack }) {
     </div>
   );
 }
-
-function DayBlock({ day, color, onChange, onDelete }) {
+function DayBlock({ day, idx, onUpdate, onDeleteDay }) {
   const [open, setOpen] = useState(true);
   const [editLabel, setEditLabel] = useState(false);
   const [labelVal, setLabelVal] = useState(day.label);
@@ -2312,8 +2333,7 @@ function DayBlock({ day, color, onChange, onDelete }) {
     </div>
   );
 }
-
-function ExRow({ ex, index, color, onChange, onDelete }) {
+function ExRow({ ex, idx, dayIdx, onUpdate, onDelete }) {
   return (
     <div style={S.exRow}>
       <span style={{...S.exNum,color}}>{index}</span>
@@ -2348,6 +2368,53 @@ function ExRow({ ex, index, color, onChange, onDelete }) {
             onChange={u=>updateDay(day.id,u)} onDelete={()=>deleteDay(day.id)} />
         ))}
       </div>
+    </div>
+  );) {
+  const [open, setOpen] = useState(true);
+  const [editLabel, setEditLabel] = useState(false);
+  const [labelVal, setLabelVal] = useState(day.label);
+  const addEx = () => onChange({...day,exercises:[...day.exercises,{id:uid(),name:"New Exercise",sets:3,reps:"10–12",rest:"60s",notes:""}]});
+  const updateEx = (exId,field,val) => onChange({...day,exercises:day.exercises.map(e=>e.id===exId?{...e,[field]:val}:e)});
+  const deleteEx = (exId) => onChange({...day,exercises:day.exercises.filter(e=>e.id!==exId)});
+  const saveLabel = () => { onChange({...day,label:labelVal}); setEditLabel(false); };
+  return (
+    <div style={{...S.dayBlock,borderLeft:`3px solid ${color}`}}>
+      <div style={S.dayHeader} onClick={()=>setOpen(o=>!o)}>
+        <div style={S.dayLeft}>
+          <span style={{color,fontSize:18,marginRight:8}}>▸</span>
+          {editLabel
+            ? <input style={{...S.input,padding:"4px 8px",fontSize:14,width:260}} value={labelVal}
+                onChange={e=>setLabelVal(e.target.value)} onBlur={saveLabel} onKeyDown={e=>e.key==="Enter"&&saveLabel()}
+                onClick={e=>e.stopPropagation()} autoFocus />
+            : <span style={S.dayTitle} onClick={e=>{e.stopPropagation();setEditLabel(true)}}>{day.label}</span>
+          }
+          <span style={S.exCount}>{day.exercises.length} exercises</span>
+        </div>
+        <div style={{display:"flex",gap:8}} onClick={e=>e.stopPropagation()}>
+          <button style={S.iconBtn} onClick={addEx}>+ Exercise</button>
+          <button style={{...S.iconBtn,color:"#ff6b6b"}} onClick={onDelete}>✕</button>
+        </div>
+      </div>
+      {open && <div style={S.exList}>
+        {day.exercises.length===0 && <Empty text="No exercises." small />}
+        {day.exercises.map((ex,i)=>(
+          <ExRow key={ex.id} ex={ex} index={i+1} color={color}
+            onChange={(f,v)=>updateEx(ex.id,f,v)} onDelete={()=>deleteEx(ex.id)} />
+        ))}
+      </div>}
+    </div>
+  );) {
+  return (
+    <div style={S.exRow}>
+      <span style={{...S.exNum,color}}>{index}</span>
+      <div style={S.exFields}>
+        <input style={{...S.exInput,flex:3}} value={ex.name} onChange={e=>onChange("name",e.target.value)} placeholder="Exercise name" />
+        <input style={{...S.exInput,flex:1}} value={ex.sets} onChange={e=>onChange("sets",e.target.value)} placeholder="Sets" />
+        <input style={{...S.exInput,flex:1.5}} value={ex.reps} onChange={e=>onChange("reps",e.target.value)} placeholder="Reps" />
+        <input style={{...S.exInput,flex:1}} value={ex.rest} onChange={e=>onChange("rest",e.target.value)} placeholder="Rest" />
+        <input style={{...S.exInput,flex:3}} value={ex.notes} onChange={e=>onChange("notes",e.target.value)} placeholder="Notes…" />
+      </div>
+      <button style={{...S.iconBtn,color:"#ff6b6b",padding:"4px 6px"}} onClick={onDelete}>✕</button>
     </div>
   );
 }
@@ -2398,9 +2465,6 @@ function ExRow({ ex, index, color, onChange, onDelete }) {
           <div style={{fontSize:12,color:C.accent,fontWeight:700}}>Submit now →</div>
         </div>
       )}
-
-      {/* Streak milestone banner */}
-      {habits && habits.length > 0 && StreakMilestoneBanner(habits, habitLogs)}
 
       {/* Habits today */}
       {habits && habits.length > 0 && (
@@ -2603,7 +2667,7 @@ function ExRow({ ex, index, color, onChange, onDelete }) {
             <div style={S.historyDate}>{fmt(session.date)}{si===0?" · Most Recent":""}</div>
             {day.exercises.map(ex=>{
               const sets = session.sets[ex.id]||[];
-              const doneSets = sets.filter(s=>s.done);
+              const doneSets = sets.filter(s=>s.done===true||s.done==="true"||s.weight);
               if(doneSets.length===0) return null;
               const best = Math.max(...doneSets.map(s=>parseFloat(s.weight)||0));
               return (
@@ -2786,10 +2850,41 @@ function ExRow({ ex, index, color, onChange, onDelete }) {
       </div>
       <Field label="Goal"><input style={S.input} value={form.goal} onChange={e=>f("goal",e.target.value)} /></Field>
     </Modal>
+  );) {
+  const [form, setForm] = useState({name:"",tag:"",color:"#FFFFFF"});
+  const f=(k,v)=>setForm(p=>({...p,[k]:v}));
+  return (
+    <Modal title="New Program" onClose={onClose} onSave={()=>onSave(form)}>
+      <Field label="Program Name"><input style={S.input} value={form.name} onChange={e=>f("name",e.target.value)} /></Field>
+      <Field label="Tag (e.g. Beginner · 3 days/week)"><input style={S.input} value={form.tag} onChange={e=>f("tag",e.target.value)} /></Field>
+      <Field label="Accent Color">
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:4}}>
+          {DAY_COLORS.map(c=>(
+            <div key={c} style={{width:28,height:28,borderRadius:"50%",background:c,cursor:"pointer",
+              border:form.color===c?"2px solid #fff":"2px solid transparent"}} onClick={()=>f("color",c)} />
+          ))}
+        </div>
+      </Field>
+    </Modal>
+  );) {
+  return (
+    <div style={S.overlay}>
+      <div style={S.modal}>
+        <div style={S.modalHeader}>
+          <div style={S.modalTitle}>{title}</div>
+          <button style={S.iconBtn} onClick={onClose}>✕</button>
+        </div>
+        <div style={S.modalBody}>{children}</div>
+        <div style={S.modalFooter}>
+          <button style={S.btnGhost} onClick={onClose}>Cancel</button>
+          <button style={S.btn} onClick={onSave}>Save →</button>
+        </div>
+      </div>
+    </div>
   );
 }
 
-// ── NUTRITION ASSIGNER (coach assigns plan to client) ────────────────────────) {
+// ── NUTRITION ASSIGNER (coach assigns plan to client) ───────────────────────) {
   useEffect(()=>{ if(onMount) onMount(); },[]);
   const blank = { calories:0, protein:0, carbs:0, fat:0, notes:"", meals:[] };
   const [form, setForm] = useState(nutrition || blank);
@@ -2854,10 +2949,108 @@ function ExRow({ ex, index, color, onChange, onDelete }) {
   );
 }
 
-// ── MEASUREMENTS PANEL ────────────────────────────────────────────────────────
+// ── MEASUREMENTS PANEL ────────────────────────────────────────────────────────) {
+  const blank = MEASUREMENT_FIELDS.reduce((acc,f)=>({...acc,[f.key]:f.type==="date"?new Date().toISOString().slice(0,10):""}),{});
+  const [form, setForm] = useState(blank);
+  const [showForm, setShowForm] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const f = (k,v) => setForm(p=>({...p,[k]:v}));
 
+  const handleSave = () => {
+    const entry = {...form};
+    MEASUREMENT_FIELDS.forEach(field => { if(field.type==="number" && entry[field.key]) entry[field.key] = +entry[field.key]; });
+    onSave(entry);
+    setSaved(true);
+    setForm(blank);
+    setTimeout(()=>{ setSaved(false); setShowForm(false); }, 1500);
+  };
 
-// ── WEEKLY CHECK-IN FORM (client fills in) ───────────────────────────────────) {
+  const sorted = [...measurements].sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  return (
+    <div>
+      <SectionHeader title={`Measurements (${measurements.length})`}
+        action={<button style={S.btnSm} onClick={()=>setShowForm(s=>!s)}>{showForm?"Cancel":"+ Add Entry"}</button>} />
+
+      {showForm && (
+        <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:20,marginBottom:20}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:12,marginBottom:16}}>
+            {MEASUREMENT_FIELDS.map(field=>(
+              <div key={field.key}>
+                <div style={{fontSize:10,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:5}}>
+                  {field.label}{field.unit?` (${field.unit})`:""}
+                </div>
+                <input style={{...S.input,padding:"8px 10px"}} type={field.type}
+                  value={form[field.key]} onChange={e=>f(field.key,e.target.value)} />
+              </div>
+            ))}
+          </div>
+          <button style={{...S.btn,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+            {saved?"✓ Saved!":"Save Measurements →"}
+          </button>
+        </div>
+      )}
+
+      {sorted.length===0 && !showForm && <Empty text="No measurements recorded yet. Click '+ Add Entry' to start tracking." />}
+
+      {sorted.length>0 && (
+        <>
+          {/* Latest snapshot */}
+          {sorted[0] && (
+            <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:20,marginBottom:16}}>
+              <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:14}}>
+                Latest — {sorted[0].date}
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(110px,1fr))",gap:12}}>
+                {MEASUREMENT_FIELDS.filter(f=>f.key!=="date"&&sorted[0][f.key]).map(field=>(
+                  <div key={field.key} style={{textAlign:"center",background:C.surface2,borderRadius:10,padding:"12px 8px"}}>
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,color:C.text,lineHeight:1}}>
+                      {sorted[0][field.key]}<span style={{fontSize:14,color:C.muted}}>{field.unit}</span>
+                    </div>
+                    <div style={{fontSize:9,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",marginTop:4}}>{field.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* History table */}
+          {sorted.length>1 && (
+            <>
+              <SectionHeader title="History" />
+              <div style={{overflowX:"auto"}}>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                  <thead>
+                    <tr style={{borderBottom:`1px solid ${C.line}`}}>
+                      {MEASUREMENT_FIELDS.map(f=>(
+                        <th key={f.key} style={{padding:"8px 10px",textAlign:"left",color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",fontSize:9,whiteSpace:"nowrap"}}>
+                          {f.label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sorted.map((row,i)=>(
+                      <tr key={i} style={{borderBottom:`1px solid ${C.line}`,opacity:i===0?1:0.7}}>
+                        {MEASUREMENT_FIELDS.map(f=>(
+                          <td key={f.key} style={{padding:"10px 10px",color:i===0?C.text:C.muted,whiteSpace:"nowrap",fontWeight:i===0?700:400}}>
+                            {row[f.key]||"—"}{row[f.key]&&f.unit?<span style={{color:C.faint,fontSize:10}}>{f.unit}</span>:""}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── WEEKLY CHECK-IN FORM (client fills in) ──────────────────────────────────) {
   const getWeekStart = () => {
     const d = new Date();
     const day = d.getDay();
@@ -2961,7 +3154,7 @@ function ExRow({ ex, index, color, onChange, onDelete }) {
   );
 }
 
-// ── COACH CHECK-IN VIEW ───────────────────────────────────────────────────────) {
+// ── COACH CHECK-IN VIEW ──────────────────────────────────────────────────────) {
   if (!checkins || checkins.length === 0) return (
     <div style={{textAlign:"center",padding:"48px 0"}}>
       <div style={{fontSize:32,marginBottom:12}}>📋</div>
@@ -3014,7 +3207,7 @@ function ExRow({ ex, index, color, onChange, onDelete }) {
   );
 }
 
-// ── HABITS EDITOR (coach sets habits) ─────────────────────────────────────────) {
+// ── HABITS EDITOR (coach sets habits) ────────────────────────────────────────) {
   const [list, setList] = useState(habits || []);
   const [newHabit, setNewHabit] = useState("");
   const [saved, setSaved] = useState(false);
@@ -3075,29 +3268,6 @@ function ExRow({ ex, index, color, onChange, onDelete }) {
   const [saved, setSaved] = useState(false);
   useEffect(()=>{ setCompletions(habitLogs[today]||{}); },[habitLogs, today]);
 
-  // Calculate streak for each habit
-  const getStreak = (habitId) => {
-    let streak = 0;
-    const d = new Date();
-    while (true) {
-      const dateStr = d.toISOString().slice(0,10);
-      const log = dateStr === today ? completions : (habitLogs[dateStr] || {});
-      if (log[habitId]) { streak++; d.setDate(d.getDate() - 1); }
-      else break;
-    }
-    return streak;
-  };
-
-  const getBestStreak = (habitId) => {
-    let best = 0, current = 0;
-    const dates = Object.keys(habitLogs).sort();
-    dates.forEach(date => {
-      if ((habitLogs[date]||{})[habitId]) { current++; best = Math.max(best, current); }
-      else current = 0;
-    });
-    return best;
-  };
-
   if (!habits || habits.length === 0) return (
     <div style={{textAlign:"center",padding:"48px 0"}}>
       <div style={{fontSize:32,marginBottom:12}}>✅</div>
@@ -3144,35 +3314,21 @@ function ExRow({ ex, index, color, onChange, onDelete }) {
 
       {/* Habit checklist */}
       <div style={{marginBottom:16}}>
-        {habits.map(h=>{
-          const streak = getStreak(h.id);
-          const best = getBestStreak(h.id);
-          return (
-            <div key={h.id}
-              style={{background:C.surface,border:`1px solid ${completions[h.id]?"rgba(203,251,69,0.3)":C.line}`,
-                borderRadius:14,padding:"14px 16px",marginBottom:8,cursor:"pointer",transition:"all .2s",
-                opacity:completions[h.id]?0.75:1,
-                boxShadow:completions[h.id]?"0 0 0 1px rgba(203,251,69,0.15)":"none"}}
-              onClick={()=>toggle(h.id)}>
-              <div style={{display:"flex",alignItems:"center",gap:14}}>
-                <div style={{fontSize:22}}>{h.emoji}</div>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:14,fontWeight:700,color:C.text,textDecoration:completions[h.id]?"line-through":"none",marginBottom:3}}>{h.label}</div>
-                  <div style={{display:"flex",gap:10,alignItems:"center"}}>
-                    {streak > 0 && <span style={{fontSize:11,color:"#FF6B4A",fontWeight:700}}>🔥 {streak} day{streak!==1?"s":""} streak</span>}
-                    {best > streak && <span style={{fontSize:10,color:C.faint,fontWeight:600}}>Best: {best}</span>}
-                    {streak === 0 && <span style={{fontSize:11,color:C.faint}}>Start your streak today</span>}
-                  </div>
-                </div>
-                <div style={{width:28,height:28,borderRadius:999,border:`2px solid ${completions[h.id]?"#CBFB45":C.line2}`,
-                  background:completions[h.id]?"#CBFB45":"transparent",display:"flex",alignItems:"center",justifyContent:"center",
-                  color:"#000",fontSize:14,fontWeight:800,transition:"all .2s",flexShrink:0}}>
-                  {completions[h.id]?"✓":""}
-                </div>
-              </div>
+        {habits.map(h=>(
+          <div key={h.id}
+            style={{display:"flex",alignItems:"center",gap:14,background:C.surface,border:`1px solid ${completions[h.id]?C.accent+"40":C.line}`,
+              borderRadius:12,padding:"14px 16px",marginBottom:8,cursor:"pointer",transition:"all .2s",
+              opacity:completions[h.id]?0.7:1}}
+            onClick={()=>toggle(h.id)}>
+            <div style={{fontSize:22}}>{h.emoji}</div>
+            <div style={{flex:1,fontSize:14,fontWeight:700,color:C.text,textDecoration:completions[h.id]?"line-through":"none"}}>{h.label}</div>
+            <div style={{width:28,height:28,borderRadius:999,border:`2px solid ${completions[h.id]?C.accent:C.line2}`,
+              background:completions[h.id]?C.accent:"transparent",display:"flex",alignItems:"center",justifyContent:"center",
+              color:"#000",fontSize:14,fontWeight:800,transition:"all .2s"}}>
+              {completions[h.id]?"✓":""}
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
 
       <button style={{...S.btn,width:"100%",padding:14,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
@@ -3209,7 +3365,7 @@ function ExRow({ ex, index, color, onChange, onDelete }) {
   );
 }
 
-// ── SHARED COMPONENTS ─────────────────────────────────────────────────────────) {
+// ── SHARED COMPONENTS ────────────────────────────────────────────────────────) {
   return (
     <div style={S.topbar}>
       <div style={S.topbarLeft}>
@@ -3441,7 +3597,7 @@ function CoachApp({ clients, programs, nutrition, addClient, updateClient, remov
             <div style={S.historyDate}>{fmt(session.date)}</div>
             {day.exercises.map(ex=>{
               const sets = session.sets[ex.id]||[];
-              const doneSets = sets.filter(s=>s.done);
+              const doneSets = sets.filter(s=>s.done===true||s.done==="true"||s.weight);
               if(doneSets.length===0) return null;
               return (
                 <div key={ex.id} style={S.historyEx}>
@@ -3514,59 +3670,10 @@ function CoachApp({ clients, programs, nutrition, addClient, updateClient, remov
   );
 }
 
-
-// ── LOADING SCREEN ────────────────────────────────────────────────────────────
-function LoadingScreen() {
-  const [dots, setDots] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setDots(d => (d + 1) % 4), 400);
-    return () => clearInterval(t);
-  }, []);
-  return (
-    <div style={{
-      position:"fixed", inset:0, background:"#080809",
-      display:"flex", flexDirection:"column",
-      alignItems:"center", justifyContent:"center",
-      zIndex:9999, fontFamily:"'Manrope',system-ui,sans-serif",
-    }}>
-      {/* Radial glow */}
-      <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 60% 40% at 50% 50%,rgba(203,251,69,0.06),transparent 70%)",pointerEvents:"none"}} />
-      
-      {/* Logo */}
-      <div style={{position:"relative",zIndex:2,textAlign:"center"}}>
-        <img src={LOGO_B64} alt="CoachedByNickHee"
-          style={{width:260,objectFit:"contain",marginBottom:48,opacity:0.95}} />
-        
-        {/* Animated bar */}
-        <div style={{width:200,height:2,background:"rgba(255,255,255,0.08)",borderRadius:999,margin:"0 auto 16px",overflow:"hidden"}}>
-          <div style={{
-            height:"100%", borderRadius:999,
-            background:"linear-gradient(90deg,transparent,#CBFB45,transparent)",
-            animation:"shimmer 1.4s ease-in-out infinite",
-            width:"60%",
-          }} />
-        </div>
-        
-        <div style={{fontSize:11,color:"#4a4a55",letterSpacing:"0.25em",textTransform:"uppercase",fontWeight:700}}>
-          Loading{"." .repeat(dots + 1)}
-        </div>
-      </div>
-      
-      <style>{`
-        @keyframes shimmer {
-          0% { transform: translateX(-200%); }
-          100% { transform: translateX(400%); }
-        }
-      `}</style>
-    </div>
-  );
-}
-
 // ── App Root ─────────────────────────────────────────────────────────────────
 
 // ── App Root ─────────────────────────────────────────────────────────────────
 export default function App() {
-  const [appReady, setAppReady] = useState(false);
   const [clients, setClients] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [nutrition, setNutrition] = useState({});
@@ -3582,12 +3689,6 @@ export default function App() {
   });
   const [loading, setLoading] = useState(false);
   const workoutLog = useWorkoutLog();
-
-  // Show loading screen for minimum 2s then fade
-  useEffect(() => {
-    const t = setTimeout(() => setAppReady(true), 2000);
-    return () => clearTimeout(t);
-  }, []);
 
   // Load all data from Supabase
   const loadData = async () => {
@@ -3712,7 +3813,6 @@ export default function App() {
     } catch(e) { console.error("Error loading measurements:", e); }
   };
 
-  if (!appReady) return <LoadingScreen />;
   if (!user) return <Login onLogin={login} />;
   // ── Check-in functions ──
   const saveCheckin = async (clientId, data) => {
