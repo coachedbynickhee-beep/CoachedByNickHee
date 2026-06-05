@@ -901,10 +901,10 @@ function Topbar({ title, subtitle, onLogout, left, right }) {
     </div>
   );
 }
-) {
+function TabBtn({ label, active, onClick }) {
   return <button style={{...S.tabBtn,...(active?S.tabBtnActive:{})}} onClick={onClick}>{label}</button>;
 }
-) {
+function SectionHeader({ title, action }) {
   return <div style={S.sectionHeader}><div style={S.sectionTitle}>{title}</div>{action}</div>;
 }
 function Field({ label, children }) {
@@ -2370,7 +2370,7 @@ function ExRow({ ex, index, color, onChange, onDelete }) {
 
 // ── CLIENT APP ────────────────────────────────────────────────────────────────
 
-) {
+function ClientDashboard({ client, assigned, nutrition, measurements, workoutLog, habits, habitLogs, checkins, onGoPrograms, onGoNutrition, onGoCheckin, onGoHabits }) {
   const latest = measurements && measurements.length > 0 ? [...measurements].sort((a,b)=>b.date.localeCompare(a.date))[0] : null;
   const allEx = assigned.flatMap(p=>p.days.flatMap(d=>d.exercises));
   const pbs = workoutLog.getPBs(client.id, allEx);
@@ -2827,7 +2827,7 @@ function NewProgramModal({ onClose, onSave }) {
   );
 }
 
-) {
+function Modal({ title, onClose, onSave, children }) {
   return (
     <div style={S.overlay}>
       <div style={S.modal}>
@@ -3349,10 +3349,10 @@ function Topbar({ title, subtitle, onLogout, left, right }) {
     </div>
   );
 }
-) {
+function TabBtn({ label, active, onClick }) {
   return <button style={{...S.tabBtn,...(active?S.tabBtnActive:{})}} onClick={onClick}>{label}</button>;
 }
-) {
+function SectionHeader({ title, action }) {
   return <div style={S.sectionHeader}><div style={S.sectionTitle}>{title}</div>{action}</div>;
 }
 function Field({ label, children }) {
