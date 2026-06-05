@@ -551,7 +551,6 @@ function NutritionAssigner({ nutrition, onSave, onMount }) {
 
 // ── MEASUREMENTS PANEL ────────────────────────────────────────────────────────
 
-
 function MeasurementsPanel({ measurements, onSave, clientName }) {
   const blank = MEASUREMENT_FIELDS.reduce((acc,f)=>({...acc,[f.key]:f.type==="date"?new Date().toISOString().slice(0,10):""}),{});
   const [form, setForm] = useState(blank);
@@ -972,8 +971,7 @@ function ClientHabitsView({ habits, habitLogs, onLog }) {
   );
 }
 
-// ── SHARED COMPONENTS ─────────────────────────────────────────────────────────
-function Topbar({ title, subtitle, onLogout, left, right }) {
+// ── SHARED COMPONENTS ─────────────────────────────────────────────────────────) {
   return (
     <div style={S.topbar}>
       <div style={S.topbarLeft}>
@@ -986,17 +984,9 @@ function Topbar({ title, subtitle, onLogout, left, right }) {
       </div>
     </div>
   );
-}
-function TabBtn({ label, active, onClick }) {
   return <button style={{...S.tabBtn,...(active?S.tabBtnActive:{})}} onClick={onClick}>{label}</button>;
-}
-function SectionHeader({ title, action }) {
   return <div style={S.sectionHeader}><div style={S.sectionTitle}>{title}</div>{action}</div>;
-}
-function Field({ label, children }) {
   return <div style={S.loginField}><label style={S.label}>{label}</label>{children}</div>;
-}
-function ClientCard({ client, programs, onClick, onDelete }) {
   const count = programs.filter(p=>p.assignedTo.includes(client.id)).length;
   return (
     <div style={S.card} onClick={onClick}>
@@ -1011,8 +1001,6 @@ function ClientCard({ client, programs, onClick, onDelete }) {
       <div style={S.cardTag}>{count} program{count!==1?"s":""} assigned</div>
     </div>
   );
-}
-function ProgramCard({ program, clients, onClick, onDelete }) {
   const count = (program.assignedTo||[]).length;
   return (
     <div style={S.card} onClick={onClick}>
@@ -1027,16 +1015,12 @@ function ProgramCard({ program, clients, onClick, onDelete }) {
       <div style={S.cardTag}>{count} client{count!==1?"s":""}</div>
     </div>
   );
-}
-function Stat({ label, value }) {
   return (
     <div style={S.statBox}>
       <div style={S.statVal}>{value}</div>
       <div style={S.statLabel}>{label}</div>
     </div>
   );
-}
-function Empty({ text, small }) {
   return <div style={{...S.empty,fontSize:small?12:14}}>{text}</div>;
 }
 
@@ -1207,7 +1191,6 @@ function NewClientModal({ onClose, onSave }) {
     </Modal>
   );
 }
-
 function NewProgramModal({ onClose, onSave }) {
   const [form, setForm] = useState({name:"",tag:"",color:"#FFFFFF"});
   const f=(k,v)=>setForm(p=>({...p,[k]:v}));
@@ -1226,7 +1209,6 @@ function NewProgramModal({ onClose, onSave }) {
     </Modal>
   );
 }
-
 function Modal({ title, onClose, onSave, children }) {
   return (
     <div style={S.overlay}>
@@ -1245,8 +1227,7 @@ function Modal({ title, onClose, onSave, children }) {
   );
 }
 
-// ── NUTRITION ASSIGNER (coach assigns plan to client) ────────────────────────
-function NutritionAssigner({ nutrition, onSave, onMount }) {
+// ── NUTRITION ASSIGNER (coach assigns plan to client) ────────────────────────) {
   useEffect(()=>{ if(onMount) onMount(); },[]);
   const blank = { calories:0, protein:0, carbs:0, fat:0, notes:"", meals:[] };
   const [form, setForm] = useState(nutrition || blank);
@@ -1311,10 +1292,7 @@ function NutritionAssigner({ nutrition, onSave, onMount }) {
   );
 }
 
-// ── MEASUREMENTS PANEL ────────────────────────────────────────────────────────
-
-
-function MeasurementsPanel({ measurements, onSave, clientName }) {
+// ── MEASUREMENTS PANEL ────────────────────────────────────────────────────────) {
   const blank = MEASUREMENT_FIELDS.reduce((acc,f)=>({...acc,[f.key]:f.type==="date"?new Date().toISOString().slice(0,10):""}),{});
   const [form, setForm] = useState(blank);
   const [showForm, setShowForm] = useState(false);
@@ -1529,8 +1507,7 @@ function ClientHistoryView({ clientId, programs, workoutLog }) {
   );
 }
 
-// ── WEEKLY CHECK-IN FORM (client fills in) ───────────────────────────────────
-function ClientCheckinForm({ checkins, onSave }) {
+// ── WEEKLY CHECK-IN FORM (client fills in) ───────────────────────────────────) {
   const getWeekStart = () => {
     const d = new Date();
     const day = d.getDay();
@@ -1634,8 +1611,7 @@ function ClientCheckinForm({ checkins, onSave }) {
   );
 }
 
-// ── COACH CHECK-IN VIEW ───────────────────────────────────────────────────────
-function CoachCheckinView({ checkins, clientName }) {
+// ── COACH CHECK-IN VIEW ───────────────────────────────────────────────────────) {
   if (!checkins || checkins.length === 0) return (
     <div style={{textAlign:"center",padding:"48px 0"}}>
       <div style={{fontSize:32,marginBottom:12}}>📋</div>
@@ -1688,8 +1664,7 @@ function CoachCheckinView({ checkins, clientName }) {
   );
 }
 
-// ── HABITS EDITOR (coach sets habits) ─────────────────────────────────────────
-function HabitsEditor({ habits, onSave, clientName }) {
+// ── HABITS EDITOR (coach sets habits) ─────────────────────────────────────────) {
   const [list, setList] = useState(habits || []);
   const [newHabit, setNewHabit] = useState("");
   const [saved, setSaved] = useState(false);
@@ -1743,8 +1718,7 @@ function HabitsEditor({ habits, onSave, clientName }) {
   );
 }
 
-// ── CLIENT HABITS VIEW (client logs daily) ────────────────────────────────────
-function ClientHabitsView({ habits, habitLogs, onLog }) {
+// ── CLIENT HABITS VIEW (client logs daily) ────────────────────────────────────) {
   const today = new Date().toISOString().slice(0,10);
   const todayLog = habitLogs[today] || {};
   const [completions, setCompletions] = useState(todayLog);
@@ -2247,8 +2221,7 @@ function CoachLogHistory({ clientId, programs, workoutLog, pbs }) {
   );
 }
 
-// ── NUTRITION EDITOR (coach) ──────────────────────────────────────────────────
-function NutritionEditor({ nutrition, onSave, client, onMount }) {
+// ── NUTRITION EDITOR (coach) ──────────────────────────────────────────────────) {
   const blank = { calories:0, protein:0, carbs:0, fat:0, notes:"", meals:[] };
   const [form, setForm] = useState(nutrition || blank);
   useEffect(()=>{ if(onMount) onMount(); },[]);
@@ -2323,8 +2296,7 @@ function ProgramBuilder({ program, onUpdate, onBack }) {
     </div>
   );
 }
-
-function DayBlock({ day, color, onChange, onDelete }) {
+function DayBlock({ day, idx, onUpdate, onDeleteDay }) {
   const [open, setOpen] = useState(true);
   const [editLabel, setEditLabel] = useState(false);
   const [labelVal, setLabelVal] = useState(day.label);
@@ -2360,8 +2332,7 @@ function DayBlock({ day, color, onChange, onDelete }) {
     </div>
   );
 }
-
-function ExRow({ ex, index, color, onChange, onDelete }) {
+function ExRow({ ex, idx, dayIdx, onUpdate, onDelete }) {
   return (
     <div style={S.exRow}>
       <span style={{...S.exNum,color}}>{index}</span>
@@ -2377,8 +2348,7 @@ function ExRow({ ex, index, color, onChange, onDelete }) {
   );
 }
 
-// ── PROGRAM BUILDER ───────────────────────────────────────────────────────────
-function ProgramBuilder({ program, onUpdate, onBack }) {
+// ── PROGRAM BUILDER ───────────────────────────────────────────────────────────) {
   const [prog, setProg] = useState(program);
   const save = (updated) => { setProg(updated); onUpdate(updated); };
   const addDay = () => save({...prog,days:[...prog.days,{id:uid(),label:`Day ${prog.days.length+1}`,exercises:[]}]});
@@ -2398,10 +2368,7 @@ function ProgramBuilder({ program, onUpdate, onBack }) {
         ))}
       </div>
     </div>
-  );
-}
-
-function DayBlock({ day, color, onChange, onDelete }) {
+  );) {
   const [open, setOpen] = useState(true);
   const [editLabel, setEditLabel] = useState(false);
   const [labelVal, setLabelVal] = useState(day.label);
@@ -2435,10 +2402,7 @@ function DayBlock({ day, color, onChange, onDelete }) {
         ))}
       </div>}
     </div>
-  );
-}
-
-function ExRow({ ex, index, color, onChange, onDelete }) {
+  );) {
   return (
     <div style={S.exRow}>
       <span style={{...S.exNum,color}}>{index}</span>
@@ -2456,8 +2420,7 @@ function ExRow({ ex, index, color, onChange, onDelete }) {
 
 // ── CLIENT APP ────────────────────────────────────────────────────────────────
 
-// ── CLIENT DASHBOARD ──────────────────────────────────────────────────────────
-function ClientDashboard({ client, assigned, nutrition, measurements, workoutLog, habits, habitLogs, checkins, onGoPrograms, onGoNutrition, onGoCheckin, onGoHabits }) {
+// ── CLIENT DASHBOARD ──────────────────────────────────────────────────────────) {
   const latest = measurements && measurements.length > 0 ? [...measurements].sort((a,b)=>b.date.localeCompare(a.date))[0] : null;
   const allEx = assigned.flatMap(p=>p.days.flatMap(d=>d.exercises));
   const pbs = workoutLog.getPBs(client.id, allEx);
@@ -2575,8 +2538,7 @@ function ClientDashboard({ client, assigned, nutrition, measurements, workoutLog
   );
 }
 
-// ── CLIENT MEASUREMENTS VIEW ──────────────────────────────────────────────────
-function ClientMeasurementsView({ measurements }) {
+// ── CLIENT MEASUREMENTS VIEW ──────────────────────────────────────────────────) {
   if (!measurements || measurements.length === 0) return (
     <div style={{textAlign:"center",padding:"48px 0"}}>
       <div style={{fontSize:32,marginBottom:12}}>📏</div>
@@ -2617,8 +2579,7 @@ function ClientMeasurementsView({ measurements }) {
   );
 }
 
-// ── CLIENT NUTRITION VIEW ────────────────────────────────────────────────────
-function ClientNutritionView({ nutrition }) {
+// ── CLIENT NUTRITION VIEW ────────────────────────────────────────────────────) {
   if (!nutrition) return (
     <div style={{textAlign:"center",padding:"48px 0"}}>
       <div style={{fontSize:32,marginBottom:12}}>🥗</div>
@@ -2661,8 +2622,7 @@ function ClientNutritionView({ nutrition }) {
   );
 }
 
-// ── CLIENT HISTORY VIEW ───────────────────────────────────────────────────────
-function ClientHistoryView({ clientId, programs, workoutLog }) {
+// ── CLIENT HISTORY VIEW ───────────────────────────────────────────────────────) {
   const [selProg, setSelProg] = useState(programs[0]?.id||null);
   const [selDay, setSelDay] = useState(null);
   const prog = programs.find(p=>p.id===selProg);
@@ -2731,8 +2691,7 @@ function ClientHistoryView({ clientId, programs, workoutLog }) {
   );
 }
 
-// ── PROGRAM VIEW (client) ────────────────────────────────────────────────────
-function ProgramView({ program, clientId, workoutLog, onBack, onSelectDay }) {
+// ── PROGRAM VIEW (client) ────────────────────────────────────────────────────) {
   const allEx = program.days.flatMap(d=>d.exercises);
   const pbs = workoutLog.getPBs(clientId, allEx);
   useEffect(()=>{
@@ -2764,8 +2723,7 @@ function ProgramView({ program, clientId, workoutLog, onBack, onSelectDay }) {
   );
 }
 
-// ── DAY VIEW (workout + logger) ───────────────────────────────────────────────
-function DayView({ day, clientId, workoutLog, onBack }) {
+// ── DAY VIEW (workout + logger) ───────────────────────────────────────────────) {
   useEffect(()=>{ workoutLog.loadHistory(clientId, day.id); },[]);
   const initLogs = () => {
     const l = {};
@@ -2876,8 +2834,7 @@ function DayView({ day, clientId, workoutLog, onBack }) {
   );
 }
 
-// ── MODALS ────────────────────────────────────────────────────────────────────
-function NewClientModal({ onClose, onSave }) {
+// ── MODALS ────────────────────────────────────────────────────────────────────) {
   const [form, setForm] = useState({name:"",email:"",password:"",age:"",weight:"",height:"",goal:""});
   const f=(k,v)=>setForm(p=>({...p,[k]:v}));
   return (
@@ -2892,10 +2849,7 @@ function NewClientModal({ onClose, onSave }) {
       </div>
       <Field label="Goal"><input style={S.input} value={form.goal} onChange={e=>f("goal",e.target.value)} /></Field>
     </Modal>
-  );
-}
-
-function NewProgramModal({ onClose, onSave }) {
+  );) {
   const [form, setForm] = useState({name:"",tag:"",color:"#FFFFFF"});
   const f=(k,v)=>setForm(p=>({...p,[k]:v}));
   return (
@@ -2911,10 +2865,7 @@ function NewProgramModal({ onClose, onSave }) {
         </div>
       </Field>
     </Modal>
-  );
-}
-
-function Modal({ title, onClose, onSave, children }) {
+  );) {
   return (
     <div style={S.overlay}>
       <div style={S.modal}>
@@ -2932,8 +2883,7 @@ function Modal({ title, onClose, onSave, children }) {
   );
 }
 
-// ── NUTRITION ASSIGNER (coach assigns plan to client) ────────────────────────
-function NutritionAssigner({ nutrition, onSave, onMount }) {
+// ── NUTRITION ASSIGNER (coach assigns plan to client) ────────────────────────) {
   useEffect(()=>{ if(onMount) onMount(); },[]);
   const blank = { calories:0, protein:0, carbs:0, fat:0, notes:"", meals:[] };
   const [form, setForm] = useState(nutrition || blank);
@@ -2999,9 +2949,7 @@ function NutritionAssigner({ nutrition, onSave, onMount }) {
 }
 
 // ── MEASUREMENTS PANEL ────────────────────────────────────────────────────────
-
-
-function MeasurementsPanel({ measurements, onSave, clientName }) {
+function NutritionEditor({ nutrition, onSave, client, onMount }) {
   const blank = MEASUREMENT_FIELDS.reduce((acc,f)=>({...acc,[f.key]:f.type==="date"?new Date().toISOString().slice(0,10):""}),{});
   const [form, setForm] = useState(blank);
   const [showForm, setShowForm] = useState(false);
@@ -3102,8 +3050,7 @@ function MeasurementsPanel({ measurements, onSave, clientName }) {
   );
 }
 
-// ── WEEKLY CHECK-IN FORM (client fills in) ───────────────────────────────────
-function ClientCheckinForm({ checkins, onSave }) {
+// ── WEEKLY CHECK-IN FORM (client fills in) ───────────────────────────────────) {
   const getWeekStart = () => {
     const d = new Date();
     const day = d.getDay();
@@ -3207,8 +3154,7 @@ function ClientCheckinForm({ checkins, onSave }) {
   );
 }
 
-// ── COACH CHECK-IN VIEW ───────────────────────────────────────────────────────
-function CoachCheckinView({ checkins, clientName }) {
+// ── COACH CHECK-IN VIEW ───────────────────────────────────────────────────────) {
   if (!checkins || checkins.length === 0) return (
     <div style={{textAlign:"center",padding:"48px 0"}}>
       <div style={{fontSize:32,marginBottom:12}}>📋</div>
@@ -3261,8 +3207,7 @@ function CoachCheckinView({ checkins, clientName }) {
   );
 }
 
-// ── HABITS EDITOR (coach sets habits) ─────────────────────────────────────────
-function HabitsEditor({ habits, onSave, clientName }) {
+// ── HABITS EDITOR (coach sets habits) ─────────────────────────────────────────) {
   const [list, setList] = useState(habits || []);
   const [newHabit, setNewHabit] = useState("");
   const [saved, setSaved] = useState(false);
@@ -3316,8 +3261,7 @@ function HabitsEditor({ habits, onSave, clientName }) {
   );
 }
 
-// ── CLIENT HABITS VIEW (client logs daily) ────────────────────────────────────
-function ClientHabitsView({ habits, habitLogs, onLog }) {
+// ── CLIENT HABITS VIEW (client logs daily) ────────────────────────────────────) {
   const today = new Date().toISOString().slice(0,10);
   const todayLog = habitLogs[today] || {};
   const [completions, setCompletions] = useState(todayLog);
@@ -3421,8 +3365,7 @@ function ClientHabitsView({ habits, habitLogs, onLog }) {
   );
 }
 
-// ── SHARED COMPONENTS ─────────────────────────────────────────────────────────
-function Topbar({ title, subtitle, onLogout, left, right }) {
+// ── SHARED COMPONENTS ─────────────────────────────────────────────────────────) {
   return (
     <div style={S.topbar}>
       <div style={S.topbarLeft}>
@@ -3435,17 +3378,9 @@ function Topbar({ title, subtitle, onLogout, left, right }) {
       </div>
     </div>
   );
-}
-function TabBtn({ label, active, onClick }) {
   return <button style={{...S.tabBtn,...(active?S.tabBtnActive:{})}} onClick={onClick}>{label}</button>;
-}
-function SectionHeader({ title, action }) {
   return <div style={S.sectionHeader}><div style={S.sectionTitle}>{title}</div>{action}</div>;
-}
-function Field({ label, children }) {
   return <div style={S.loginField}><label style={S.label}>{label}</label>{children}</div>;
-}
-function ClientCard({ client, programs, onClick, onDelete }) {
   const count = programs.filter(p=>p.assignedTo.includes(client.id)).length;
   return (
     <div style={S.card} onClick={onClick}>
@@ -3460,8 +3395,6 @@ function ClientCard({ client, programs, onClick, onDelete }) {
       <div style={S.cardTag}>{count} program{count!==1?"s":""} assigned</div>
     </div>
   );
-}
-function ProgramCard({ program, clients, onClick, onDelete }) {
   const count = (program.assignedTo||[]).length;
   return (
     <div style={S.card} onClick={onClick}>
@@ -3476,16 +3409,12 @@ function ProgramCard({ program, clients, onClick, onDelete }) {
       <div style={S.cardTag}>{count} client{count!==1?"s":""}</div>
     </div>
   );
-}
-function Stat({ label, value }) {
   return (
     <div style={S.statBox}>
       <div style={S.statVal}>{value}</div>
       <div style={S.statLabel}>{label}</div>
     </div>
   );
-}
-function Empty({ text, small }) {
   return <div style={{...S.empty,fontSize:small?12:14}}>{text}</div>;
 }
 
@@ -3541,8 +3470,7 @@ function CoachApp({ clients, programs, nutrition, addClient, updateClient, remov
   );
 }
 
-// ── CLIENT DETAIL (coach view) ────────────────────────────────────────────────
-function ClientDetail({ client, programs, clients, updateClient, updateProgram, assignProgram, nutrition, saveNutrition, loadNutrition, measurements, saveMeasurement, loadMeasurements, checkins, loadCheckins, habits, saveHabits, loadHabits, workoutLog, onBack, onOpenProgram }) {
+// ── CLIENT DETAIL (coach view) ────────────────────────────────────────────────) {
   const [tab, setTab] = useState("programs");
   const [showEdit, setShowEdit] = useState(false);
   const assigned = programs.filter(p=>p.assignedTo.includes(client.id));
@@ -3610,8 +3538,7 @@ function ClientDetail({ client, programs, clients, updateClient, updateProgram, 
   );
 }
 
-// ── EDIT CLIENT MODAL ─────────────────────────────────────────────────────────
-function EditClientModal({ client, onClose, onSave }) {
+// ── EDIT CLIENT MODAL ─────────────────────────────────────────────────────────) {
   const [form, setForm] = useState({name:client.name,email:client.email,age:client.age,weight:client.weight,height:client.height,goal:client.goal});
   const f=(k,v)=>setForm(p=>({...p,[k]:v}));
   return (
@@ -3628,8 +3555,7 @@ function EditClientModal({ client, onClose, onSave }) {
   );
 }
 
-// ── COACH LOG HISTORY ────────────────────────────────────────────────────────
-function CoachLogHistory({ clientId, programs, workoutLog, pbs }) {
+// ── COACH LOG HISTORY ────────────────────────────────────────────────────────) {
   const [selProg, setSelProg] = useState(programs[0]?.id || null);
   const [selDay, setSelDay] = useState(null);
   const prog = programs.find(p=>p.id===selProg);
@@ -3692,8 +3618,7 @@ function CoachLogHistory({ clientId, programs, workoutLog, pbs }) {
   );
 }
 
-// ── NUTRITION EDITOR (coach) ──────────────────────────────────────────────────
-function NutritionEditor({ nutrition, onSave, client, onMount }) {
+// ── NUTRITION EDITOR (coach) ──────────────────────────────────────────────────) {
   const blank = { calories:0, protein:0, carbs:0, fat:0, notes:"", meals:[] };
   const [form, setForm] = useState(nutrition || blank);
   useEffect(()=>{ if(onMount) onMount(); },[]);
