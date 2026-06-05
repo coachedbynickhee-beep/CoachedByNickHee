@@ -944,43 +944,35 @@ function ClientHabitsView({ habits, habitLogs, onLog }) {
 
       {/* Habit checklist */}
       <div style={{marginBottom:16}}>
-        {habits.map(h=>(
-          {(() => {
-            const streak = getStreak(h.id);
-            const best = getBestStreak(h.id);
-            return (
-              <div key={h.id}
-                style={{background:C.surface,border:`1px solid ${completions[h.id]?"rgba(203,251,69,0.3)":C.line}`,
-                  borderRadius:14,padding:"14px 16px",marginBottom:8,cursor:"pointer",transition:"all .2s",
-                  opacity:completions[h.id]?0.75:1,
-                  boxShadow:completions[h.id]?"0 0 0 1px rgba(203,251,69,0.15)":"none"}}
-                onClick={()=>toggle(h.id)}>
-                <div style={{display:"flex",alignItems:"center",gap:14}}>
-                  <div style={{fontSize:22}}>{h.emoji}</div>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:14,fontWeight:700,color:C.text,textDecoration:completions[h.id]?"line-through":"none",marginBottom:3}}>{h.label}</div>
-                    <div style={{display:"flex",gap:10,alignItems:"center"}}>
-                      {streak > 0 && (
-                        <span style={{fontSize:11,color:"#FF6B4A",fontWeight:700}}>
-                          🔥 {streak} day{streak!==1?"s":""} streak
-                        </span>
-                      )}
-                      {best > streak && (
-                        <span style={{fontSize:10,color:C.faint,fontWeight:600}}>Best: {best}</span>
-                      )}
-                      {streak === 0 && <span style={{fontSize:11,color:C.faint}}>Start your streak today</span>}
-                    </div>
-                  </div>
-                  <div style={{width:28,height:28,borderRadius:999,border:`2px solid ${completions[h.id]?"#CBFB45":C.line2}`,
-                    background:completions[h.id]?"#CBFB45":"transparent",display:"flex",alignItems:"center",justifyContent:"center",
-                    color:"#000",fontSize:14,fontWeight:800,transition:"all .2s",flexShrink:0}}>
-                    {completions[h.id]?"✓":""}
+        {habits.map(h=>{
+          const streak = getStreak(h.id);
+          const best = getBestStreak(h.id);
+          return (
+            <div key={h.id}
+              style={{background:C.surface,border:`1px solid ${completions[h.id]?"rgba(203,251,69,0.3)":C.line}`,
+                borderRadius:14,padding:"14px 16px",marginBottom:8,cursor:"pointer",transition:"all .2s",
+                opacity:completions[h.id]?0.75:1,
+                boxShadow:completions[h.id]?"0 0 0 1px rgba(203,251,69,0.15)":"none"}}
+              onClick={()=>toggle(h.id)}>
+              <div style={{display:"flex",alignItems:"center",gap:14}}>
+                <div style={{fontSize:22}}>{h.emoji}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:14,fontWeight:700,color:C.text,textDecoration:completions[h.id]?"line-through":"none",marginBottom:3}}>{h.label}</div>
+                  <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                    {streak > 0 && <span style={{fontSize:11,color:"#FF6B4A",fontWeight:700}}>🔥 {streak} day{streak!==1?"s":""} streak</span>}
+                    {best > streak && <span style={{fontSize:10,color:C.faint,fontWeight:600}}>Best: {best}</span>}
+                    {streak === 0 && <span style={{fontSize:11,color:C.faint}}>Start your streak today</span>}
                   </div>
                 </div>
+                <div style={{width:28,height:28,borderRadius:999,border:`2px solid ${completions[h.id]?"#CBFB45":C.line2}`,
+                  background:completions[h.id]?"#CBFB45":"transparent",display:"flex",alignItems:"center",justifyContent:"center",
+                  color:"#000",fontSize:14,fontWeight:800,transition:"all .2s",flexShrink:0}}>
+                  {completions[h.id]?"✓":""}
+                </div>
               </div>
-            );
-          })()}
-        ))}
+            </div>
+          );
+        })}
       </div>
 
       <button style={{...S.btn,width:"100%",padding:14,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
@@ -1744,43 +1736,35 @@ function ClientHistoryView({ clientId, programs, workoutLog }) {
 
       {/* Habit checklist */}
       <div style={{marginBottom:16}}>
-        {habits.map(h=>(
-          {(() => {
-            const streak = getStreak(h.id);
-            const best = getBestStreak(h.id);
-            return (
-              <div key={h.id}
-                style={{background:C.surface,border:`1px solid ${completions[h.id]?"rgba(203,251,69,0.3)":C.line}`,
-                  borderRadius:14,padding:"14px 16px",marginBottom:8,cursor:"pointer",transition:"all .2s",
-                  opacity:completions[h.id]?0.75:1,
-                  boxShadow:completions[h.id]?"0 0 0 1px rgba(203,251,69,0.15)":"none"}}
-                onClick={()=>toggle(h.id)}>
-                <div style={{display:"flex",alignItems:"center",gap:14}}>
-                  <div style={{fontSize:22}}>{h.emoji}</div>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:14,fontWeight:700,color:C.text,textDecoration:completions[h.id]?"line-through":"none",marginBottom:3}}>{h.label}</div>
-                    <div style={{display:"flex",gap:10,alignItems:"center"}}>
-                      {streak > 0 && (
-                        <span style={{fontSize:11,color:"#FF6B4A",fontWeight:700}}>
-                          🔥 {streak} day{streak!==1?"s":""} streak
-                        </span>
-                      )}
-                      {best > streak && (
-                        <span style={{fontSize:10,color:C.faint,fontWeight:600}}>Best: {best}</span>
-                      )}
-                      {streak === 0 && <span style={{fontSize:11,color:C.faint}}>Start your streak today</span>}
-                    </div>
-                  </div>
-                  <div style={{width:28,height:28,borderRadius:999,border:`2px solid ${completions[h.id]?"#CBFB45":C.line2}`,
-                    background:completions[h.id]?"#CBFB45":"transparent",display:"flex",alignItems:"center",justifyContent:"center",
-                    color:"#000",fontSize:14,fontWeight:800,transition:"all .2s",flexShrink:0}}>
-                    {completions[h.id]?"✓":""}
+        {habits.map(h=>{
+          const streak = getStreak(h.id);
+          const best = getBestStreak(h.id);
+          return (
+            <div key={h.id}
+              style={{background:C.surface,border:`1px solid ${completions[h.id]?"rgba(203,251,69,0.3)":C.line}`,
+                borderRadius:14,padding:"14px 16px",marginBottom:8,cursor:"pointer",transition:"all .2s",
+                opacity:completions[h.id]?0.75:1,
+                boxShadow:completions[h.id]?"0 0 0 1px rgba(203,251,69,0.15)":"none"}}
+              onClick={()=>toggle(h.id)}>
+              <div style={{display:"flex",alignItems:"center",gap:14}}>
+                <div style={{fontSize:22}}>{h.emoji}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:14,fontWeight:700,color:C.text,textDecoration:completions[h.id]?"line-through":"none",marginBottom:3}}>{h.label}</div>
+                  <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                    {streak > 0 && <span style={{fontSize:11,color:"#FF6B4A",fontWeight:700}}>🔥 {streak} day{streak!==1?"s":""} streak</span>}
+                    {best > streak && <span style={{fontSize:10,color:C.faint,fontWeight:600}}>Best: {best}</span>}
+                    {streak === 0 && <span style={{fontSize:11,color:C.faint}}>Start your streak today</span>}
                   </div>
                 </div>
+                <div style={{width:28,height:28,borderRadius:999,border:`2px solid ${completions[h.id]?"#CBFB45":C.line2}`,
+                  background:completions[h.id]?"#CBFB45":"transparent",display:"flex",alignItems:"center",justifyContent:"center",
+                  color:"#000",fontSize:14,fontWeight:800,transition:"all .2s",flexShrink:0}}>
+                  {completions[h.id]?"✓":""}
+                </div>
               </div>
-            );
-          })()}
-        ))}
+            </div>
+          );
+        })}
       </div>
 
       <button style={{...S.btn,width:"100%",padding:14,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
@@ -1860,6 +1844,24 @@ function ClientMeasurementsView({ measurements }) {
 }
 
 // ── CLIENT DASHBOARD ──────────────────────────────────────────────────────────
+function StreakMilestoneBanner(habits, habitLogs) {
+  const today = new Date().toISOString().slice(0,10);
+  const log = habitLogs[today]||{};
+  let maxStreak = 0;
+  habits.forEach(h => {
+    let s = 0; const d = new Date();
+    while(true) {
+      const ds = d.toISOString().slice(0,10);
+      const l = ds===today?log:(habitLogs[ds]||{});
+      if(l[h.id]){s++;d.setDate(d.getDate()-1);}else break;
+    }
+    maxStreak = Math.max(maxStreak, s);
+  });
+  if (maxStreak >= 30) return <div style={{background:"linear-gradient(135deg,rgba(212,245,60,0.12),rgba(168,232,0,0.08))",border:"1px solid rgba(212,245,60,0.3)",borderRadius:14,padding:"14px 18px",marginBottom:14,display:"flex",alignItems:"center",gap:12}}><div style={{fontSize:28}}>👑</div><div><div style={{fontWeight:800,fontSize:14,color:"#D4F53C",marginBottom:2}}>30-Day Legend!</div><div style={{fontSize:12,color:"#7a7a85"}}>A full month of consistency. Incredible.</div></div></div>;
+  if (maxStreak >= 7) return <div style={{background:"linear-gradient(135deg,rgba(255,107,74,0.15),rgba(255,159,69,0.1))",border:"1px solid rgba(255,107,74,0.3)",borderRadius:14,padding:"14px 18px",marginBottom:14,display:"flex",alignItems:"center",gap:12}}><div style={{fontSize:28}}>🔥</div><div><div style={{fontWeight:800,fontSize:14,color:"#FF6B4A",marginBottom:2}}>7-Day Streak!</div><div style={{fontSize:12,color:"#7a7a85"}}>You're on fire — one week straight!</div></div></div>;
+  return null;
+}
+
 function ClientDashboard({ client, assigned, nutrition, measurements, workoutLog, habits, habitLogs, checkins, onGoPrograms, onGoNutrition, onGoCheckin, onGoHabits }) {
   const latest = measurements && measurements.length > 0 ? [...measurements].sort((a,b)=>b.date.localeCompare(a.date))[0] : null;
   const allEx = assigned.flatMap(p=>p.days.flatMap(d=>d.exercises));
@@ -1906,35 +1908,7 @@ function ClientDashboard({ client, assigned, nutrition, measurements, workoutLog
       )}
 
       {/* Streak milestone banner */}
-      {(() => {
-        if (!habits || habits.length === 0) return null;
-        const today2 = new Date().toISOString().slice(0,10);
-        const log = habitLogs[today2]||{};
-        // Count max streak across all habits
-        let maxStreak = 0;
-        habits.forEach(h => {
-          let s = 0; const d2 = new Date();
-          while(true) {
-            const ds = d2.toISOString().slice(0,10);
-            const l = ds===today2?log:(habitLogs[ds]||{});
-            if(l[h.id]){s++;d2.setDate(d2.getDate()-1);}else break;
-          }
-          maxStreak = Math.max(maxStreak, s);
-        });
-        if (maxStreak === 7) return (
-          <div style={{background:"linear-gradient(135deg,rgba(255,107,74,0.15),rgba(255,159,69,0.1))",border:"1px solid rgba(255,107,74,0.3)",borderRadius:14,padding:"14px 18px",marginBottom:14,display:"flex",alignItems:"center",gap:12}}>
-            <div style={{fontSize:28}}>🔥</div>
-            <div><div style={{fontWeight:800,fontSize:14,color:"#FF6B4A",marginBottom:2}}>7-Day Streak!</div><div style={{fontSize:12,color:C.muted}}>You're on fire — one week straight!</div></div>
-          </div>
-        );
-        if (maxStreak === 30) return (
-          <div style={{background:"linear-gradient(135deg,rgba(212,245,60,0.12),rgba(168,232,0,0.08))",border:"1px solid rgba(212,245,60,0.3)",borderRadius:14,padding:"14px 18px",marginBottom:14,display:"flex",alignItems:"center",gap:12}}>
-            <div style={{fontSize:28}}>👑</div>
-            <div><div style={{fontWeight:800,fontSize:14,color:C.accent,marginBottom:2}}>30-Day Legend!</div><div style={{fontSize:12,color:C.muted}}>A full month of consistency. Incredible.</div></div>
-          </div>
-        );
-        return null;
-      })()}
+      {habits && habits.length > 0 && StreakMilestoneBanner(habits, habitLogs)}
 
       {/* Habits today */}
       {habits && habits.length > 0 && (
@@ -2448,35 +2422,7 @@ function ExRow({ ex, index, color, onChange, onDelete }) {
       )}
 
       {/* Streak milestone banner */}
-      {(() => {
-        if (!habits || habits.length === 0) return null;
-        const today2 = new Date().toISOString().slice(0,10);
-        const log = habitLogs[today2]||{};
-        // Count max streak across all habits
-        let maxStreak = 0;
-        habits.forEach(h => {
-          let s = 0; const d2 = new Date();
-          while(true) {
-            const ds = d2.toISOString().slice(0,10);
-            const l = ds===today2?log:(habitLogs[ds]||{});
-            if(l[h.id]){s++;d2.setDate(d2.getDate()-1);}else break;
-          }
-          maxStreak = Math.max(maxStreak, s);
-        });
-        if (maxStreak === 7) return (
-          <div style={{background:"linear-gradient(135deg,rgba(255,107,74,0.15),rgba(255,159,69,0.1))",border:"1px solid rgba(255,107,74,0.3)",borderRadius:14,padding:"14px 18px",marginBottom:14,display:"flex",alignItems:"center",gap:12}}>
-            <div style={{fontSize:28}}>🔥</div>
-            <div><div style={{fontWeight:800,fontSize:14,color:"#FF6B4A",marginBottom:2}}>7-Day Streak!</div><div style={{fontSize:12,color:C.muted}}>You're on fire — one week straight!</div></div>
-          </div>
-        );
-        if (maxStreak === 30) return (
-          <div style={{background:"linear-gradient(135deg,rgba(212,245,60,0.12),rgba(168,232,0,0.08))",border:"1px solid rgba(212,245,60,0.3)",borderRadius:14,padding:"14px 18px",marginBottom:14,display:"flex",alignItems:"center",gap:12}}>
-            <div style={{fontSize:28}}>👑</div>
-            <div><div style={{fontWeight:800,fontSize:14,color:C.accent,marginBottom:2}}>30-Day Legend!</div><div style={{fontSize:12,color:C.muted}}>A full month of consistency. Incredible.</div></div>
-          </div>
-        );
-        return null;
-      })()}
+      {habits && habits.length > 0 && StreakMilestoneBanner(habits, habitLogs)}
 
       {/* Habits today */}
       {habits && habits.length > 0 && (
@@ -3220,43 +3166,35 @@ function ExRow({ ex, index, color, onChange, onDelete }) {
 
       {/* Habit checklist */}
       <div style={{marginBottom:16}}>
-        {habits.map(h=>(
-          {(() => {
-            const streak = getStreak(h.id);
-            const best = getBestStreak(h.id);
-            return (
-              <div key={h.id}
-                style={{background:C.surface,border:`1px solid ${completions[h.id]?"rgba(203,251,69,0.3)":C.line}`,
-                  borderRadius:14,padding:"14px 16px",marginBottom:8,cursor:"pointer",transition:"all .2s",
-                  opacity:completions[h.id]?0.75:1,
-                  boxShadow:completions[h.id]?"0 0 0 1px rgba(203,251,69,0.15)":"none"}}
-                onClick={()=>toggle(h.id)}>
-                <div style={{display:"flex",alignItems:"center",gap:14}}>
-                  <div style={{fontSize:22}}>{h.emoji}</div>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:14,fontWeight:700,color:C.text,textDecoration:completions[h.id]?"line-through":"none",marginBottom:3}}>{h.label}</div>
-                    <div style={{display:"flex",gap:10,alignItems:"center"}}>
-                      {streak > 0 && (
-                        <span style={{fontSize:11,color:"#FF6B4A",fontWeight:700}}>
-                          🔥 {streak} day{streak!==1?"s":""} streak
-                        </span>
-                      )}
-                      {best > streak && (
-                        <span style={{fontSize:10,color:C.faint,fontWeight:600}}>Best: {best}</span>
-                      )}
-                      {streak === 0 && <span style={{fontSize:11,color:C.faint}}>Start your streak today</span>}
-                    </div>
-                  </div>
-                  <div style={{width:28,height:28,borderRadius:999,border:`2px solid ${completions[h.id]?"#CBFB45":C.line2}`,
-                    background:completions[h.id]?"#CBFB45":"transparent",display:"flex",alignItems:"center",justifyContent:"center",
-                    color:"#000",fontSize:14,fontWeight:800,transition:"all .2s",flexShrink:0}}>
-                    {completions[h.id]?"✓":""}
+        {habits.map(h=>{
+          const streak = getStreak(h.id);
+          const best = getBestStreak(h.id);
+          return (
+            <div key={h.id}
+              style={{background:C.surface,border:`1px solid ${completions[h.id]?"rgba(203,251,69,0.3)":C.line}`,
+                borderRadius:14,padding:"14px 16px",marginBottom:8,cursor:"pointer",transition:"all .2s",
+                opacity:completions[h.id]?0.75:1,
+                boxShadow:completions[h.id]?"0 0 0 1px rgba(203,251,69,0.15)":"none"}}
+              onClick={()=>toggle(h.id)}>
+              <div style={{display:"flex",alignItems:"center",gap:14}}>
+                <div style={{fontSize:22}}>{h.emoji}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:14,fontWeight:700,color:C.text,textDecoration:completions[h.id]?"line-through":"none",marginBottom:3}}>{h.label}</div>
+                  <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                    {streak > 0 && <span style={{fontSize:11,color:"#FF6B4A",fontWeight:700}}>🔥 {streak} day{streak!==1?"s":""} streak</span>}
+                    {best > streak && <span style={{fontSize:10,color:C.faint,fontWeight:600}}>Best: {best}</span>}
+                    {streak === 0 && <span style={{fontSize:11,color:C.faint}}>Start your streak today</span>}
                   </div>
                 </div>
+                <div style={{width:28,height:28,borderRadius:999,border:`2px solid ${completions[h.id]?"#CBFB45":C.line2}`,
+                  background:completions[h.id]?"#CBFB45":"transparent",display:"flex",alignItems:"center",justifyContent:"center",
+                  color:"#000",fontSize:14,fontWeight:800,transition:"all .2s",flexShrink:0}}>
+                  {completions[h.id]?"✓":""}
+                </div>
               </div>
-            );
-          })()}
-        ))}
+            </div>
+          );
+        })}
       </div>
 
       <button style={{...S.btn,width:"100%",padding:14,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
