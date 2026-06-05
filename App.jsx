@@ -2226,7 +2226,7 @@ function CoachLogHistory({ clientId, programs, workoutLog, pbs }) {
             <div style={S.historyDate}>{fmt(session.date)}</div>
             {day.exercises.map(ex=>{
               const sets = session.sets[ex.id]||[];
-              const doneSets = sets.filter(s=>s.done===true||s.done==="true");
+              const doneSets = sets.filter(s=>s.done===true||s.done==="true"||s.weight);
               if(doneSets.length===0) return null;
               return (
                 <div key={ex.id} style={S.historyEx}>
@@ -3671,7 +3671,7 @@ function CoachLogHistory({ clientId, programs, workoutLog, pbs }) {
             <div style={S.historyDate}>{fmt(session.date)}</div>
             {day.exercises.map(ex=>{
               const sets = session.sets[ex.id]||[];
-              const doneSets = sets.filter(s=>s.done===true||s.done==="true");
+              const doneSets = sets.filter(s=>s.done===true||s.done==="true"||s.weight);
               if(doneSets.length===0) return null;
               return (
                 <div key={ex.id} style={S.historyEx}>
