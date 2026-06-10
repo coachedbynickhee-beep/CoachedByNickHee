@@ -1,10 +1,13 @@
 // ── CoachedByNickHee Platform ─────────────────────────────────────────────────
 import { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
 
 // ── Config ───────────────────────────────────────────────────────────────────
 const SUPABASE_URL = "https://jzievdnzlntbtjoitcgc.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6aWV2ZG56bG50YnRqb2l0Y2djIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1MDcwMzIsImV4cCI6MjA5NjA4MzAzMn0.6xaC_SijPt2SUVX4Lc8FuqaMVpkwP1l-PdW32yXOdGk";
-const COACH = { email: "coach@me.com", password: "coach123", name: "Coach" };
+
+// Supabase client — used for authentication (sessions, login, token refresh)
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(
@@ -42,11 +45,18 @@ const LOGO_B64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAEbCAIAAAAN
 const sb = {
   async query(table, method="GET", body=null, params="") {
     const url = `${SUPABASE_URL}/rest/v1/${table}${params}`;
+    // Use the logged-in user's access token so RLS policies apply.
+    // Falls back to the anon key when no one is logged in.
+    let token = SUPABASE_KEY;
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session?.access_token) token = data.session.access_token;
+    } catch (e) { /* not logged in — use anon key */ }
     const res = await fetch(url, {
       method,
       headers: {
         "apikey": SUPABASE_KEY,
-        "Authorization": `Bearer ${SUPABASE_KEY}`,
+        "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json",
         "Prefer": method === "POST" ? "return=representation" : method === "PATCH" ? "return=representation" : "",
       },
@@ -1964,12 +1974,8 @@ export default function App() {
   const [checkins, setCheckins] = useState({});
   const [habits, setHabits] = useState({});
   const [habitLogs, setHabitLogs] = useState({});
-  const [user, setUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem("cbnh_user");
-      return saved ? JSON.parse(saved) : null;
-    } catch { return null; }
-  });
+  const [user, setUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [loading, setLoading] = useState(false);
   const workoutLog = useWorkoutLog();
 
@@ -1991,23 +1997,53 @@ export default function App() {
 
   useEffect(() => { loadData(); }, []);
 
-  const login = async (email, password) => {
-    if (email === COACH.email && password === COACH.password) {
-      const u = { role:"coach" };
-      setUser(u);
-      localStorage.setItem("cbnh_user", JSON.stringify(u));
-      return true;
-    }
-    const matches = await sb.get("clients", `?email=eq.${encodeURIComponent(email)}&client_password=eq.${encodeURIComponent(password)}`);
-    if (matches && matches.length > 0) {
-      const u = { role:"client", id:matches[0].id };
-      setUser(u);
-      localStorage.setItem("cbnh_user", JSON.stringify(u));
-      return true;
-    }
-    return false;
+  // Given a logged-in auth user, figure out if they're the coach or a client.
+  const resolveUser = async (authUser) => {
+    if (!authUser) return null;
+    // Is this auth user registered as a coach?
+    try {
+      const coachRows = await sb.get("coaches", `?user_id=eq.${authUser.id}`);
+      if (coachRows && coachRows.length > 0) return { role: "coach", authId: authUser.id };
+    } catch (e) { console.error("coach check failed:", e); }
+    // Otherwise, find their client row by user_id
+    try {
+      const clientRows = await sb.get("clients", `?user_id=eq.${authUser.id}`);
+      if (clientRows && clientRows.length > 0) return { role: "client", id: clientRows[0].id, authId: authUser.id };
+    } catch (e) { console.error("client lookup failed:", e); }
+    return null;
   };
-  const logout = () => { setUser(null); localStorage.removeItem("cbnh_user"); };
+
+  // Restore session on page load
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data?.session?.user) {
+          const resolved = await resolveUser(data.session.user);
+          setUser(resolved);
+        }
+      } catch (e) { console.error("session restore failed:", e); }
+      setAuthChecked(true);
+    })();
+  }, []);
+
+  const login = async (email, password) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error || !data?.user) return false;
+    const resolved = await resolveUser(data.user);
+    if (!resolved) {
+      // Authenticated but not linked to a coach or client record
+      await supabase.auth.signOut();
+      return false;
+    }
+    setUser(resolved);
+    return true;
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  };
 
   // Wrapped setters that sync to Supabase
   const addClient = async (clientData) => {
@@ -2121,6 +2157,7 @@ export default function App() {
     } catch(e) { console.error("Error loading measurements:", e); }
   };
 
+  if (!authChecked) return null;
   if (!user) return <Login onLogin={login} />;
   // ── Check-in functions ──
   const saveCheckin = async (clientId, data) => {
