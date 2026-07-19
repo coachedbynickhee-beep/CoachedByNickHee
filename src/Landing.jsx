@@ -182,6 +182,24 @@ function NavLink({ children, onClick }) {
 }
 
 function Photo({ src, label, style, editing, onChange }) {
+  const inputRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr] = useState('');
+  const pick = () => { if (inputRef.current) inputRef.current.click(); };
+  const onFile = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    setErr(''); setUploading(true);
+    try {
+      const url = await sb.upload('landing', file);
+      onChange(url);
+    } catch (ex) {
+      setErr('Upload failed');
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = '';
+    }
+  };
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       {src
@@ -192,12 +210,17 @@ function Photo({ src, label, style, editing, onChange }) {
             {label || 'ADD PHOTO'}
           </div>}
       {editing && (
-        <input type="text" value={src || ''} placeholder="Paste image URL"
-          onChange={(e) => onChange(e.target.value)}
-          onClick={(e) => e.stopPropagation()}
-          style={{ position: 'absolute', left: 6, right: 6, bottom: 6, width: 'calc(100% - 12px)', boxSizing: 'border-box',
-            fontSize: 11, padding: '5px 7px', borderRadius: 5, border: '1px solid rgba(77,163,255,0.6)',
-            background: 'rgba(0,0,0,0.75)', color: '#fff', outline: 'none' }} />
+        <>
+          <input ref={inputRef} type="file" accept="image/*" onChange={onFile} style={{ display: 'none' }} />
+          <button type="button" onClick={(e) => { e.stopPropagation(); pick(); }}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: uploading ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.28)', color: '#fff',
+              border: '1px solid rgba(77,163,255,0.7)', borderRadius: 4, fontSize: 12, fontWeight: 700,
+              letterSpacing: 1, textTransform: 'uppercase', transition: 'background 0.2s ease' }}>
+            {uploading ? 'Uploading…' : (err ? err : (src ? 'Change photo' : 'Upload photo'))}
+          </button>
+        </>
       )}
     </div>
   );
