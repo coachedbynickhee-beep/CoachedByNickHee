@@ -431,7 +431,7 @@ function Login({ onLogin }) {
         <div style={{
           position:"absolute", top:"-20%", right:"-10%",
           width:"60%", height:"60%",
-          background:"radial-gradient(circle, rgba(203,251,69,0.08) 0%, transparent 70%)",
+          background:"radial-gradient(circle, rgba(77,163,255,0.08) 0%, transparent 70%)",
           pointerEvents:"none",
         }} />
 
@@ -440,8 +440,8 @@ function Login({ onLogin }) {
         <div style={{position:"relative", zIndex:2}}>
           {/* Kicker */}
           <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:16}}>
-            <div style={{width:28, height:2, background:"#CBFB45"}} />
-            <span style={{fontSize:11, letterSpacing:"0.3em", textTransform:"uppercase", color:"#CBFB45", fontWeight:700}}>
+            <div style={{width:28, height:2, background:"#4da3ff"}} />
+            <span style={{fontSize:11, letterSpacing:"0.3em", textTransform:"uppercase", color:"#4da3ff", fontWeight:700}}>
               Elite Coaching Platform
             </span>
           </div>
@@ -453,7 +453,7 @@ function Login({ onLogin }) {
             marginBottom:16,
           }}>
             Re-Establish<br/>
-            <span style={{color:"#CBFB45"}}>Your</span><br/>
+            <span style={{color:"#4da3ff"}}>Your</span><br/>
             Limits
           </div>
 
@@ -466,7 +466,7 @@ function Login({ onLogin }) {
           <div style={{display:"flex", gap:24, flexWrap:"wrap"}}>
             {stats.map(s=>(
               <div key={s.val}>
-                <div style={{fontFamily:"'Bebas Neue',sans-serif", fontSize:36, color:"#CBFB45", lineHeight:1}}>{s.val}</div>
+                <div style={{fontFamily:"'Bebas Neue',sans-serif", fontSize:36, color:"#4da3ff", lineHeight:1}}>{s.val}</div>
                 <div style={{fontSize:10, textTransform:"uppercase", letterSpacing:"0.15em", color:"#65656e", fontWeight:700, marginTop:4}}>{s.label}</div>
               </div>
             ))}
@@ -955,7 +955,7 @@ function ClientDashboard({ client, assigned, nutrition, measurements, workoutLog
   return (
     <div>
       {/* Hero stats */}
-      <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:16,padding:20,marginBottom:14,backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(203,251,69,0.06),transparent 60%)"}}>
+      <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:16,padding:20,marginBottom:14,backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(77,163,255,0.06),transparent 60%)"}}>
         <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.2em",marginBottom:14}}>Your Stats</div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
           {[{val:client.weight+"kg",label:"Weight"},{val:client.height+"cm",label:"Height"},{val:assigned.length,label:"Programs"},{val:pbCount||"—",label:"Personal Bests"},{val:recentSessions.length||"—",label:"Days Trained"},{val:latest?.bodyfat?latest.bodyfat+"%":"—",label:"Body Fat"}].map(s=>(
@@ -969,7 +969,7 @@ function ClientDashboard({ client, assigned, nutrition, measurements, workoutLog
 
       {/* Check-in nudge */}
       {!hasCheckin && (
-        <div style={{background:"rgba(203,251,69,0.06)",border:"1px solid rgba(203,251,69,0.25)",borderRadius:14,padding:18,marginBottom:14,cursor:"pointer"}} onClick={onGoCheckin}>
+        <div style={{background:"rgba(77,163,255,0.06)",border:"1px solid rgba(77,163,255,0.25)",borderRadius:14,padding:18,marginBottom:14,cursor:"pointer"}} onClick={onGoCheckin}>
           <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:6}}>📋 Weekly Check-In Due</div>
           <div style={{fontSize:13,color:C.muted,marginBottom:8}}>Your coach is waiting for your weekly update.</div>
           <div style={{fontSize:12,color:C.accent,fontWeight:700}}>Submit now →</div>
@@ -985,7 +985,7 @@ function ClientDashboard({ client, assigned, nutrition, measurements, workoutLog
             <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,color:C.muted}}>/ {habits.length}</div>
           </div>
           <div style={{background:C.surface2,borderRadius:999,height:5,overflow:"hidden"}}>
-            <div style={{height:"100%",background:`linear-gradient(90deg,${C.accent},#a8e800)`,borderRadius:999,width:`${habits.length>0?(habitsDone/habits.length)*100:0}%`,transition:"width .4s"}} />
+            <div style={{height:"100%",background:`linear-gradient(90deg,${C.accent},#2e7de0)`,borderRadius:999,width:`${habits.length>0?(habitsDone/habits.length)*100:0}%`,transition:"width .4s"}} />
           </div>
           <div style={{marginTop:8,fontSize:12,color:C.accent,fontWeight:700}}>Log habits →</div>
         </div>
@@ -1063,7 +1063,7 @@ function ClientMeasurementsView({ measurements }) {
   return (
     <div>
       <SectionHeader title="Your Measurements" />
-      <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:16,padding:20,marginBottom:16,backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(203,251,69,0.05),transparent 60%)"}}>
+      <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:16,padding:20,marginBottom:16,backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(77,163,255,0.05),transparent 60%)"}}>
         <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:14}}>Latest — {latest.date}</div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(90px,1fr))",gap:10}}>
           {MEASUREMENT_FIELDS.filter(f=>f.key!=="date"&&latest[f.key]).map(field=>(
@@ -1638,7 +1638,7 @@ function ClientCheckinForm({ checkins, onSave }) {
     <div>
       <SectionHeader title={`Week of ${weekStart}`} />
       <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:16,padding:20,marginBottom:16,
-        backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(203,251,69,0.05),transparent 60%)"}}>
+        backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(77,163,255,0.05),transparent 60%)"}}>
         <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:16}}>
           Weekly Check-In
         </div>
@@ -1711,12 +1711,12 @@ function CoachCheckinView({ checkins, clientName }) {
       <SectionHeader title={`Check-ins (${checkins.length})`} />
       {sorted.map((c,i)=>(
         <div key={i} style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:20,marginBottom:12,
-          ...(i===0?{backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(203,251,69,0.05),transparent 60%)"}:{})}}>
+          ...(i===0?{backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(77,163,255,0.05),transparent 60%)"}:{})}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
             <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em"}}>
               Week of {c.week_start}
             </div>
-            {i===0 && <span style={{fontSize:10,background:"rgba(203,251,69,0.1)",color:C.accent,border:`1px solid rgba(203,251,69,0.3)`,borderRadius:999,padding:"3px 10px",fontWeight:700}}>Latest</span>}
+            {i===0 && <span style={{fontSize:10,background:"rgba(77,163,255,0.1)",color:C.accent,border:`1px solid rgba(77,163,255,0.3)`,borderRadius:999,padding:"3px 10px",fontWeight:700}}>Latest</span>}
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:12}}>
             {[["😴","Sleep Quality",c.sleep_quality],["🧠","Stress",c.stress],["⚡","Energy",c.energy],["🎯","Adherence",c.adherence]].map(([emoji,label,val])=>{
@@ -1841,7 +1841,7 @@ function ClientHabitsView({ habits, habitLogs, onLog }) {
 
       {/* Progress ring */}
       <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:16,padding:24,marginBottom:16,
-        backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(203,251,69,0.06),transparent 60%)",textAlign:"center"}}>
+        backgroundImage:"radial-gradient(ellipse at 100% 0%,rgba(77,163,255,0.06),transparent 60%)",textAlign:"center"}}>
         <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:72,color:doneCount===habits.length?C.accent:C.text,lineHeight:1}}>
           {doneCount}<span style={{fontSize:32,color:C.muted}}>/{habits.length}</span>
         </div>
@@ -1850,7 +1850,7 @@ function ClientHabitsView({ habits, habitLogs, onLog }) {
         </div>
         {/* Progress bar */}
         <div style={{background:C.surface2,borderRadius:999,height:6,marginTop:16,overflow:"hidden"}}>
-          <div style={{height:"100%",background:`linear-gradient(90deg,${C.accent},#a8e800)`,borderRadius:999,
+          <div style={{height:"100%",background:`linear-gradient(90deg,${C.accent},#2e7de0)`,borderRadius:999,
             width:`${habits.length>0?(doneCount/habits.length)*100:0}%`,transition:"width .4s"}} />
         </div>
       </div>
@@ -1894,7 +1894,7 @@ function ClientHabitsView({ habits, habitLogs, onLog }) {
                 </div>
                 <div style={{height:48,background:C.surface2,borderRadius:8,position:"relative",overflow:"hidden",border:`1px solid ${isToday?C.accent:C.line}`}}>
                   <div style={{position:"absolute",bottom:0,left:0,right:0,height:`${pct*100}%`,
-                    background:pct===1?C.accent:`rgba(203,251,69,${0.3+pct*0.4})`,transition:"height .3s"}} />
+                    background:pct===1?C.accent:`rgba(77,163,255,${0.3+pct*0.4})`,transition:"height .3s"}} />
                 </div>
                 <div style={{fontSize:10,color:pct===1?C.accent:C.muted,fontWeight:700,marginTop:4}}>
                   {done}/{habits.length}
@@ -1980,13 +1980,13 @@ function Empty({ text, small }) {
 const C = {
   bg:"#080809", surface:"#0f0f12", surface2:"#16161b",
   line:"rgba(255,255,255,.06)", line2:"rgba(255,255,255,.12)",
-  text:"#F0EDE6", muted:"#7a7a85", faint:"#4a4a55", accent:"#D4F53C",
+  text:"#F0EDE6", muted:"#7a7a85", faint:"#4a4a55", accent:"#4da3ff",
   glute:"#FF6B4A", quad:"#5BC0FF", ham:"#7BE0A0", abd:"#F4B740",
   back:"#B88CFF", sh:"#FF9F45", cf:"#4FD1C5",
 };
 
 const S = {
-  app:{ boxSizing:"border-box", overflowX:"hidden", background:"#080809", backgroundImage:"radial-gradient(900px 500px at 85% -5%,rgba(255,107,74,.08),transparent 60%),radial-gradient(800px 500px at -10% 10%,rgba(203,251,69,.05),transparent 55%)", minHeight:"100vh", color:C.text, fontFamily:"'Manrope',system-ui,sans-serif" },
+  app:{ boxSizing:"border-box", overflowX:"hidden", background:"#080809", backgroundImage:"radial-gradient(900px 500px at 85% -5%,rgba(255,107,74,.08),transparent 60%),radial-gradient(800px 500px at -10% 10%,rgba(77,163,255,.05),transparent 55%)", minHeight:"100vh", color:C.text, fontFamily:"'Manrope',system-ui,sans-serif" },
   loginWrap:{ background:"radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0b0b0d 70%)", minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center" },
   loginCard:{ background:C.surface, border:`1px solid ${C.line2}`, borderRadius:16, padding:48, width:"100%", maxWidth:480 },
   loginLogo:{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, marginBottom:28 },
