@@ -1,4 +1,59 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+
+// ── Visual/interactive enhancements (injected) ──────────────────────────────
+if (typeof document !== "undefined" && !document.getElementById("cbnh-anim-styles")) {
+  const st = document.createElement("style");
+  st.id = "cbnh-anim-styles";
+  st.textContent = `
+    @keyframes cbnhFloat1 { 0%{transform:translate(0,0) scale(1);} 50%{transform:translate(40px,30px) scale(1.15);} 100%{transform:translate(0,0) scale(1);} }
+    @keyframes cbnhFloat2 { 0%{transform:translate(0,0) scale(1);} 50%{transform:translate(-50px,-20px) scale(1.1);} 100%{transform:translate(0,0) scale(1);} }
+    @keyframes cbnhFadeUp { from{opacity:0;transform:translateY(18px);} to{opacity:1;transform:translateY(0);} }
+    @keyframes cbnhPulse { 0%,100%{opacity:.5;} 50%{opacity:1;} }
+    .cbnh-reveal { animation: cbnhFadeUp .6s ease both; }
+    .cbnh-lift { transition: transform .28s cubic-bezier(.2,.7,.2,1), box-shadow .28s ease, border-color .28s ease; will-change: transform; }
+    .cbnh-lift:hover { transform: translateY(-4px); box-shadow: 0 14px 40px -12px rgba(77,163,255,.45); border-color: rgba(77,163,255,.55) !important; }
+    .cbnh-btn { transition: transform .18s ease, box-shadow .22s ease, filter .2s ease; }
+    .cbnh-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 26px -8px rgba(77,163,255,.6); filter: brightness(1.05); }
+    .cbnh-btn:active { transform: translateY(0) scale(.98); }
+    .cbnh-tab { transition: color .2s ease, background .2s ease, transform .15s ease; }
+    .cbnh-tab:hover { transform: translateY(-1px); }
+    .cbnh-glow { position: fixed; border-radius: 50%; filter: blur(70px); pointer-events: none; z-index: 0; }
+  `;
+  document.head.appendChild(st);
+}
+
+function Reveal({ children, delay = 0, style }) {
+  const ref = useRef(null);
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { setShown(true); io.disconnect(); } });
+    }, { threshold: 0.1 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <div ref={ref} style={{
+      transition: "opacity .6s ease, transform .6s ease",
+      transitionDelay: delay + "ms",
+      opacity: shown ? 1 : 0,
+      transform: shown ? "translateY(0)" : "translateY(18px)",
+      ...style
+    }}>{children}</div>
+  );
+}
+
+function AmbientGlows() {
+  return (
+    <>
+      <div className="cbnh-glow" style={{ top: "-8%", right: "-4%", width: 420, height: 420, background: "radial-gradient(circle, rgba(77,163,255,.16), transparent 70%)", animation: "cbnhFloat1 14s ease-in-out infinite" }} />
+      <div className="cbnh-glow" style={{ bottom: "-10%", left: "-6%", width: 480, height: 480, background: "radial-gradient(circle, rgba(46,125,224,.12), transparent 70%)", animation: "cbnhFloat2 18s ease-in-out infinite" }} />
+    </>
+  );
+}
+
 
 // Inject fonts
 if (typeof document !== "undefined") {
@@ -546,7 +601,7 @@ function CoachApp({ clients, programs, nutrition, addClient, updateClient, remov
       onBack={()=>setActiveClient(null)} onOpenProgram={setActiveProgram} />;
   }
   return (
-    <div style={S.app}>
+    <div style={{...S.app, position:"relative"}}><AmbientGlows />
       <Topbar title={<img src={LOGO_B64} alt="CoachedByNickhee" style={{height:28,objectFit:"contain"}} />} subtitle="" onLogout={onLogout}
         right={<div style={{display:"flex",gap:8}}>
           <TabBtn label="Clients" active={tab==="clients"} onClick={()=>setTab("clients")} />
@@ -554,11 +609,11 @@ function CoachApp({ clients, programs, nutrition, addClient, updateClient, remov
         </div>} />
       <div style={S.content}>
         {tab==="clients" && <>
-          <SectionHeader title={`Clients (${clients.length})`} action={<button style={S.btnSm} onClick={()=>setShowNewClient(true)}>+ New Client</button>} />
+          <SectionHeader title={`Clients (${clients.length})`} action={<button className="cbnh-btn" style={S.btnSm} onClick={()=>setShowNewClient(true)}>+ New Client</button>} />
           <div style={S.grid}>{clients.map(c=><ClientCard key={c.id} client={c} programs={programs} onClick={()=>setActiveClient(c.id)} onDelete={id=>{if(window.confirm("Remove "+c.name+"?"))removeClient(id);}} />)}</div>
         </>}
         {tab==="programs" && <>
-          <SectionHeader title={`Programs (${programs.length})`} action={<button style={S.btnSm} onClick={()=>setShowNewProgram(true)}>+ New Program</button>} />
+          <SectionHeader title={`Programs (${programs.length})`} action={<button className="cbnh-btn" style={S.btnSm} onClick={()=>setShowNewProgram(true)}>+ New Program</button>} />
           <div style={S.grid}>{programs.map(p=><ProgramCard key={p.id} program={p} clients={clients} onClick={()=>setActiveProgram(p.id)} onDelete={deleteProgram} />)}</div>
         </>}
       </div>
@@ -586,11 +641,11 @@ function ClientDetail({ client, programs, clients, updateClient, updateProgram, 
   const pbs = workoutLog.getPBs(client.id, allExercises);
 
   return (
-    <div style={S.app}>
+    <div style={{...S.app, position:"relative"}}><AmbientGlows />
       <Topbar title={client.name} subtitle={client.goal} onLogout={null}
         left={<button style={S.backBtn} onClick={onBack}>← Back</button>}
         right={<div style={{display:"flex",gap:8}}>
-          <button style={S.btnGhost} onClick={()=>setShowEdit(true)}>✏️ Edit</button>
+          <button className="cbnh-btn" style={S.btnGhost} onClick={()=>setShowEdit(true)}>✏️ Edit</button>
           <TabBtn label="Programs" active={tab==="programs"} onClick={()=>setTab("programs")} />
           <TabBtn label="Nutrition" active={tab==="nutrition"} onClick={()=>setTab("nutrition")} />
           <TabBtn label="Measurements" active={tab==="measurements"} onClick={()=>{setTab("measurements");loadMeasurements();}} />
@@ -620,7 +675,7 @@ function ClientDetail({ client, programs, clients, updateClient, updateProgram, 
               <div key={p.id} style={S.assignCard}>
                 <div style={{...S.programDot,background:p.color}} />
                 <div style={S.assignName}>{p.name}</div>
-                <button style={S.btnSm} onClick={()=>doAssignProgram(p.id)}>Assign →</button>
+                <button className="cbnh-btn" style={S.btnSm} onClick={()=>doAssignProgram(p.id)}>Assign →</button>
               </div>
             ))}</div>
           </>}
@@ -734,7 +789,7 @@ function NutritionEditor({ nutrition, onSave, client, onMount }) {
 
   return (
     <div>
-      <SectionHeader title="Nutrition Plan" action={<button style={S.btn} onClick={()=>onSave(form)}>Save Plan</button>} />
+      <SectionHeader title="Nutrition Plan" action={<button className="cbnh-btn" style={S.btn} onClick={()=>onSave(form)}>Save Plan</button>} />
       <div style={S.macroGrid}>
         {[["Calories","calories","kcal"],["Protein","protein","g"],["Carbs","carbs","g"],["Fat","fat","g"]].map(([label,key,unit])=>(
           <div key={key} style={S.macroBox}>
@@ -750,7 +805,7 @@ function NutritionEditor({ nutrition, onSave, client, onMount }) {
       <Field label="Coach Notes">
         <textarea style={{...S.input,minHeight:72,resize:"vertical"}} value={form.notes} onChange={e=>f("notes",e.target.value)} />
       </Field>
-      <SectionHeader title="Meal Plan" action={<button style={S.btnSm} onClick={addMeal}>+ Meal</button>} />
+      <SectionHeader title="Meal Plan" action={<button className="cbnh-btn" style={S.btnSm} onClick={addMeal}>+ Meal</button>} />
       {form.meals.length===0 && <Empty text="No meals added yet." />}
       {form.meals.map(m=>(
         <div key={m.id} style={S.mealEditorCard}>
@@ -782,12 +837,12 @@ function ProgramBuilder({ program, onUpdate, onBack }) {
   const updateDay = (dayId,updated) => save({...prog,days:prog.days.map(d=>d.id===dayId?updated:d)});
   const deleteDay = (dayId) => save({...prog,days:prog.days.filter(d=>d.id!==dayId)});
   return (
-    <div style={S.app}>
+    <div style={{...S.app, position:"relative"}}><AmbientGlows />
       <Topbar title={prog.name} subtitle={prog.tag} onLogout={null}
         left={<button style={S.backBtn} onClick={onBack}>← Back</button>}
         right={<span style={{color:"#FFFFFF",fontSize:12}}>✓ Auto-saved</span>} />
       <div style={S.content}>
-        <SectionHeader title={`Training Days (${prog.days.length})`} action={<button style={S.btnSm} onClick={addDay}>+ Add Day</button>} />
+        <SectionHeader title={`Training Days (${prog.days.length})`} action={<button className="cbnh-btn" style={S.btnSm} onClick={addDay}>+ Add Day</button>} />
         {prog.days.length===0 && <Empty text="No days yet. Add your first training day." />}
         {prog.days.map((day,di)=>(
           <DayBlock key={day.id} day={day} color={DAY_COLORS[di%DAY_COLORS.length]}
@@ -880,7 +935,7 @@ function ClientApp({ client, programs, nutrition, workoutLog, loadNutrition, mea
   ];
 
   return (
-    <div style={S.app}>
+    <div style={{...S.app, position:"relative"}}><AmbientGlows />
       <div style={{...S.topbar,flexDirection:"column",alignItems:"flex-start",gap:0,padding:"16px 16px 0"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",marginBottom:14}}>
           <div>
@@ -889,7 +944,7 @@ function ClientApp({ client, programs, nutrition, workoutLog, loadNutrition, mea
             </div>
             <div style={{fontSize:12,color:C.muted,marginTop:2}}>{client.goal}</div>
           </div>
-          <button style={S.btnGhost} onClick={onLogout}>Sign out</button>
+          <button className="cbnh-btn" style={S.btnGhost} onClick={onLogout}>Sign out</button>
         </div>
         <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:12,width:"100%",scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}>
           {tabs.map(t=>(
@@ -987,7 +1042,7 @@ function ClientDashboard({ client, assigned, nutrition, measurements, workoutLog
       {/* Programs */}
       {assigned.length > 0 && (
         <div style={{marginBottom:14}}>
-          <SectionHeader title="Active Programs" action={<button style={S.btnSm} onClick={onGoPrograms}>View All →</button>} />
+          <SectionHeader title="Active Programs" action={<button className="cbnh-btn" style={S.btnSm} onClick={onGoPrograms}>View All →</button>} />
           <div style={S.grid}>{assigned.slice(0,2).map(p=>(
             <div key={p.id} style={S.progCard} onClick={onGoPrograms}>
               <div style={{...S.progAccent,background:p.color}} />
@@ -1206,7 +1261,7 @@ function ProgramView({ program, clientId, workoutLog, onBack, onSelectDay }) {
     program.days.forEach(d => workoutLog.loadHistory(clientId, d.id));
   }, [program.id]);
   return (
-    <div style={S.app}>
+    <div style={{...S.app, position:"relative"}}><AmbientGlows />
       <Topbar title={program.name} subtitle={program.tag} onLogout={null}
         left={<button style={S.backBtn} onClick={onBack}>← Back</button>} />
       <div style={S.content}>
@@ -1273,10 +1328,10 @@ function DayView({ day, clientId, workoutLog, onBack }) {
   };
 
   return (
-    <div style={S.app}>
+    <div style={{...S.app, position:"relative"}}><AmbientGlows />
       <Topbar title={day.label} subtitle={`${completed}/${total} exercises done`} onLogout={null}
         left={<button style={S.backBtn} onClick={onBack}>← Back</button>}
-        right={<button style={{...S.btnSm,...(saved?{background:"#7BE0A0"}:{})}} onClick={saveSession}>
+        right={<button className="cbnh-btn" style={{...S.btnSm,...(saved?{background:"#7BE0A0"}:{})}} onClick={saveSession}>
           {saved?"✓ Saved!":"💾 Save Session"}
         </button>} />
       <div style={S.content}>
@@ -1320,7 +1375,7 @@ function DayView({ day, clientId, workoutLog, onBack }) {
                       value={s.weight} type="number" onChange={e=>updateSet(ex.id,si,"weight",e.target.value)} />
                     <input style={{...S.setInput,borderColor:s.done?"#FFFFFF50":C.line2}} placeholder="—"
                       value={s.reps} type="number" onChange={e=>updateSet(ex.id,si,"reps",e.target.value)} />
-                    <button style={{...S.checkBtn,width:32,height:32,fontSize:13,
+                    <button className="cbnh-btn" style={{...S.checkBtn,width:32,height:32,fontSize:13,
                       background:s.done?"#FFFFFF":"transparent",color:s.done?"#000":"#FFFFFF"}}
                       onClick={()=>toggleSet(ex.id,si)}>{s.done?"✓":"○"}</button>
                   </div>
@@ -1333,7 +1388,7 @@ function DayView({ day, clientId, workoutLog, onBack }) {
         {completed===total && total>0 && (
           <div style={S.doneMsg}>
             🎉 Session complete!<br/>
-            <button style={{...S.btn,marginTop:12}} onClick={saveSession}>
+            <button className="cbnh-btn" style={{...S.btn,marginTop:12}} onClick={saveSession}>
               {saved?"✓ Saved!":"Save this session →"}
             </button>
           </div>
@@ -1391,8 +1446,8 @@ function Modal({ title, onClose, onSave, children }) {
         </div>
         <div style={S.modalBody}>{children}</div>
         <div style={S.modalFooter}>
-          <button style={S.btnGhost} onClick={onClose}>Cancel</button>
-          <button style={S.btn} onClick={onSave}>Save →</button>
+          <button className="cbnh-btn" style={S.btnGhost} onClick={onClose}>Cancel</button>
+          <button className="cbnh-btn" style={S.btn} onClick={onSave}>Save →</button>
         </div>
       </div>
     </div>
@@ -1421,7 +1476,7 @@ function NutritionAssigner({ nutrition, onSave, onMount }) {
   return (
     <div>
       <SectionHeader title="Nutrition Plan" action={
-        <button style={{...S.btn,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+        <button className="cbnh-btn" style={{...S.btn,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
           {saved ? "✓ Saved!" : "Assign Plan →"}
         </button>
       } />
@@ -1441,7 +1496,7 @@ function NutritionAssigner({ nutrition, onSave, onMount }) {
         <textarea style={{...S.input,minHeight:72,resize:"vertical"}} value={form.notes} onChange={e=>f("notes",e.target.value)}
           placeholder="e.g. Small surplus for lean gain. Carbs concentrated around training." />
       </Field>
-      <SectionHeader title="Meal Plan" action={<button style={S.btnSm} onClick={addMeal}>+ Meal</button>} />
+      <SectionHeader title="Meal Plan" action={<button className="cbnh-btn" style={S.btnSm} onClick={addMeal}>+ Meal</button>} />
       {form.meals.length===0 && <Empty text="No meals added yet. Click '+ Meal' to build the plan." />}
       {form.meals.map(m=>(
         <div key={m.id} style={S.mealEditorCard}>
@@ -1502,7 +1557,7 @@ function MeasurementsPanel({ measurements, onSave, clientName }) {
   return (
     <div>
       <SectionHeader title={`Measurements (${measurements.length})`}
-        action={<button style={S.btnSm} onClick={()=>setShowForm(s=>!s)}>{showForm?"Cancel":"+ Add Entry"}</button>} />
+        action={<button className="cbnh-btn" style={S.btnSm} onClick={()=>setShowForm(s=>!s)}>{showForm?"Cancel":"+ Add Entry"}</button>} />
 
       {showForm && (
         <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:20,marginBottom:20}}>
@@ -1517,7 +1572,7 @@ function MeasurementsPanel({ measurements, onSave, clientName }) {
               </div>
             ))}
           </div>
-          <button style={{...S.btn,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+          <button className="cbnh-btn" style={{...S.btn,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
             {saved?"✓ Saved!":"Save Measurements →"}
           </button>
         </div>
@@ -1657,7 +1712,7 @@ function ClientCheckinForm({ checkins, onSave }) {
             onChange={e=>f("notes",e.target.value)} placeholder="How did the week go? Any struggles, wins, or feedback?" />
         </div>
 
-        <button style={{...S.btn,width:"100%",marginTop:16,padding:"14px",...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+        <button className="cbnh-btn" style={{...S.btn,width:"100%",marginTop:16,padding:"14px",...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
           {saved ? "✓ Submitted!" : "Submit Check-In →"}
         </button>
       </div>
@@ -1767,7 +1822,7 @@ function HabitsEditor({ habits, onSave, clientName }) {
   return (
     <div>
       <SectionHeader title="Daily Habits" action={
-        <button style={{...S.btn,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+        <button className="cbnh-btn" style={{...S.btn,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
           {saved?"✓ Saved!":"Save Habits →"}
         </button>
       } />
@@ -1789,7 +1844,7 @@ function HabitsEditor({ habits, onSave, clientName }) {
         <div style={{display:"flex",gap:8,marginTop:14}}>
           <input style={{...S.input,flex:1}} value={newHabit} onChange={e=>setNewHabit(e.target.value)}
             placeholder="e.g. Drink 2L of water" onKeyDown={e=>e.key==="Enter"&&addHabit()} />
-          <button style={S.btnSm} onClick={addHabit}>+ Add</button>
+          <button className="cbnh-btn" style={S.btnSm} onClick={addHabit}>+ Add</button>
         </div>
       </div>
     </div>
@@ -1867,7 +1922,7 @@ function ClientHabitsView({ habits, habitLogs, onLog }) {
         ))}
       </div>
 
-      <button style={{...S.btn,width:"100%",padding:14,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+      <button className="cbnh-btn" style={{...S.btn,width:"100%",padding:14,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
         {saved?"✓ Saved!":"Save Today's Habits →"}
       </button>
 
@@ -1911,13 +1966,13 @@ function Topbar({ title, subtitle, onLogout, left, right }) {
       </div>
       <div style={S.topbarRight}>
         {right}
-        {onLogout&&<button style={S.btnGhost} onClick={onLogout}>Sign out</button>}
+        {onLogout&&<button className="cbnh-btn" style={S.btnGhost} onClick={onLogout}>Sign out</button>}
       </div>
     </div>
   );
 }
 function TabBtn({ label, active, onClick }) {
-  return <button style={{...S.tabBtn,...(active?S.tabBtnActive:{})}} onClick={onClick}>{label}</button>;
+  return <button className="cbnh-tab" style={{...S.tabBtn,...(active?S.tabBtnActive:{})}} onClick={onClick}>{label}</button>;
 }
 function SectionHeader({ title, action }) {
   return <div style={S.sectionHeader}><div style={S.sectionTitle}>{title}</div>{action}</div>;
@@ -1928,7 +1983,7 @@ function Field({ label, children }) {
 function ClientCard({ client, programs, onClick, onDelete }) {
   const count = programs.filter(p=>p.assignedTo.includes(client.id)).length;
   return (
-    <div style={S.card} onClick={onClick}>
+    <div className="cbnh-lift" style={S.card} onClick={onClick}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
         <div style={S.cardAvatar}>{client.name.split(" ").map(n=>n[0]).join("")}</div>
         <button style={{background:"transparent",border:"1px solid #ff6b6b",color:"#ff6b6b",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:11,fontWeight:700}}
@@ -1944,7 +1999,7 @@ function ClientCard({ client, programs, onClick, onDelete }) {
 function ProgramCard({ program, clients, onClick, onDelete }) {
   const count = (program.assignedTo||[]).length;
   return (
-    <div style={S.card} onClick={onClick}>
+    <div className="cbnh-lift" style={S.card} onClick={onClick}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
         <div style={{...S.programDot,background:program.color,width:36,height:36}} />
         {onDelete && <button style={{background:"transparent",border:"1px solid #ff6b6b",color:"#ff6b6b",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:11,fontWeight:700}}
@@ -1959,7 +2014,7 @@ function ProgramCard({ program, clients, onClick, onDelete }) {
 }
 function Stat({ label, value }) {
   return (
-    <div style={S.statBox}>
+    <div className="cbnh-lift" style={S.statBox}>
       <div style={S.statVal}>{value}</div>
       <div style={S.statLabel}>{label}</div>
     </div>
@@ -1995,14 +2050,14 @@ const S = {
   error:{ color:"#ff6b6b", fontSize:13, marginBottom:8 },
   loginHint:{ marginTop:20, fontSize:11, color:C.faint, lineHeight:1.7, textAlign:"center" },
 
-  topbar:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 20px", borderBottom:`1px solid ${C.line}`, background:C.surface, position:"sticky", top:0, zIndex:10, gap:12, flexWrap:"wrap" },
+  topbar:{ position:"relative", zIndex:2, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 20px", borderBottom:`1px solid ${C.line}`, background:C.surface, position:"sticky", top:0, zIndex:10, gap:12, flexWrap:"wrap" },
   topbarLeft:{ display:"flex", alignItems:"center", gap:12 },
   topbarRight:{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" },
   topbarTitle:{ fontWeight:400, fontSize:22, color:C.text, fontFamily:"'Bebas Neue',sans-serif", letterSpacing:"0.06em" },
   topbarSub:{ fontSize:11, color:C.muted, marginTop:1 },
   backBtn:{ background:"transparent", color:C.muted, border:"none", cursor:"pointer", fontSize:13, padding:"6px 10px", borderRadius:6 },
 
-  content:{ padding:"20px 18px", maxWidth:920, margin:"0 auto" },
+  content:{ position:"relative", zIndex:1, padding:"20px 18px", maxWidth:920, margin:"0 auto" },
   sectionHeader:{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14, marginTop:20 },
   sectionTitle:{ fontWeight:700, fontSize:10, color:C.faint, textTransform:"uppercase", letterSpacing:"0.25em" },
 
