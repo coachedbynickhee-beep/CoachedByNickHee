@@ -24,7 +24,7 @@ return isMobile;
 }
 const uid = () => Math.random().toString(36).slice(2, 9);
 const todayKey = () => new Date().toISOString().slice(0,10);
-const fmt = (d) => new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"
+const fmt = (d) => new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
 const DAY_COLORS = ["#FF6B4A","#5BC0FF","#7BE0A0","#F4B740","#B88CFF","#FF9F45","#4FD1C5"]
 const MEASUREMENT_FIELDS = [
 { key:"date", label:"Date", type:"date" },
