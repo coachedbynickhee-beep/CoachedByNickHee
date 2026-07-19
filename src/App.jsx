@@ -310,24 +310,42 @@ export default function App() {
     await updateProgram({...prog, assignedTo: newAssigned});
   };
 
-  const saveNutrition = async (clientId, data) => {
+  const saveNutrition = async (clientId, plan) => {
     try {
-      const existing = await sb.get("nutrition", `?client_id=eq.${clientId}`);
-      if (existing && existing.length > 0) {
-        await sb.patch("nutrition", {...data, updated_at: new Date().toISOString()}, `?client_id=eq.${clientId}`);
+      const payload = {name: plan.name||"Plan", calories: plan.calories, protein: plan.protein, carbs: plan.carbs, fat: plan.fat, notes: plan.notes, meals: plan.meals};
+      let saved;
+      if (plan.id) {
+        const res = await sb.patch("nutrition", {...payload, updated_at: new Date().toISOString()}, `?id=eq.${plan.id}`);
+        saved = (res && res[0]) ? res[0] : plan;
       } else {
-        await sb.post("nutrition", {...data, client_id: clientId});
+        const res = await sb.post("nutrition", {...payload, client_id: clientId});
+        saved = (res && res[0]) ? res[0] : {...plan, id: Date.now()};
       }
-      setNutrition(prev => ({...prev, [clientId]: data}));
+      setNutrition(prev => {
+        const list = Array.isArray(prev[clientId]) ? prev[clientId] : (prev[clientId] ? [prev[clientId]] : []);
+        const idx = list.findIndex(p => p.id === saved.id);
+        const next = idx >= 0 ? list.map(p => p.id === saved.id ? saved : p) : [...list, saved];
+        return {...prev, [clientId]: next};
+      });
+      return saved;
     } catch(e) { alert("Error saving nutrition: " + e.message); }
   };
 
   const loadNutrition = async (clientId) => {
     if (nutrition[clientId]) return;
     try {
-      const result = await sb.get("nutrition", `?client_id=eq.${clientId}`);
-      if (result && result[0]) setNutrition(prev => ({...prev, [clientId]: result[0]}));
+      const result = await sb.get("nutrition", `?client_id=eq.${clientId}&order=id.asc`);
+      if (result) setNutrition(prev => ({...prev, [clientId]: result}));
     } catch(e) { console.error("Error loading nutrition:", e); }
+  };
+  const deleteNutritionPlan = async (clientId, planId) => {
+    try {
+      await sb.delete("nutrition", `?id=eq.${planId}`);
+      setNutrition(prev => {
+        const list = Array.isArray(prev[clientId]) ? prev[clientId] : [];
+        return {...prev, [clientId]: list.filter(p => p.id !== planId)};
+      });
+    } catch(e) { alert("Error deleting plan: " + e.message); }
   };
 
   const saveMeasurement = async (clientId, data) => {
@@ -416,7 +434,7 @@ export default function App() {
     <CoachApp clients={clients} programs={programs} nutrition={nutrition}
       addClient={addClient} updateClient={updateClient} removeClient={removeClient}
       addProgram={addProgram} updateProgram={updateProgram} assignProgram={assignProgram} deleteProgram={deleteProgram}
-      saveNutrition={saveNutrition} loadNutrition={loadNutrition}
+      saveNutrition={saveNutrition} loadNutrition={loadNutrition} deleteNutritionPlan={deleteNutritionPlan}
       measurements={measurements} saveMeasurement={saveMeasurement} loadMeasurements={loadMeasurements}
       checkins={checkins} loadCheckins={loadCheckins}
       habits={habits} saveHabits={saveHabits} loadHabits={loadHabits}
@@ -578,7 +596,7 @@ function Login({ onLogin }) {
 }
 
 // ── COACH APP ────────────────────────────────────────────────────────────────
-function CoachApp({ clients, programs, nutrition, addClient, updateClient, removeClient, addProgram, updateProgram, assignProgram, deleteProgram, saveNutrition, loadNutrition, measurements, saveMeasurement, loadMeasurements, checkins, loadCheckins, habits, saveHabits, loadHabits, workoutLog, onLogout }) {
+function CoachApp({ clients, programs, nutrition, addClient, updateClient, removeClient, addProgram, updateProgram, assignProgram, deleteProgram, saveNutrition, loadNutrition, deleteNutritionPlan, measurements, saveMeasurement, loadMeasurements, checkins, loadCheckins, habits, saveHabits, loadHabits, workoutLog, onLogout }) {
   const [tab, setTab] = useState("clients");
   const [activeClient, setActiveClient] = useState(null);
   const [activeProgram, setActiveProgram] = useState(null);
@@ -593,7 +611,7 @@ function CoachApp({ clients, programs, nutrition, addClient, updateClient, remov
     const c = clients.find(c => c.id === activeClient);
     return <ClientDetail client={c} programs={programs} clients={clients}
       updateClient={updateClient} updateProgram={updateProgram} assignProgram={assignProgram}
-      nutrition={nutrition[c.id]} saveNutrition={(n)=>saveNutrition(c.id,n)} loadNutrition={()=>loadNutrition(c.id)}
+      nutrition={nutrition[c.id]} saveNutrition={(n)=>saveNutrition(c.id,n)} loadNutrition={()=>loadNutrition(c.id)} deleteNutritionPlan={(pid)=>deleteNutritionPlan(c.id,pid)}
       measurements={measurements[c.id]||[]} saveMeasurement={(d)=>saveMeasurement(c.id,d)} loadMeasurements={()=>loadMeasurements(c.id)}
       checkins={checkins[c.id]||[]} loadCheckins={()=>loadCheckins(c.id)}
       habits={habits[c.id]||[]} saveHabits={(h)=>saveHabits(c.id,h)} loadHabits={()=>loadHabits(c.id)}
@@ -626,7 +644,7 @@ function CoachApp({ clients, programs, nutrition, addClient, updateClient, remov
 }
 
 // ── CLIENT DETAIL (coach view) ────────────────────────────────────────────────
-function ClientDetail({ client, programs, clients, updateClient, updateProgram, assignProgram, nutrition, saveNutrition, loadNutrition, measurements, saveMeasurement, loadMeasurements, checkins, loadCheckins, habits, saveHabits, loadHabits, workoutLog, onBack, onOpenProgram }) {
+function ClientDetail({ client, programs, clients, updateClient, updateProgram, assignProgram, nutrition, saveNutrition, loadNutrition, deleteNutritionPlan, measurements, saveMeasurement, loadMeasurements, checkins, loadCheckins, habits, saveHabits, loadHabits, workoutLog, onBack, onOpenProgram }) {
   const [tab, setTab] = useState("programs");
   const [showEdit, setShowEdit] = useState(false);
   const assigned = programs.filter(p=>p.assignedTo.includes(client.id));
@@ -681,7 +699,7 @@ function ClientDetail({ client, programs, clients, updateClient, updateProgram, 
           </>}
         </>}
 
-        {tab==="nutrition" && <NutritionAssigner nutrition={nutrition} onSave={saveNutrition} onMount={loadNutrition} />}
+        {tab==="nutrition" && <NutritionManager plans={nutrition} onSave={saveNutrition} onDelete={deleteNutritionPlan} onMount={loadNutrition} />}
 
         {tab==="history" && <CoachLogHistory clientId={client.id} programs={assigned} workoutLog={workoutLog} pbs={pbs} />}
         {tab==="measurements" && <MeasurementsPanel measurements={measurements} onSave={saveMeasurement} clientName={client.name} />}
@@ -778,7 +796,7 @@ function CoachLogHistory({ clientId, programs, workoutLog, pbs }) {
 
 // ── NUTRITION EDITOR (coach) ──────────────────────────────────────────────────
 function NutritionEditor({ nutrition, onSave, client, onMount }) {
-  const blank = { calories:0, protein:0, carbs:0, fat:0, notes:"", meals:[] };
+  const blank = { name:"New Plan", calories:0, protein:0, carbs:0, fat:0, notes:"", meals:[] };
   const [form, setForm] = useState(nutrition || blank);
   useEffect(()=>{ if(onMount) onMount(); },[]);
   const f = (k,v) => setForm(p=>({...p,[k]:v}));
@@ -1079,20 +1097,20 @@ function ClientDashboard({ client, assigned, nutrition, measurements, workoutLog
       )}
 
       {/* Nutrition teaser */}
-      {nutrition && (
+      {(() => { const _np = Array.isArray(nutrition)?nutrition[0]:nutrition; const _cnt = Array.isArray(nutrition)?nutrition.length:(nutrition?1:0); return _np && (
         <div style={{background:C.surface,border:`1px solid ${C.line}`,borderRadius:14,padding:18,cursor:"pointer"}} onClick={onGoNutrition}>
           <div style={{fontSize:10,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:10}}>Your Nutrition Plan</div>
           <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
-            {[["Calories",nutrition.calories,"kcal"],["Protein",nutrition.protein,"g"],["Carbs",nutrition.carbs,"g"],["Fat",nutrition.fat,"g"]].map(([l,v,u])=>(
+            {[["Calories",_np.calories,"kcal"],["Protein",_np.protein,"g"],["Carbs",_np.carbs,"g"],["Fat",_np.fat,"g"]].map(([l,v,u])=>(
               <div key={l} style={{textAlign:"center"}}>
                 <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:26,color:C.text,lineHeight:1}}>{v||"—"}<span style={{fontSize:11,color:C.muted}}>{u}</span></div>
                 <div style={{fontSize:9,color:C.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",marginTop:3}}>{l}</div>
               </div>
             ))}
           </div>
-          <div style={{marginTop:10,fontSize:12,color:C.accent,fontWeight:700}}>View full plan →</div>
+          <div style={{marginTop:10,fontSize:12,color:C.accent,fontWeight:700}}>{_cnt>1 ? ("View all " + _cnt + " plans \u2192") : "View full plan \u2192"}</div>
         </div>
-      )}
+      );})()}
     </div>
   );
 }
@@ -1140,50 +1158,59 @@ function ClientMeasurementsView({ measurements }) {
 }
 
 // ── CLIENT NUTRITION VIEW ────────────────────────────────────────────────────
-function ClientNutritionView({ nutrition }) {
-  if (!nutrition) return (
-    <div style={{textAlign:"center",padding:"48px 0"}}>
-      <div style={{fontSize:32,marginBottom:12}}>🥗</div>
-      <div style={{color:C.muted,fontSize:14}}>Your coach hasn't set a nutrition plan yet.</div>
-    </div>
-  );
-  const { calories, protein, carbs, fat, notes, meals } = nutrition;
-  const totP = meals.reduce((s,m)=>s+m.protein,0);
-  const totC = meals.reduce((s,m)=>s+m.carbs,0);
-  const totF = meals.reduce((s,m)=>s+m.fat,0);
+function NutritionPlanCard({ plan, showTitle }) {
+  const { name, calories, protein, carbs, fat, notes, meals } = plan;
+  const ms = meals || [];
+  const totP = ms.reduce((s,m)=>s+(+m.protein||0),0);
+  const totC = ms.reduce((s,m)=>s+(+m.carbs||0),0);
+  const totF = ms.reduce((s,m)=>s+(+m.fat||0),0);
   return (
-    <div>
-      <SectionHeader title="Your Nutrition Plan" />
+    <div className="cbnh-lift" style={{...S.mealEditorCard, marginBottom:20}}>
+      {showTitle && <SectionHeader title={name || "Nutrition Plan"} />}
       <div style={S.macroGrid}>
         {[["Calories",calories,"kcal","#FFFFFF"],["Protein",protein,"g","#FFFFFF"],["Carbs",carbs,"g","#CCCCCC"],["Fat",fat,"g","#999999"]].map(([l,v,u,col])=>(
           <div key={l} style={{...S.macroBox,borderColor:col+"33"}}>
             <div style={{...S.macroLabel,color:col}}>{l}</div>
-            <div style={{fontSize:24,fontWeight:800,color:col}}>{v}<span style={{fontSize:13,fontWeight:400,color:C.muted,marginLeft:3}}>{u}</span></div>
+            <div style={{fontSize:24,fontWeight:800,color:col}}>{v||0}<span style={{fontSize:13,fontWeight:600,color:C.muted}}> {u}</span></div>
           </div>
         ))}
       </div>
-      {notes && <div style={S.coachNote}><span style={{color:"#FFFFFF",marginRight:6}}>📋</span>{notes}</div>}
-      <SectionHeader title="Meal Breakdown" />
-      {meals.map(m=>(
-        <div key={m.id} style={S.mealViewCard}>
-          <div style={S.mealName}>{m.name}</div>
-          <div style={S.mealDesc}>{m.description}</div>
-          <div style={S.mealMacros}>
-            <span style={{color:"#FFFFFF"}}>P {m.protein}g</span>
-            <span style={{color:"#CCCCCC"}}>C {m.carbs}g</span>
-            <span style={{color:"#999999"}}>F {m.fat}g</span>
-            <span style={{color:C.muted}}>{m.protein*4+m.carbs*4+m.fat*9} kcal</span>
+      {notes && <div style={S.coachNote}><span style={{color:"#FFFFFF",marginRight:6}}>&#9642;</span>{notes}</div>}
+      {ms.length>0 && <>
+        <SectionHeader title="Meal Breakdown" />
+        {ms.map(m=>(
+          <div key={m.id} style={S.mealViewCard}>
+            <div style={S.mealName}>{m.name}</div>
+            <div style={S.mealDesc}>{m.description}</div>
+            <div style={S.mealMacros}>
+              <span style={{color:"#FFFFFF"}}>P {m.protein}g</span>
+              <span style={{color:"#CCCCCC"}}>C {m.carbs}g</span>
+              <span style={{color:"#999999"}}>F {m.fat}g</span>
+              <span style={{color:C.muted}}>{m.protein*4+m.carbs*4+m.fat*9} kcal</span>
+            </div>
           </div>
-        </div>
-      ))}
-      <div style={S.mealTotal}>
-        Daily total from meals — P {totP}g · C {totC}g · F {totF}g · {totP*4+totC*4+totF*9} kcal
-      </div>
+        ))}
+        <div style={S.mealTotal}>Daily total from meals &mdash; P {totP}g &middot; C {totC}g &middot; F {totF}g &middot; {totP*4+totC*4+totF*9} kcal</div>
+      </>}
     </div>
   );
 }
 
-// ── CLIENT HISTORY VIEW ───────────────────────────────────────────────────────
+function ClientNutritionView({ nutrition }) {
+  const plans = Array.isArray(nutrition) ? nutrition : (nutrition ? [nutrition] : []);
+  if (plans.length === 0) return (
+    <div style={{textAlign:"center",padding:"48px 0"}}>
+      <div style={{fontSize:32,marginBottom:12}}>&#129367;</div>
+      <div style={{color:C.muted,fontSize:14}}>Your coach hasn't set a nutrition plan yet.</div>
+    </div>
+  );
+  return (
+    <div>
+      <SectionHeader title={plans.length>1 ? ("Your Nutrition Plans (" + plans.length + ")") : "Your Nutrition Plan"} />
+      {plans.map(p=>(<NutritionPlanCard key={p.id} plan={p} showTitle={plans.length>1} />))}
+    </div>
+  );
+}
 function ClientHistoryView({ clientId, programs, workoutLog }) {
   const [selProg, setSelProg] = useState(programs[0]?.id||null);
   const [selDay, setSelDay] = useState(null);
@@ -1455,7 +1482,33 @@ function Modal({ title, onClose, onSave, children }) {
 }
 
 // ── NUTRITION ASSIGNER (coach assigns plan to client) ────────────────────────
-function NutritionAssigner({ nutrition, onSave, onMount }) {
+function NutritionManager({ plans, onSave, onDelete, onMount }) {
+  useEffect(()=>{ if(onMount) onMount(); },[]);
+  const list = Array.isArray(plans) ? plans : (plans ? [plans] : []);
+  const [selId, setSelId] = useState(null);
+  const [adding, setAdding] = useState(false);
+  const current = adding ? null : (list.find(p=>p.id===selId) || list[0] || null);
+  const blank = { name:"New Plan", calories:0, protein:0, carbs:0, fat:0, notes:"", meals:[] };
+  const handleSave = async (plan) => { const saved = await onSave(plan); if (saved && saved.id) { setSelId(saved.id); setAdding(false); } };
+  const handleDelete = (id) => { if (!id) { setAdding(false); return; } if (window.confirm("Delete this nutrition plan?")) { onDelete(id); setAdding(false); setSelId(null); } };
+  return (
+    <div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16,alignItems:"center"}}>
+        {list.map(p=>(
+          <button key={p.id} className="cbnh-tab" style={{...S.tabBtn, ...((!adding && current && current.id===p.id)?S.tabBtnActive:{})}} onClick={()=>{ setAdding(false); setSelId(p.id); }}>{p.name || "Plan"}</button>
+        ))}
+        <button className="cbnh-btn" style={{...S.btnSm}} onClick={()=>{ setAdding(true); setSelId(null); }}>+ Add plan</button>
+      </div>
+      {(current || adding) ? (
+        <NutritionAssigner key={adding ? "new" : (current && current.id)} nutrition={adding ? blank : current} onSave={handleSave} onDelete={()=>handleDelete(adding ? null : (current && current.id))} showName={true} />
+      ) : (
+        <Empty text="No nutrition plans yet. Click '+ Add plan' to create one." />
+      )}
+    </div>
+  );
+}
+
+function NutritionAssigner({ nutrition, onSave, onMount, onDelete, showName }) {
   useEffect(()=>{ if(onMount) onMount(); },[]);
   const blank = { calories:0, protein:0, carbs:0, fat:0, notes:"", meals:[] };
   const [form, setForm] = useState(nutrition || blank);
@@ -1475,11 +1528,20 @@ function NutritionAssigner({ nutrition, onSave, onMount }) {
 
   return (
     <div>
-      <SectionHeader title="Nutrition Plan" action={
-        <button className="cbnh-btn" style={{...S.btn,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
-          {saved ? "✓ Saved!" : "Assign Plan →"}
-        </button>
-      } />
+      {showName && (
+          <div style={{display:"flex",gap:8,alignItems:"flex-end",marginBottom:14}}>
+            <div style={{flex:1}}>
+              <div style={S.macroLabel}>Plan name</div>
+              <input style={{...S.input,fontSize:16,fontWeight:700}} value={form.name||""} onChange={e=>f("name",e.target.value)} placeholder="e.g. Training Day / Rest Day" />
+            </div>
+            {onDelete && (<button className="cbnh-btn" style={{...S.btnGhost,color:"#FF6B6B",borderColor:"rgba(255,107,107,.4)"}} onClick={onDelete}>Delete</button>)}
+          </div>
+        )}
+        <SectionHeader title={showName ? "Macros" : "Nutrition Plan"} action={
+          <button className="cbnh-btn" style={{...S.btn,...(saved?{background:"#7BE0A0"}:{})}} onClick={handleSave}>
+            {saved ? "\u2713 Saved!" : (showName ? "Save Plan \u2192" : "Assign Plan \u2192")}
+          </button>
+        } />
       <div style={S.macroGrid}>
         {[["Calories","calories","kcal"],["Protein","protein","g"],["Carbs","carbs","g"],["Fat","fat","g"]].map(([label,key,unit])=>(
           <div key={key} style={S.macroBox}>
