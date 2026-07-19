@@ -28,10 +28,10 @@ const useIsMobile = () => {
 };
 
 // ── Supabase Client ───────────────────────────────────────────────────────────
-const SUPABASE_URL = "https://jzievdnzlntbtjoitcgc.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6aWV2ZG56bG50YnRqb2l0Y2djIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1MDcwMzIsImV4cCI6MjA5NjA4MzAzMn0.6xaC_SijPt2SUVX4Lc8FuqaMVpkwP1l-PdW32yXOdGk";
+export const SUPABASE_URL = "https://jzievdnzlntbtjoitcgc.supabase.co";
+export const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6aWV2ZG56bG50YnRqb2l0Y2djIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1MDcwMzIsImV4cCI6MjA5NjA4MzAzMn0.6xaC_SijPt2SUVX4Lc8FuqaMVpkwP1l-PdW32yXOdGk";
 
-const sb = {
+export const sb = {
   async query(table, method="GET", body=null, params="") {
     const url = `${SUPABASE_URL}/rest/v1/${table}${params}`;
     const res = await fetch(url, {
