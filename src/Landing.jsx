@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { sb } from './App.jsx';
 
 // ──────────────────────────────────────────────────────────────
 // LANDING PAGE — CoachedByNickHee
-// Public page shown before sign in. Fill in the PLACEHOLDER
-// sections below with your own photos and text.
+// Content is editable in-page when signed in as the coach.
+// Everyone else sees the saved content read-only.
 // ──────────────────────────────────────────────────────────────
 
 const ACCENT = '#4da3ff';        // luxury sapphire blue
@@ -14,25 +15,62 @@ const CARD = 'rgba(255,255,255,0.04)';
 const BORDER = '1px solid rgba(255,255,255,0.08)';
 const MUTED = 'rgba(255,255,255,0.55)';
 
-// >>> PLACEHOLDER DATA — replace text and add image URLs <<<
-const TESTIMONIALS = [
-  { name: 'CLIENT NAME HERE', role: 'e.g. Fat loss client', quote: 'Testimonial text goes here - paste what your client said about training with you.', img: '' },
-  { name: 'CLIENT NAME HERE', role: 'e.g. Strength client', quote: 'Testimonial text goes here - paste what your client said about training with you.', img: '' },
-  { name: 'CLIENT NAME HERE', role: 'e.g. Prep client', quote: 'Testimonial text goes here - paste what your client said about training with you.', img: '' },
-];
+const DEFAULT_CONTENT = {
+  hero: {
+    kicker: 'Elite Coaching Platform',
+    intro: 'Real coaching. Real results. Explore client transformations, testimonials and the latest training updates below.',
+  },
+  testimonials: [
+    { name: 'CLIENT NAME HERE', role: 'e.g. Fat loss client', quote: 'Testimonial text goes here - paste what your client said about training with you.', img: '' },
+    { name: 'CLIENT NAME HERE', role: 'e.g. Strength client', quote: 'Testimonial text goes here - paste what your client said about training with you.', img: '' },
+    { name: 'CLIENT NAME HERE', role: 'e.g. Prep client', quote: 'Testimonial text goes here - paste what your client said about training with you.', img: '' },
+  ],
+  transformations: [
+    { name: 'CLIENT NAME', stat: 'e.g. -12kg in 16 weeks', before: '', after: '' },
+    { name: 'CLIENT NAME', stat: 'e.g. +8kg lean mass', before: '', after: '' },
+    { name: 'CLIENT NAME', stat: 'e.g. First pull-up achieved', before: '', after: '' },
+  ],
+  updates: [
+    { date: 'DATE HERE', title: 'TRAINING UPDATE TITLE', body: 'Write your latest training update, programme news or announcement here.' },
+    { date: 'DATE HERE', title: 'TRAINING UPDATE TITLE', body: 'Write your latest training update, programme news or announcement here.' },
+  ],
+};
 
-const TRANSFORMATIONS = [
-  { name: 'CLIENT NAME', stat: 'e.g. -12kg in 16 weeks', before: '', after: '' },
-  { name: 'CLIENT NAME', stat: 'e.g. +8kg lean mass', before: '', after: '' },
-  { name: 'CLIENT NAME', stat: 'e.g. First pull-up achieved', before: '', after: '' },
-];
+function useIsCoach() {
+  const [isCoach, setIsCoach] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      try {
+        const raw = localStorage.getItem('cbnh_user');
+        const u = raw ? JSON.parse(raw) : null;
+        setIsCoach(!!u && u.role === 'coach');
+      } catch (e) { setIsCoach(false); }
+    };
+    check();
+    window.addEventListener('storage', check);
+    return () => window.removeEventListener('storage', check);
+  }, []);
+  return isCoach;
+}
 
-const UPDATES = [
-  { date: 'DATE HERE', title: 'TRAINING UPDATE TITLE', body: 'Write your latest training update, programme news or announcement here.' },
-  { date: 'DATE HERE', title: 'TRAINING UPDATE TITLE', body: 'Write your latest training update, programme news or announcement here.' },
-];
+async function loadContent() {
+  try {
+    const rows = await sb.get('landing_content', '?id=eq.1&select=data');
+    if (rows && rows.length && rows[0].data && Object.keys(rows[0].data).length) {
+      return rows[0].data;
+    }
+  } catch (e) { /* table may not exist yet – fall back to defaults */ }
+  return null;
+}
 
-// ── Scroll reveal hook ──────────────────────────────────────────
+async function saveContent(data) {
+  const updated = await sb.patch('landing_content', { data, updated_at: new Date().toISOString() }, '?id=eq.1');
+  if (!updated || !updated.length) {
+    await sb.post('landing_content', { id: 1, data });
+  }
+  return true;
+}
+
 function useReveal() {
   const ref = useRef(null);
   const [shown, setShown] = useState(false);
@@ -61,7 +99,33 @@ function Reveal({ children, delay = 0, style }) {
   );
 }
 
-// ── Interactive card with hover lift + blue glow ────────────────
+function EditableText({ value, onChange, editing, multiline, placeholder, style, tag }) {
+  if (!editing) {
+    const Tag = tag || 'span';
+    return <Tag style={style}>{value}</Tag>;
+  }
+  const shared = {
+    value: value,
+    onChange: (e) => onChange(e.target.value),
+    placeholder: placeholder || '',
+    style: {
+      ...style,
+      width: '100%',
+      boxSizing: 'border-box',
+      background: 'rgba(255,255,255,0.06)',
+      border: '1px solid rgba(77,163,255,0.5)',
+      borderRadius: 6,
+      color: 'inherit',
+      font: 'inherit',
+      padding: '6px 8px',
+      outline: 'none',
+    },
+  };
+  return multiline
+    ? <textarea rows={3} {...shared} />
+    : <input type="text" {...shared} />;
+}
+
 function HoverCard({ children, style, hoverStyle }) {
   const [h, setH] = useState(false);
   return (
@@ -82,7 +146,6 @@ function HoverCard({ children, style, hoverStyle }) {
   );
 }
 
-// ── Interactive accent button ───────────────────────────────────
 function AccentButton({ children, onClick, big }) {
   const [h, setH] = useState(false);
   return (
@@ -103,7 +166,6 @@ function AccentButton({ children, onClick, big }) {
   );
 }
 
-// ── Text link with animated underline ───────────────────────────
 function NavLink({ children, onClick }) {
   const [h, setH] = useState(false);
   return (
@@ -119,20 +181,68 @@ function NavLink({ children, onClick }) {
   );
 }
 
-function Photo({ src, label, style }) {
-  if (src) {
-    return <img src={src} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', ...style }} />;
-  }
+function Photo({ src, label, style, editing, onChange }) {
   return (
-    <div style={{ width: '100%', height: '100%', minHeight: 180, display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.25)', color: MUTED, fontSize: 12,
-      letterSpacing: 1, textTransform: 'uppercase', textAlign: 'center', padding: 12, ...style }}>
-      {label || 'ADD PHOTO'}
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      {src
+        ? <img src={src} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', minHeight: 64, ...style }} />
+        : <div style={{ width: '100%', height: '100%', minHeight: 180, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.25)', color: MUTED, fontSize: 12,
+            letterSpacing: 1, textTransform: 'uppercase', textAlign: 'center', padding: 12, ...style }}>
+            {label || 'ADD PHOTO'}
+          </div>}
+      {editing && (
+        <input type="text" value={src || ''} placeholder="Paste image URL"
+          onChange={(e) => onChange(e.target.value)}
+          onClick={(e) => e.stopPropagation()}
+          style={{ position: 'absolute', left: 6, right: 6, bottom: 6, width: 'calc(100% - 12px)', boxSizing: 'border-box',
+            fontSize: 11, padding: '5px 7px', borderRadius: 5, border: '1px solid rgba(77,163,255,0.6)',
+            background: 'rgba(0,0,0,0.75)', color: '#fff', outline: 'none' }} />
+      )}
     </div>
   );
 }
 
 export default function Landing({ onSignIn }) {
+  const isCoach = useIsCoach();
+  const [content, setContent] = useState(DEFAULT_CONTENT);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState('');
+
+  useEffect(() => {
+    let alive = true;
+    loadContent().then((data) => {
+      if (alive && data) setContent({ ...DEFAULT_CONTENT, ...data });
+    });
+    return () => { alive = false; };
+  }, []);
+
+  const setHero = (key, val) => setContent((c) => ({ ...c, hero: { ...c.hero, [key]: val } }));
+  const setItem = (section, idx, key, val) => setContent((c) => {
+    const arr = c[section].map((it, i) => i === idx ? { ...it, [key]: val } : it);
+    return { ...c, [section]: arr };
+  });
+
+  const handleSave = useCallback(async () => {
+    setSaving(true); setStatus('');
+    try {
+      await saveContent(content);
+      setStatus('Saved');
+      setEditing(false);
+      setTimeout(() => setStatus(''), 2500);
+    } catch (e) {
+      setStatus('Save failed — is the landing_content table set up?');
+    } finally {
+      setSaving(false);
+    }
+  }, [content]);
+
+  const handleCancel = () => {
+    setEditing(false); setStatus('');
+    loadContent().then((data) => setContent(data ? { ...DEFAULT_CONTENT, ...data } : DEFAULT_CONTENT));
+  };
+
   const container = { maxWidth: 1200, margin: '0 auto', padding: '0 24px' };
   const heading = { fontSize: 13, letterSpacing: 3, textTransform: 'uppercase', color: ACCENT, marginBottom: 12, fontWeight: 700 };
   const sectionTitle = { fontSize: 34, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 32px', lineHeight: 1.05 };
@@ -140,7 +250,6 @@ export default function Landing({ onSignIn }) {
   return (
     <div style={{ background: BG, color: '#fff', minHeight: '100vh', fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", position: 'relative', overflow: 'hidden' }}>
 
-      {/* Animated ambient glow + keyframes */}
       <style>{`
         @keyframes floatGlow { 0%{transform:translate(0,0) scale(1);} 50%{transform:translate(40px,30px) scale(1.15);} 100%{transform:translate(0,0) scale(1);} }
         @keyframes floatGlow2 { 0%{transform:translate(0,0) scale(1);} 50%{transform:translate(-50px,-20px) scale(1.1);} 100%{transform:translate(0,0) scale(1);} }
@@ -152,6 +261,31 @@ export default function Landing({ onSignIn }) {
         background: 'radial-gradient(circle,rgba(46,125,224,0.14),transparent 70%)', filter: 'blur(20px)', pointerEvents: 'none',
         animation: 'floatGlow2 18s ease-in-out infinite', zIndex: 0 }} />
 
+      {isCoach && (
+        <div style={{ position: 'sticky', top: 0, zIndex: 50, display: 'flex', alignItems: 'center', gap: 12,
+          padding: '10px 24px', background: 'rgba(10,10,12,0.92)', backdropFilter: 'blur(8px)',
+          borderBottom: '1px solid rgba(77,163,255,0.35)' }}>
+          <span style={{ fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', color: ACCENT, fontWeight: 700 }}>Coach mode</span>
+          <span style={{ flex: 1 }} />
+          {status && <span style={{ fontSize: 13, color: MUTED }}>{status}</span>}
+          {!editing && (
+            <button onClick={() => setEditing(true)}
+              style={{ cursor: 'pointer', background: ACCENT, color: '#fff', border: 'none', fontWeight: 700,
+                padding: '8px 18px', borderRadius: 5, letterSpacing: 1, textTransform: 'uppercase', fontSize: 12 }}>Edit page</button>
+          )}
+          {editing && (
+            <>
+              <button onClick={handleCancel} disabled={saving}
+                style={{ cursor: 'pointer', background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.3)',
+                  padding: '8px 18px', borderRadius: 5, letterSpacing: 1, textTransform: 'uppercase', fontSize: 12 }}>Cancel</button>
+              <button onClick={handleSave} disabled={saving}
+                style={{ cursor: 'pointer', background: ACCENT, color: '#fff', border: 'none', fontWeight: 700,
+                  padding: '8px 18px', borderRadius: 5, letterSpacing: 1, textTransform: 'uppercase', fontSize: 12 }}>{saving ? 'Saving…' : 'Save'}</button>
+            </>
+          )}
+        </div>
+      )}
+
       <div style={{ position: 'relative', zIndex: 1 }}>
 
       {/* NAV */}
@@ -162,17 +296,19 @@ export default function Landing({ onSignIn }) {
 
       {/* HERO */}
       <header style={{ ...container, paddingTop: 60, paddingBottom: 80 }}>
-        <Reveal><div style={heading}>Elite Coaching Platform</div></Reveal>
+        <Reveal>
+          <EditableText tag="div" style={heading} editing={editing}
+            value={content.hero.kicker} onChange={(v) => setHero('kicker', v)} placeholder="Kicker" />
+        </Reveal>
         <Reveal delay={80}>
           <h1 style={{ fontSize: 72, fontWeight: 900, lineHeight: 0.95, textTransform: 'uppercase', margin: '0 0 20px' }}>
             Re-Establish<br /><span style={{ background: 'linear-gradient(120deg,' + ACCENT + ',' + ACCENT_DEEP + ')', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Your</span><br />Limits
           </h1>
         </Reveal>
         <Reveal delay={160}>
-          <p style={{ color: MUTED, fontSize: 18, maxWidth: 560, margin: '0 0 32px' }}>
-            {/* PLACEHOLDER: intro line */}
-            Real coaching. Real results. Explore client transformations, testimonials and the latest training updates below.
-          </p>
+          <EditableText tag="p" multiline editing={editing}
+            style={{ color: MUTED, fontSize: 18, maxWidth: 560, margin: '0 0 32px' }}
+            value={content.hero.intro} onChange={(v) => setHero('intro', v)} placeholder="Intro line" />
         </Reveal>
         <Reveal delay={240}>
           <AccentButton onClick={onSignIn} big>Sign In to Your Dashboard &rarr;</AccentButton>
@@ -184,15 +320,21 @@ export default function Landing({ onSignIn }) {
         <Reveal><div style={heading}>What Clients Say</div></Reveal>
         <Reveal delay={60}><h2 style={sectionTitle}>Client Testimonials</h2></Reveal>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 20 }}>
-          {TESTIMONIALS.map((t, i) => (
+          {content.testimonials.map((t, i) => (
             <Reveal key={i} delay={i * 90}>
               <HoverCard style={{ padding: 24 }}>
                 <div style={{ width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', marginBottom: 16 }}>
-                  <Photo src={t.img} label="PHOTO" style={{ minHeight: 64 }} />
+                  <Photo src={t.img} label="PHOTO" editing={editing} onChange={(v) => setItem('testimonials', i, 'img', v)} style={{ minHeight: 64 }} />
                 </div>
-                <p style={{ fontSize: 15, lineHeight: 1.6, margin: '0 0 16px', color: 'rgba(255,255,255,0.85)' }}>&ldquo;{t.quote}&rdquo;</p>
-                <div style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, fontSize: 14 }}>{t.name}</div>
-                <div style={{ color: MUTED, fontSize: 13 }}>{t.role}</div>
+                <EditableText tag="p" multiline editing={editing}
+                  style={{ fontSize: 15, lineHeight: 1.6, margin: '0 0 16px', color: 'rgba(255,255,255,0.85)' }}
+                  value={t.quote} onChange={(v) => setItem('testimonials', i, 'quote', v)} placeholder="Testimonial quote" />
+                <EditableText tag="div" editing={editing}
+                  style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, fontSize: 14 }}
+                  value={t.name} onChange={(v) => setItem('testimonials', i, 'name', v)} placeholder="Client name" />
+                <EditableText tag="div" editing={editing}
+                  style={{ color: MUTED, fontSize: 13 }}
+                  value={t.role} onChange={(v) => setItem('testimonials', i, 'role', v)} placeholder="Client role" />
               </HoverCard>
             </Reveal>
           ))}
@@ -204,22 +346,26 @@ export default function Landing({ onSignIn }) {
         <Reveal><div style={heading}>Proof It Works</div></Reveal>
         <Reveal delay={60}><h2 style={sectionTitle}>Transformations</h2></Reveal>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 20 }}>
-          {TRANSFORMATIONS.map((t, i) => (
+          {content.transformations.map((t, i) => (
             <Reveal key={i} delay={i * 90}>
               <HoverCard style={{ overflow: 'hidden' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                   <div style={{ position: 'relative' }}>
-                    <Photo src={t.before} label="BEFORE PHOTO" />
+                    <Photo src={t.before} label="BEFORE PHOTO" editing={editing} onChange={(v) => setItem('transformations', i, 'before', v)} />
                     <span style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(0,0,0,0.6)', padding: '2px 8px', fontSize: 10, letterSpacing: 1, borderRadius: 3 }}>BEFORE</span>
                   </div>
                   <div style={{ position: 'relative' }}>
-                    <Photo src={t.after} label="AFTER PHOTO" />
+                    <Photo src={t.after} label="AFTER PHOTO" editing={editing} onChange={(v) => setItem('transformations', i, 'after', v)} />
                     <span style={{ position: 'absolute', top: 8, left: 8, background: ACCENT, color: '#fff', padding: '2px 8px', fontSize: 10, letterSpacing: 1, borderRadius: 3, fontWeight: 700 }}>AFTER</span>
                   </div>
                 </div>
                 <div style={{ padding: 20 }}>
-                  <div style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>{t.name}</div>
-                  <div style={{ color: ACCENT, fontSize: 14, fontWeight: 600, marginTop: 4 }}>{t.stat}</div>
+                  <EditableText tag="div" editing={editing}
+                    style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}
+                    value={t.name} onChange={(v) => setItem('transformations', i, 'name', v)} placeholder="Client name" />
+                  <EditableText tag="div" editing={editing}
+                    style={{ color: ACCENT, fontSize: 14, fontWeight: 600, marginTop: 4 }}
+                    value={t.stat} onChange={(v) => setItem('transformations', i, 'stat', v)} placeholder="Result / stat" />
                 </div>
               </HoverCard>
             </Reveal>
@@ -227,18 +373,25 @@ export default function Landing({ onSignIn }) {
         </div>
       </section>
 
+
       {/* TRAINING UPDATES */}
       <section style={{ ...container, paddingTop: 40, paddingBottom: 80 }}>
         <Reveal><div style={heading}>Latest News</div></Reveal>
         <Reveal delay={60}><h2 style={sectionTitle}>Training Updates</h2></Reveal>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {UPDATES.map((u, i) => (
+          {content.updates.map((u, i) => (
             <Reveal key={i} delay={i * 90}>
               <HoverCard style={{ padding: 24, display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-                <div style={{ color: ACCENT, fontSize: 13, fontWeight: 700, letterSpacing: 1, minWidth: 120 }}>{u.date}</div>
+                <EditableText tag="div" editing={editing}
+                  style={{ color: ACCENT, fontSize: 13, fontWeight: 700, letterSpacing: 1, minWidth: 120 }}
+                  value={u.date} onChange={(v) => setItem('updates', i, 'date', v)} placeholder="Date" />
                 <div style={{ flex: 1, minWidth: 240 }}>
-                  <div style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>{u.title}</div>
-                  <p style={{ color: 'rgba(255,255,255,0.8)', margin: 0, lineHeight: 1.6, fontSize: 15 }}>{u.body}</p>
+                  <EditableText tag="div" editing={editing}
+                    style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}
+                    value={u.title} onChange={(v) => setItem('updates', i, 'title', v)} placeholder="Update title" />
+                  <EditableText tag="p" multiline editing={editing}
+                    style={{ color: 'rgba(255,255,255,0.8)', margin: 0, lineHeight: 1.6, fontSize: 15 }}
+                    value={u.body} onChange={(v) => setItem('updates', i, 'body', v)} placeholder="Update text" />
                 </div>
               </HoverCard>
             </Reveal>
