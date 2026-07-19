@@ -438,13 +438,6 @@ function Login({ onLogin }) {
 
         {/* Content */}
         <div style={{position:"relative", zIndex:2}}>
-          {/* Kicker */}
-          <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:16}}>
-            <div style={{width:28, height:2, background:"#4da3ff"}} />
-            <span style={{fontSize:11, letterSpacing:"0.3em", textTransform:"uppercase", color:"#4da3ff", fontWeight:700}}>
-              Elite Coaching Platform
-            </span>
-          </div>
 
           {/* Headline */}
           <div style={{
