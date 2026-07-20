@@ -11,7 +11,7 @@ if (typeof document !== "undefined" && !document.getElementById("cbnh-anim-style
     @keyframes cbnhPulse { 0%,100%{opacity:.5;} 50%{opacity:1;} }
     .cbnh-reveal { animation: cbnhFadeUp .6s ease both; }
     .cbnh-lift { transition: transform .28s cubic-bezier(.2,.7,.2,1), box-shadow .28s ease, border-color .28s ease; will-change: transform; }
-    .cbnh-lift:hover { transform: translateY(-4px); box-shadow: 0 14px 40px -12px rgba(77,163,255,.45); border-color: rgba(77,163,255,.55) !important; }
+    .cbnh-lift:hover { transform: translateY(-6px); box-shadow: 0 14px 40px -12px rgba(77,163,255,.45); border-color: rgba(77,163,255,.55) !important; }
     .cbnh-btn { transition: transform .18s ease, box-shadow .22s ease, filter .2s ease; }
     .cbnh-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 26px -8px rgba(77,163,255,.6); filter: brightness(1.05); }
     .cbnh-btn:active { transform: translateY(0) scale(.98); }
@@ -2106,7 +2106,7 @@ const S = {
   loginField:{ marginBottom:14 },
   label:{ fontSize:11, fontWeight:600, color:C.muted, textTransform:"uppercase", letterSpacing:1, display:"block", marginBottom:5 },
   input:{ width:"100%", background:"rgba(22,22,27,0.8)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:10, color:C.text, padding:"11px 14px", fontSize:14, outline:"none", boxSizing:"border-box", transition:"border-color .2s" },
-  btn:{ background:C.accent, color:"#080809", border:"none", borderRadius:10, padding:"11px 22px", fontWeight:800, fontSize:13, cursor:"pointer", fontFamily:"'Manrope',sans-serif", letterSpacing:"0.06em", textTransform:"uppercase", transition:"opacity .15s" },
+  btn:{ background:`linear-gradient(135deg, ${C.accent}, #2e7de0)`, color:"#080809", border:"none", borderRadius:12, padding:"12px 24px", fontWeight:800, fontSize:13, cursor:"pointer", fontFamily:"'Manrope',sans-serif", letterSpacing:"0.06em", textTransform:"uppercase", boxShadow:"0 8px 22px -8px rgba(77,163,255,0.6)", transition:"transform .18s ease, box-shadow .22s ease, filter .2s ease" },
   btnSm:{ background:"#FFFFFF", color:"#000", border:"none", borderRadius:6, padding:"6px 14px", fontWeight:700, fontSize:12, cursor:"pointer" },
   btnGhost:{ background:"transparent", color:C.muted, border:"1px solid rgba(255,255,255,0.1)", borderRadius:999, padding:"7px 18px", fontWeight:600, fontSize:11, cursor:"pointer", textTransform:"uppercase", letterSpacing:"0.08em", transition:"border-color .2s" },
   error:{ color:"#ff6b6b", fontSize:13, marginBottom:8 },
@@ -2123,12 +2123,12 @@ const S = {
   sectionHeader:{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14, marginTop:20 },
   sectionTitle:{ fontWeight:700, fontSize:10, color:C.faint, textTransform:"uppercase", letterSpacing:"0.25em" },
 
-  grid:{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(min(220px,100%),1fr))", gap:12 },
-  card:{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:12, padding:16, cursor:"pointer" },
-  cardAvatar:{ width:40, height:40, background:"#FFFFFF22", border:"1px solid #FFFFFF44", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700, fontSize:14, color:"#FFFFFF", marginBottom:10 },
+  grid:{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(min(240px,100%),1fr))", gap:18 },
+  card:{ background:`linear-gradient(180deg, ${C.surface2}, ${C.surface})`, border:`1px solid ${C.line}`, borderRadius:16, padding:20, cursor:"pointer", boxShadow:"0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 24px -16px rgba(0,0,0,0.7)", position:"relative", overflow:"hidden" },
+  cardAvatar:{ width:44, height:44, background:"linear-gradient(135deg, rgba(77,163,255,0.22), rgba(77,163,255,0.06))", border:"1px solid rgba(77,163,255,0.35)", borderRadius:12, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:800, fontSize:15, color:C.accent, marginBottom:12, boxShadow:"0 4px 14px -6px rgba(77,163,255,0.5)" },
   cardName:{ fontWeight:800, fontSize:15, marginBottom:6, letterSpacing:"-0.02em", lineHeight:1.2 },
   cardMeta:{ fontSize:12, color:C.muted, marginBottom:2 },
-  cardTag:{ fontSize:11, color:"#FFFFFF", marginTop:8, fontWeight:600 },
+  cardTag:{ fontSize:11, color:C.accent, marginTop:10, fontWeight:700, letterSpacing:"0.04em", textTransform:"uppercase" },
 
   statsRow:{ display:"flex", gap:8, marginBottom:4, flexWrap:"wrap" },
   statBox:{ flex:1, background:"rgba(15,15,18,0.8)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:14, padding:"16px 8px", textAlign:"center" },
