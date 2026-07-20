@@ -363,7 +363,6 @@ export default function Landing({ onSignIn }) {
             <div style={{ position: 'absolute', width: 300, height: 300, borderRadius: '50%', border: '1px solid ' + ACCENT_SOFT, transform: 'scale(1.35)' }} />
             <div style={{ position: 'absolute', width: 300, height: 300, borderRadius: '50%', border: '1px solid ' + ACCENT_SOFT, transform: 'scale(1.7)' }} />
             <div style={{ position: 'absolute', width: 120, height: 120, borderRadius: '50%', background: ACCENT_SOFT, top: '12%', right: '8%', filter: 'blur(2px)' }} />
-            <div style={{ position: 'relative', fontSize: 64, fontWeight: 900, letterSpacing: 4, textTransform: 'uppercase', background: 'linear-gradient(120deg,' + ACCENT + ',' + ACCENT_DEEP + ')', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>CBH</div>
           </div>
         </Reveal>
       </header>
