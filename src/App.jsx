@@ -963,7 +963,7 @@ function ClientApp({ client, programs, nutrition, workoutLog, loadNutrition, mea
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",marginBottom:14}}>
           <div>
             <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:26,color:C.text,letterSpacing:"0.05em",lineHeight:1}}>
-              Hey, {client.name.split(" ")[0]} 👋
+              Hey, {(client.name||"there").split(" ")[0]} 👋
             </div>
             <div style={{fontSize:12,color:C.muted,marginTop:2}}>{client.goal}</div>
           </div>
@@ -2052,7 +2052,7 @@ function ClientCard({ client, programs, onClick, onDelete }) {
   return (
     <div className="cbnh-lift" style={S.card} onClick={onClick}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-        <div style={S.cardAvatar}>{client.name.split(" ").map(n=>n[0]).join("")}</div>
+        <div style={S.cardAvatar}>{(client.name||"?").split(" ").map(n=>n[0]).join("")}</div>
         <button style={{background:"transparent",border:"1px solid #ff6b6b",color:"#ff6b6b",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:11,fontWeight:700}}
           onClick={e=>{e.stopPropagation();if(window.confirm("Remove "+client.name+"?"))onDelete(client.id);}}>✕ Remove</button>
       </div>
