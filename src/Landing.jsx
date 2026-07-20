@@ -363,6 +363,7 @@ export default function Landing({ onSignIn }) {
             <div style={{ position: 'absolute', width: 300, height: 300, borderRadius: '50%', border: '1px solid ' + ACCENT_SOFT, transform: 'scale(1.35)' }} />
             <div style={{ position: 'absolute', width: 300, height: 300, borderRadius: '50%', border: '1px solid ' + ACCENT_SOFT, transform: 'scale(1.7)' }} />
             <div style={{ position: 'absolute', width: 120, height: 120, borderRadius: '50%', background: ACCENT_SOFT, top: '12%', right: '8%', filter: 'blur(2px)' }} />
+            <div style={{ position: 'relative', fontSize: 64, fontWeight: 900, letterSpacing: 4, textTransform: 'uppercase', background: 'linear-gradient(120deg,' + ACCENT + ',' + ACCENT_DEEP + ')', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>CBH</div>
           </div>
         </Reveal>
       </header>
@@ -430,7 +431,10 @@ export default function Landing({ onSignIn }) {
       <section style={{ ...container, paddingTop: 40, paddingBottom: 80 }}>
         <Reveal><div style={heading}>Latest News</div></Reveal>
         <Reveal delay={60}><h2 style={sectionTitle}>Training Updates</h2></Reveal>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <Reveal delay={100}>
+          <div style={{ display: 'inline-block', marginBottom: 24, padding: '5px 12px', borderRadius: 999, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: ACCENT, background: ACCENT_SOFT, border: '1px solid ' + ACCENT_SOFT }}>New Tip Daily</div>
+        </Reveal>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 720 }}>
           {(() => {
               const _tip = FAT_LOSS_TIPS[Math.floor(Date.now() / 86400000) % FAT_LOSS_TIPS.length];
               const _today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
