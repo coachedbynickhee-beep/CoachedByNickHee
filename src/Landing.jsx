@@ -337,7 +337,8 @@ export default function Landing({ onSignIn }) {
       </nav>
 
       {/* HERO */}
-      <header style={{ ...container, paddingTop: 60, paddingBottom: 80 }}>
+      <header style={{ ...container, paddingTop: 60, paddingBottom: 80, display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(320px,1fr))', gap: 40, alignItems: 'center' }}>
+        <div>
         <Reveal>
           <EditableText tag="div" style={heading} editing={editing}
             value={content.hero.kicker} onChange={(v) => setHero('kicker', v)} placeholder="Kicker" />
@@ -354,6 +355,16 @@ export default function Landing({ onSignIn }) {
         </Reveal>
         <Reveal delay={240}>
           <AccentButton onClick={onSignIn} big>Sign In to Your Dashboard &rarr;</AccentButton>
+        </Reveal>
+              </div>
+        <Reveal delay={200}>
+          <div aria-hidden="true" style={{ position: 'relative', width: '100%', minHeight: 360, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ position: 'absolute', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle at 35% 35%,' + ACCENT + ',' + ACCENT_DEEP + ')', filter: 'blur(4px)', boxShadow: '0 30px 120px ' + ACCENT_SOFT }} />
+            <div style={{ position: 'absolute', width: 300, height: 300, borderRadius: '50%', border: '1px solid ' + ACCENT_SOFT, transform: 'scale(1.35)' }} />
+            <div style={{ position: 'absolute', width: 300, height: 300, borderRadius: '50%', border: '1px solid ' + ACCENT_SOFT, transform: 'scale(1.7)' }} />
+            <div style={{ position: 'absolute', width: 120, height: 120, borderRadius: '50%', background: ACCENT_SOFT, top: '12%', right: '8%', filter: 'blur(2px)' }} />
+            <div style={{ position: 'relative', fontSize: 64, fontWeight: 900, letterSpacing: 4, textTransform: 'uppercase', background: 'linear-gradient(120deg,' + ACCENT + ',' + ACCENT_DEEP + ')', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>CBH</div>
+          </div>
         </Reveal>
       </header>
 
