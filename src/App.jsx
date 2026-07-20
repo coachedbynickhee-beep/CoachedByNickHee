@@ -18,6 +18,11 @@ if (typeof document !== "undefined" && !document.getElementById("cbnh-anim-style
     .cbnh-tab { transition: color .2s ease, background .2s ease, transform .15s ease; }
     .cbnh-tab:hover { transform: translateY(-1px); }
     .cbnh-glow { position: fixed; border-radius: 50%; filter: blur(70px); pointer-events: none; z-index: 0; }
+    input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+    * { box-sizing: border-box; }
+    .cbnh-setrow { display: flex; align-items: center; gap: 6px; width: 100%; }
+    .cbnh-setrow > input { min-width: 0; }
   `;
   document.head.appendChild(st);
 }
@@ -1399,9 +1404,9 @@ function DayView({ day, clientId, workoutLog, onBack }) {
                   <div key={si} style={{...S.setLogRow,background:s.done?"#FFFFFF10":"transparent"}}>
                     <span style={{...S.setNum,color:s.done?"#FFFFFF":C.muted}}>{si+1}</span>
                     <input style={{...S.setInput,borderColor:s.done?"#FFFFFF50":C.line2}} placeholder="—"
-                      value={s.weight} type="number" onChange={e=>updateSet(ex.id,si,"weight",e.target.value)} />
+                      value={s.weight} type="number" inputMode="decimal" onChange={e=>updateSet(ex.id,si,"weight",e.target.value)} />
                     <input style={{...S.setInput,borderColor:s.done?"#FFFFFF50":C.line2}} placeholder="—"
-                      value={s.reps} type="number" onChange={e=>updateSet(ex.id,si,"reps",e.target.value)} />
+                      value={s.reps} type="number" inputMode="numeric" onChange={e=>updateSet(ex.id,si,"reps",e.target.value)} />
                     <button className="cbnh-btn" style={{...S.checkBtn,width:32,height:32,fontSize:13,
                       background:s.done?"#FFFFFF":"transparent",color:s.done?"#000":"#FFFFFF"}}
                       onClick={()=>toggleSet(ex.id,si)}>{s.done?"✓":"○"}</button>
@@ -2168,10 +2173,10 @@ const S = {
   checkBtn:{ border:"1px solid #FFFFFF", borderRadius:8, width:36, height:36, cursor:"pointer", fontWeight:700, fontSize:16, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" },
 
   setLogWrap:{ borderTop:"1px solid rgba(255,255,255,.07)", paddingTop:10, marginTop:4 },
-  setLogHeader:{ display:"flex", alignItems:"center", gap:8, marginBottom:6, fontSize:10, fontWeight:700, color:"#65656e", textTransform:"uppercase", letterSpacing:0.8, padding:"0 2px" },
-  setLogRow:{ display:"flex", alignItems:"center", gap:8, marginBottom:6, borderRadius:6, padding:"4px 2px", transition:"background .2s" },
+  setLogHeader:{ display:"flex", alignItems:"center", gap:6, marginBottom:6, fontSize:10, fontWeight:700, color:"#65656e", textTransform:"uppercase", letterSpacing:0.8, padding:"0 2px" },
+  setLogRow:{ display:"flex", alignItems:"center", gap:6, marginBottom:6, borderRadius:6, padding:"4px 2px", transition:"background .2s", width:"100%", boxSizing:"border-box" },
   setNum:{ flex:"0 0 36px", fontSize:12, fontWeight:700, textAlign:"center" },
-  setInput:{ flex:1, background:"rgba(22,22,27,0.8)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:10, color:C.text, padding:"9px 8px", fontSize:14, textAlign:"center", outline:"none", minWidth:0, transition:"border-color .2s", fontFamily:"'Manrope',sans-serif", fontWeight:700 },
+  setInput:{ flex:1, background:"rgba(22,22,27,0.8)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:10, color:C.text, padding:"9px 8px", fontSize:14, textAlign:"center", outline:"none", minWidth:0, maxWidth:"100%", boxSizing:"border-box", WebkitAppearance:"none", MozAppearance:"textfield", appearance:"none", transition:"border-color .2s", fontFamily:"'Manrope',sans-serif", fontWeight:700 },
 
   progressBar:{ height:3, background:"rgba(255,255,255,0.06)", borderRadius:2, marginBottom:20, overflow:"hidden" },
   progressFill:{ height:"100%", background:"#FFFFFF", borderRadius:2, transition:"width .4s" },
