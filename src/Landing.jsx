@@ -1,6 +1,25 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { sb } from './App.jsx';
 
+// Daily-rotating fat-loss training tips (one shown per day, changes at midnight)
+const FAT_LOSS_TIPS = [
+  [{ title: 'Build Your Deficit Around Protein', body: 'Anchor a fat-loss phase with a moderate calorie deficit of roughly 300-500 kcal/day and protein at 1.6-2.2g per kg of bodyweight. High protein preserves lean muscle in a deficit and keeps you fuller, so you drop fat while holding onto the size and strength you\'ve built.' },
+  { title: 'Keep Lifting Heavy While Cutting', body: 'Don\'t drop your working weights just because you\'re eating less. Maintaining intensity and load on your key compound lifts tells the body to protect muscle. Aim to at least maintain strength on squats, presses and pulls throughout the cut.' },
+  { title: 'Let Steps Do the Heavy Lifting', body: 'Daily step targets of 8,000-12,000 burn meaningful calories without the recovery cost of endless cardio. Walking is low-fatigue, easy to sustain, and scales your energy expenditure day after day - a far better long-term fat-loss lever than grinding hours on the treadmill.' },
+  { title: 'Protect Your Sleep', body: 'Aim for 7-9 hours of quality sleep. Poor sleep raises hunger hormones, worsens recovery, and makes it harder to hold muscle in a deficit. Consistent sleep is one of the most underrated fat-loss tools you have.' },
+  { title: 'Prioritise Progressive Overload', body: 'Fat loss is the goal, but progress in the gym is what keeps muscle on your frame. Keep chasing small wins - an extra rep, a little more load, cleaner technique - so your body has a reason to stay muscular while the fat comes off.' },
+  { title: 'Use Refeeds and Diet Breaks', body: 'Long, aggressive deficits blunt performance, mood and hunger control. Schedule periodic higher-carb refeed days or short maintenance diet breaks. These restore training quality and adherence, making the overall cut more sustainable and effective.' },
+  { title: 'Front-Load Your Protein', body: 'Spread protein across the day with 3-5 servings of roughly 0.4g per kg each. Even distribution supports muscle protein synthesis and appetite control far better than cramming most of your protein into one meal.' },
+  { title: 'Manage Fatigue, Not Just Calories', body: 'Recovery matters more in a deficit. Watch for lingering soreness, poor sleep and stalled lifts - these signal you need to manage volume and rest, not just cut more food. Train hard, but recover harder.' },
+  { title: 'Add Cardio Strategically', body: 'Use cardio as a tool, not a punishment. Start with the minimum needed to keep fat loss moving and add more only when progress stalls. This preserves your ability to ramp it up later instead of maxing out early.' },
+  { title: 'Track Progress Beyond the Scale', body: 'Bodyweight fluctuates daily with water, food and sleep. Use weekly averages, progress photos, waist measurements and gym performance together. A truer picture keeps you from over-reacting to normal scale noise.' },
+  { title: 'Aim for 0.5-1% Bodyweight Per Week', body: 'A sustainable fat-loss rate of about 0.5-1% of bodyweight per week protects muscle and performance. Faster isn\'t better - slower, controlled loss keeps more of your hard-earned size while the fat comes off.' },
+  { title: 'Fill Up on Volume Foods', body: 'Lean proteins, vegetables and high-fibre carbs deliver a lot of food for fewer calories. Building meals around these keeps you satisfied in a deficit without blowing your intake - satiety is the secret weapon of an easy cut.' },
+  { title: 'Time Carbs Around Training', body: 'Place a larger share of your daily carbs before and after your workouts. This fuels hard training and supports recovery when it matters most, helping you keep intensity high even as overall calories come down.' },
+  { title: 'Stay Consistent Over Perfect', body: 'The best fat-loss plan is the one you can repeat. A slightly imperfect approach you follow every week beats a flawless plan you abandon. Consistency across weeks and months is what actually reveals the physique underneath.' }]
+];
+
+
 // ──────────────────────────────────────────────────────────────
 // LANDING PAGE — CoachedByNickHee
 // Content is editable in-page when signed in as the coach.
@@ -402,23 +421,21 @@ export default function Landing({ onSignIn }) {
         <Reveal><div style={heading}>Latest News</div></Reveal>
         <Reveal delay={60}><h2 style={sectionTitle}>Training Updates</h2></Reveal>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {content.updates.map((u, i) => (
-            <Reveal key={i} delay={i * 90}>
-              <HoverCard style={{ padding: 24, display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-                <EditableText tag="div" editing={editing}
-                  style={{ color: ACCENT, fontSize: 13, fontWeight: 700, letterSpacing: 1, minWidth: 120 }}
-                  value={u.date} onChange={(v) => setItem('updates', i, 'date', v)} placeholder="Date" />
-                <div style={{ flex: 1, minWidth: 240 }}>
-                  <EditableText tag="div" editing={editing}
-                    style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}
-                    value={u.title} onChange={(v) => setItem('updates', i, 'title', v)} placeholder="Update title" />
-                  <EditableText tag="p" multiline editing={editing}
-                    style={{ color: 'rgba(255,255,255,0.8)', margin: 0, lineHeight: 1.6, fontSize: 15 }}
-                    value={u.body} onChange={(v) => setItem('updates', i, 'body', v)} placeholder="Update text" />
-                </div>
-              </HoverCard>
-            </Reveal>
-          ))}
+          {(() => {
+              const _tip = FAT_LOSS_TIPS[Math.floor(Date.now() / 86400000) % FAT_LOSS_TIPS.length];
+              const _today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+              return (
+                <Reveal>
+                  <HoverCard style={{ padding: 24, display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+                    <div style={{ color: ACCENT, fontSize: 13, fontWeight: 700, letterSpacing: 1, minWidth: 120 }}>{_today}</div>
+                    <div style={{ flex: 1, minWidth: 240 }}>
+                      <div style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>{_tip.title}</div>
+                      <p style={{ color: 'rgba(255,255,255,0.8)', margin: 0, lineHeight: 1.6 }}>{_tip.body}</p>
+                    </div>
+                  </HoverCard>
+                </Reveal>
+              );
+            })()}
         </div>
       </section>
 
