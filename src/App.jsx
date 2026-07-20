@@ -1185,7 +1185,7 @@ function NutritionPlanCard({ plan, showTitle }) {
         <SectionHeader title="Meal Breakdown" />
         {ms.map(m=>(
           <div key={m.id} style={S.mealViewCard}>
-            <div style={S.mealName}>{m.name}</div>
+            <div style={S.mealName}>{m?.name}</div>
             <div style={S.mealDesc}>{m.description}</div>
             <div style={S.mealMacros}>
               <span style={{color:"#FFFFFF"}}>P {m.protein}g</span>
@@ -1248,7 +1248,7 @@ function ClientHistoryView({ clientId, programs, workoutLog }) {
             {day.exercises.filter(ex=>pbs[ex.id]).map(ex=>(
               <div key={ex.id} style={S.pbChip}>
                 <div style={S.pbVal}>{pbs[ex.id]}kg</div>
-                <div style={S.pbName}>{ex.name}</div>
+                <div style={S.pbName}>{ex?.name}</div>
                 <div style={S.pbLabel}>🏆 PB</div>
               </div>
             ))}
@@ -1266,7 +1266,7 @@ function ClientHistoryView({ clientId, programs, workoutLog }) {
               return (
                 <div key={ex.id} style={S.historyEx}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                    <div style={S.historyExName}>{ex.name}</div>
+                    <div style={S.historyExName}>{ex?.name}</div>
                     {pbs[ex.id]===best && best>0 && <span style={{fontSize:10,color:"#FFFFFF",fontWeight:700}}>🏆 PB</span>}
                   </div>
                   <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:4}}>
@@ -1294,7 +1294,7 @@ function ProgramView({ program, clientId, workoutLog, onBack, onSelectDay }) {
   }, [program.id]);
   return (
     <div style={{...S.app, position:"relative"}}><AmbientGlows />
-      <Topbar title={program.name} subtitle={program.tag} onLogout={null}
+      <Topbar title={program?.name} subtitle={program.tag} onLogout={null}
         left={<button style={S.backBtn} onClick={onBack}>← Back</button>} />
       <div style={S.content}>
         <SectionHeader title="Training Days" />
@@ -1383,7 +1383,7 @@ function DayView({ day, clientId, workoutLog, onBack }) {
                 <span style={S.wcNum}>{i+1}</span>
                 <div style={{flex:1}}>
                   <div style={{display:"flex",alignItems:"center",gap:8}}>
-                    <div style={{...S.wcName,textDecoration:allDone?"line-through":"none"}}>{ex.name}</div>
+                    <div style={{...S.wcName,textDecoration:allDone?"line-through":"none"}}>{ex?.name}</div>
                     {isNewPB && <span style={S.pbBadge}>🏆 New PB!</span>}
                     {!isNewPB && pb && <span style={S.prevPB}>PB {pb}kg</span>}
                   </div>
@@ -1436,7 +1436,7 @@ function NewClientModal({ onClose, onSave }) {
   const f=(k,v)=>setForm(p=>({...p,[k]:v}));
   return (
     <Modal title="New Client" onClose={onClose} onSave={()=>onSave({...form,age:+form.age,weight:+form.weight,height:+form.height})}>
-      <Field label="Name"><input style={S.input} value={form.name} onChange={e=>f("name",e.target.value)} /></Field>
+      <Field label="Name"><input style={S.input} value={form?.name} onChange={e=>f("name",e.target.value)} /></Field>
       <Field label="Email"><input style={S.input} value={form.email} onChange={e=>f("email",e.target.value)} type="email" /></Field>
       <Field label="Password"><input style={S.input} value={form.password} onChange={e=>f("password",e.target.value)} /></Field>
       <div style={{display:"flex",gap:8}}>
@@ -1454,7 +1454,7 @@ function NewProgramModal({ onClose, onSave }) {
   const f=(k,v)=>setForm(p=>({...p,[k]:v}));
   return (
     <Modal title="New Program" onClose={onClose} onSave={()=>onSave(form)}>
-      <Field label="Program Name"><input style={S.input} value={form.name} onChange={e=>f("name",e.target.value)} /></Field>
+      <Field label="Program Name"><input style={S.input} value={form?.name} onChange={e=>f("name",e.target.value)} /></Field>
       <Field label="Tag (e.g. Beginner · 3 days/week)"><input style={S.input} value={form.tag} onChange={e=>f("tag",e.target.value)} /></Field>
       <Field label="Accent Color">
         <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:4}}>
@@ -1500,7 +1500,7 @@ function NutritionManager({ plans, onSave, onDelete, onMount }) {
     <div>
       <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16,alignItems:"center"}}>
         {list.map(p=>(
-          <button key={p.id} className="cbnh-tab" style={{...S.tabBtn, ...((!adding && current && current.id===p.id)?S.tabBtnActive:{})}} onClick={()=>{ setAdding(false); setSelId(p.id); }}>{p.name || "Plan"}</button>
+          <button key={p.id} className="cbnh-tab" style={{...S.tabBtn, ...((!adding && current && current.id===p.id)?S.tabBtnActive:{})}} onClick={()=>{ setAdding(false); setSelId(p.id); }}>{p?.name || "Plan"}</button>
         ))}
         <button className="cbnh-btn" style={{...S.btnSm}} onClick={()=>{ setAdding(true); setSelId(null); }}>+ Add plan</button>
       </div>
@@ -1537,7 +1537,7 @@ function NutritionAssigner({ nutrition, onSave, onMount, onDelete, showName }) {
           <div style={{display:"flex",gap:8,alignItems:"flex-end",marginBottom:14}}>
             <div style={{flex:1}}>
               <div style={S.macroLabel}>Plan name</div>
-              <input style={{...S.input,fontSize:16,fontWeight:700}} value={form.name||""} onChange={e=>f("name",e.target.value)} placeholder="e.g. Training Day / Rest Day" />
+              <input style={{...S.input,fontSize:16,fontWeight:700}} value={form?.name||""} onChange={e=>f("name",e.target.value)} placeholder="e.g. Training Day / Rest Day" />
             </div>
             {onDelete && (<button className="cbnh-btn" style={{...S.btnGhost,color:"#FF6B6B",borderColor:"rgba(255,107,107,.4)"}} onClick={onDelete}>Delete</button>)}
           </div>
@@ -1568,7 +1568,7 @@ function NutritionAssigner({ nutrition, onSave, onMount, onDelete, showName }) {
       {form.meals.map(m=>(
         <div key={m.id} style={S.mealEditorCard}>
           <div style={{display:"flex",gap:8,marginBottom:8}}>
-            <input style={{...S.input,flex:2,fontWeight:700}} value={m.name} onChange={e=>updateMeal(m.id,"name",e.target.value)} placeholder="e.g. Breakfast" />
+            <input style={{...S.input,flex:2,fontWeight:700}} value={m?.name} onChange={e=>updateMeal(m.id,"name",e.target.value)} placeholder="e.g. Breakfast" />
             <button style={{...S.iconBtn,color:"#ff6b6b"}} onClick={()=>deleteMeal(m.id)}>✕</button>
           </div>
           <textarea style={{...S.input,minHeight:56,resize:"vertical",marginBottom:8}} value={m.description}
@@ -2054,9 +2054,9 @@ function ClientCard({ client, programs, onClick, onDelete }) {
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
         <div style={S.cardAvatar}>{(client.name||"?").split(" ").map(n=>n[0]).join("")}</div>
         <button style={{background:"transparent",border:"1px solid #ff6b6b",color:"#ff6b6b",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:11,fontWeight:700}}
-          onClick={e=>{e.stopPropagation();if(window.confirm("Remove "+client.name+"?"))onDelete(client.id);}}>✕ Remove</button>
+          onClick={e=>{e.stopPropagation();if(window.confirm("Remove "+client?.name+"?"))onDelete(client.id);}}>✕ Remove</button>
       </div>
-      <div style={S.cardName}>{client.name}</div>
+      <div style={S.cardName}>{client?.name}</div>
       <div style={S.cardMeta}>{client.goal}</div>
       <div style={S.cardMeta}>{client.age}y · {client.weight}kg · {client.height}cm</div>
       <div style={S.cardTag}>{count} program{count!==1?"s":""} assigned</div>
@@ -2070,9 +2070,9 @@ function ProgramCard({ program, clients, onClick, onDelete }) {
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
         <div style={{...S.programDot,background:program.color,width:36,height:36}} />
         {onDelete && <button style={{background:"transparent",border:"1px solid #ff6b6b",color:"#ff6b6b",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:11,fontWeight:700}}
-          onClick={e=>{e.stopPropagation();if(window.confirm("Delete "+program.name+"?"))onDelete(program.id);}}>✕ Delete</button>}
+          onClick={e=>{e.stopPropagation();if(window.confirm("Delete "+program?.name+"?"))onDelete(program.id);}}>✕ Delete</button>}
       </div>
-      <div style={S.cardName}>{program.name}</div>
+      <div style={S.cardName}>{program?.name}</div>
       <div style={S.cardMeta}>{program.tag}</div>
       <div style={S.cardMeta}>{program.days.length} days · {program.days.reduce((s,d)=>s+d.exercises.length,0)} exercises</div>
       <div style={S.cardTag}>{count} client{count!==1?"s":""}</div>
