@@ -1407,7 +1407,7 @@ function DayView({ day, clientId, workoutLog, onBack }) {
                       value={s.weight} type="number" inputMode="decimal" onChange={e=>updateSet(ex.id,si,"weight",e.target.value)} />
                     <input style={{...S.setInput,borderColor:s.done?"#FFFFFF50":C.line2}} placeholder="—"
                       value={s.reps} type="number" inputMode="numeric" onChange={e=>updateSet(ex.id,si,"reps",e.target.value)} />
-                    <button className="cbnh-btn" style={{...S.checkBtn,width:32,height:32,fontSize:13,
+                    <button className="cbnh-btn" style={{...S.checkBtn,width:40,height:40,fontSize:13,
                       background:s.done?"#FFFFFF":"transparent",color:s.done?"#000":"#FFFFFF"}}
                       onClick={()=>toggleSet(ex.id,si)}>{s.done?"✓":"○"}</button>
                   </div>
@@ -2170,13 +2170,13 @@ const S = {
   wcName:{ fontWeight:800, fontSize:15, marginBottom:3, letterSpacing:"-0.01em" },
   wcMeta:{ fontSize:12, color:C.muted },
   wcNotes:{ fontSize:11, color:C.faint, marginTop:4, fontStyle:"italic" },
-  checkBtn:{ border:"1px solid #FFFFFF", borderRadius:8, width:36, height:36, cursor:"pointer", fontWeight:700, fontSize:16, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" },
+  checkBtn:{ border:"1px solid #FFFFFF", borderRadius:8, width:40, height:40, cursor:"pointer", fontWeight:700, fontSize:16, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" },
 
   setLogWrap:{ borderTop:"1px solid rgba(255,255,255,.07)", paddingTop:10, marginTop:4 },
   setLogHeader:{ display:"flex", alignItems:"center", gap:6, marginBottom:6, fontSize:10, fontWeight:700, color:"#65656e", textTransform:"uppercase", letterSpacing:0.8, padding:"0 2px" },
   setLogRow:{ display:"flex", alignItems:"center", gap:6, marginBottom:6, borderRadius:6, padding:"4px 2px", transition:"background .2s", width:"100%", boxSizing:"border-box" },
   setNum:{ flex:"0 0 36px", fontSize:12, fontWeight:700, textAlign:"center" },
-  setInput:{ flex:1, background:"rgba(22,22,27,0.8)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:10, color:C.text, padding:"9px 8px", fontSize:14, textAlign:"center", outline:"none", minWidth:0, maxWidth:"100%", boxSizing:"border-box", WebkitAppearance:"none", MozAppearance:"textfield", appearance:"none", transition:"border-color .2s", fontFamily:"'Manrope',sans-serif", fontWeight:700 },
+  setInput:{ flex:1, background:"rgba(22,22,27,0.8)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:10, color:C.text, padding:"9px 8px", fontSize:16, textAlign:"center", outline:"none", minWidth:0, maxWidth:"100%", boxSizing:"border-box", WebkitAppearance:"none", MozAppearance:"textfield", appearance:"none", transition:"border-color .2s", fontFamily:"'Manrope',sans-serif", fontWeight:700 },
 
   progressBar:{ height:3, background:"rgba(255,255,255,0.06)", borderRadius:2, marginBottom:20, overflow:"hidden" },
   progressFill:{ height:"100%", background:"#FFFFFF", borderRadius:2, transition:"width .4s" },
