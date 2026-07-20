@@ -697,7 +697,7 @@ function ClientDetail({ client, programs, clients, updateClient, updateProgram, 
             <div style={S.grid}>{unassigned.map(p=>(
               <div key={p.id} style={S.assignCard}>
                 <div style={{...S.programDot,background:p.color}} />
-                <div style={S.assignName}>{p.name}</div>
+                <div style={S.assignName}>{p?.name}</div>
                 <button className="cbnh-btn" style={S.btnSm} onClick={()=>doAssignProgram(p.id)}>Assign →</button>
               </div>
             ))}</div>
@@ -753,7 +753,7 @@ function CoachLogHistory({ clientId, programs, workoutLog, pbs }) {
     <div>
       <SectionHeader title="Workout Log History" />
       <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>
-        {programs.map(p=><button key={p.id} style={{...S.tabBtn,...(selProg===p.id?S.tabBtnActive:{})}} onClick={()=>setSelProg(p.id)}>{p.name}</button>)}
+        {programs.map(p=><button key={p.id} style={{...S.tabBtn,...(selProg===p.id?S.tabBtnActive:{})}} onClick={()=>setSelProg(p.id)}>{p?.name}</button>)}
       </div>
       {prog && <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>
         {prog.days.map((d,i)=>(
@@ -984,7 +984,7 @@ function ClientApp({ client, programs, nutrition, workoutLog, loadNutrition, mea
           <div style={S.grid}>{assigned.map(p=>(
             <div key={p.id} style={S.progCard} onClick={()=>setActiveProg(p.id)}>
               <div style={{...S.progAccent,background:p.color}} />
-              <div style={S.progName}>{p.name}</div>
+              <div style={S.progName}>{p?.name}</div>
               <div style={S.progTag}>{p.tag}</div>
               <div style={S.progDays}>{p.days.length} days · {p.days.reduce((s,d)=>s+d.exercises.length,0)} exercises</div>
               <div style={{...S.btnSm,marginTop:12,display:"inline-block"}}>Open →</div>
@@ -1010,9 +1010,9 @@ function ClientDashboard({ client, assigned, nutrition, measurements, workoutLog
 
   const recentSessions = [];
   assigned.forEach(prog => {
-    prog.days.forEach(day => {
+    (prog?.days||[]).forEach(day => {
       const hist = workoutLog.getHistory(client.id, day.id);
-      if (hist.length > 0) recentSessions.push({date:hist[hist.length-1].date,dayLabel:day.label,progName:prog.name,color:prog.color});
+      if (hist.length > 0) recentSessions.push({date:hist[hist.length-1].date,dayLabel:day.label,progName:prog?.name,color:prog?.color});
     });
   });
   recentSessions.sort((a,b)=>new Date(b.date)-new Date(a.date));
@@ -1069,7 +1069,7 @@ function ClientDashboard({ client, assigned, nutrition, measurements, workoutLog
           <div style={S.grid}>{assigned.slice(0,2).map(p=>(
             <div key={p.id} style={S.progCard} onClick={onGoPrograms}>
               <div style={{...S.progAccent,background:p.color}} />
-              <div style={S.progName}>{p.name}</div>
+              <div style={S.progName}>{p?.name}</div>
               <div style={S.progTag}>{p.tag}</div>
               <div style={S.progDays}>{p.days.length} days · {p.days.reduce((s,d)=>s+d.exercises.length,0)} exercises</div>
             </div>
@@ -1232,7 +1232,7 @@ function ClientHistoryView({ clientId, programs, workoutLog }) {
     <div>
       <SectionHeader title="Your Workout History" />
       {programs.length>1 && <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
-        {programs.map(p=><button key={p.id} style={{...S.tabBtn,...(selProg===p.id?S.tabBtnActive:{})}} onClick={()=>setSelProg(p.id)}>{p.name}</button>)}
+        {programs.map(p=><button key={p.id} style={{...S.tabBtn,...(selProg===p.id?S.tabBtnActive:{})}} onClick={()=>setSelProg(p.id)}>{p?.name}</button>)}
       </div>}
       {prog && <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>
         {prog.days.map((d,i)=>(
