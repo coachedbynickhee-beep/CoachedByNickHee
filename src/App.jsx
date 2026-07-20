@@ -930,7 +930,7 @@ function ExRow({ ex, index, color, onChange, onDelete }) {
 }
 
 // ── CLIENT APP ────────────────────────────────────────────────────────────────
-function ClientApp({ client, programs, nutrition, workoutLog, loadNutrition, measurements, loadMeasurements, checkins, saveCheckin, loadCheckins, habits, saveHabitLog, habitLogs, loadHabitLogs, onLogout }) {
+function ClientApp({ client = {}, programs, nutrition, workoutLog, loadNutrition, measurements, loadMeasurements, checkins, saveCheckin, loadCheckins, habits, saveHabitLog, habitLogs, loadHabitLogs, onLogout }) {
   const [tab, setTab] = useState("dashboard");
   const [activeProg, setActiveProg] = useState(null);
   const [activeDay, setActiveDay] = useState(null);
