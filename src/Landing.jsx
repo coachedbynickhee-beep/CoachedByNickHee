@@ -3,7 +3,7 @@ import { sb } from './App.jsx';
 
 // Daily-rotating fat-loss training tips (one shown per day, changes at midnight)
 const FAT_LOSS_TIPS = [
-  [{ title: 'Build Your Deficit Around Protein', body: 'Anchor a fat-loss phase with a moderate calorie deficit of roughly 300-500 kcal/day and protein at 1.6-2.2g per kg of bodyweight. High protein preserves lean muscle in a deficit and keeps you fuller, so you drop fat while holding onto the size and strength you\'ve built.' },
+  { title: 'Build Your Deficit Around Protein', body: 'Anchor a fat-loss phase with a moderate calorie deficit of roughly 300-500 kcal/day and protein at 1.6-2.2g per kg of bodyweight. High protein preserves lean muscle in a deficit and keeps you fuller, so you drop fat while holding onto the size and strength you\'ve built.' },
   { title: 'Keep Lifting Heavy While Cutting', body: 'Don\'t drop your working weights just because you\'re eating less. Maintaining intensity and load on your key compound lifts tells the body to protect muscle. Aim to at least maintain strength on squats, presses and pulls throughout the cut.' },
   { title: 'Let Steps Do the Heavy Lifting', body: 'Daily step targets of 8,000-12,000 burn meaningful calories without the recovery cost of endless cardio. Walking is low-fatigue, easy to sustain, and scales your energy expenditure day after day - a far better long-term fat-loss lever than grinding hours on the treadmill.' },
   { title: 'Protect Your Sleep', body: 'Aim for 7-9 hours of quality sleep. Poor sleep raises hunger hormones, worsens recovery, and makes it harder to hold muscle in a deficit. Consistent sleep is one of the most underrated fat-loss tools you have.' },
@@ -16,7 +16,7 @@ const FAT_LOSS_TIPS = [
   { title: 'Aim for 0.5-1% Bodyweight Per Week', body: 'A sustainable fat-loss rate of about 0.5-1% of bodyweight per week protects muscle and performance. Faster isn\'t better - slower, controlled loss keeps more of your hard-earned size while the fat comes off.' },
   { title: 'Fill Up on Volume Foods', body: 'Lean proteins, vegetables and high-fibre carbs deliver a lot of food for fewer calories. Building meals around these keeps you satisfied in a deficit without blowing your intake - satiety is the secret weapon of an easy cut.' },
   { title: 'Time Carbs Around Training', body: 'Place a larger share of your daily carbs before and after your workouts. This fuels hard training and supports recovery when it matters most, helping you keep intensity high even as overall calories come down.' },
-  { title: 'Stay Consistent Over Perfect', body: 'The best fat-loss plan is the one you can repeat. A slightly imperfect approach you follow every week beats a flawless plan you abandon. Consistency across weeks and months is what actually reveals the physique underneath.' }]
+  { title: 'Stay Consistent Over Perfect', body: 'The best fat-loss plan is the one you can repeat. A slightly imperfect approach you follow every week beats a flawless plan you abandon. Consistency across weeks and months is what actually reveals the physique underneath.' }
 ];
 
 
