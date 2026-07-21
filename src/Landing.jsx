@@ -417,6 +417,42 @@ export default function Landing({ onSignIn }) {
         </div>
       </section>
 
+      {/* HOW IT WORKS */}
+      <section style={{ ...container, paddingTop: 40, paddingBottom: 60 }}>
+        <Reveal><div style={heading}>The Process</div></Reveal>
+        <Reveal delay={60}><h2 style={sectionTitle}>How It Works</h2></Reveal>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 28, marginTop: 12 }}>
+            <Reveal key={0} delay={0}>
+              <div style={{ position: 'relative', paddingTop: 4 }}>
+                <div style={{ fontSize: 56, fontWeight: 800, lineHeight: 1, color: ACCENT, opacity: 0.95, marginBottom: 10 }}>01</div>
+                <div style={{ fontSize: 19, fontWeight: 800, marginBottom: 6 }}>Apply</div>
+                <div style={{ fontSize: 14.5, lineHeight: 1.6, color: MUTED }}>Tell me your goals, your training history and what you want to become.</div>
+              </div>
+            </Reveal>
+            <Reveal key={1} delay={80}>
+              <div style={{ position: 'relative', paddingTop: 4 }}>
+                <div style={{ fontSize: 56, fontWeight: 800, lineHeight: 1, color: ACCENT, opacity: 0.95, marginBottom: 10 }}>02</div>
+                <div style={{ fontSize: 19, fontWeight: 800, marginBottom: 6 }}>Assess</div>
+                <div style={{ fontSize: 14.5, lineHeight: 1.6, color: MUTED }}>We build a plan around your exact starting point — never a template.</div>
+              </div>
+            </Reveal>
+            <Reveal key={2} delay={160}>
+              <div style={{ position: 'relative', paddingTop: 4 }}>
+                <div style={{ fontSize: 56, fontWeight: 800, lineHeight: 1, color: ACCENT, opacity: 0.95, marginBottom: 10 }}>03</div>
+                <div style={{ fontSize: 19, fontWeight: 800, marginBottom: 6 }}>Execute</div>
+                <div style={{ fontSize: 14.5, lineHeight: 1.6, color: MUTED }}>Train, log every session and check in. Your plan evolves as you do.</div>
+              </div>
+            </Reveal>
+            <Reveal key={3} delay={240}>
+              <div style={{ position: 'relative', paddingTop: 4 }}>
+                <div style={{ fontSize: 56, fontWeight: 800, lineHeight: 1, color: ACCENT, opacity: 0.95, marginBottom: 10 }}>04</div>
+                <div style={{ fontSize: 19, fontWeight: 800, marginBottom: 6 }}>Transform</div>
+                <div style={{ fontSize: 14.5, lineHeight: 1.6, color: MUTED }}>Consistent, measurable progress toward a stronger, more capable you.</div>
+              </div>
+            </Reveal>
+        </div>
+      </section>
+
       {/* TESTIMONIALS */}
       <section style={{ ...container, paddingTop: 40, paddingBottom: 60 }}>
         <Reveal><div style={heading}>What Clients Say</div></Reveal>
