@@ -2098,9 +2098,28 @@ function ProgramCard({ program, clients, onClick, onDelete }) {
   );
 }
 function Stat({ label, value }) {
+  const str = String(value);
+  const m = str.match(/^(-?\d+(?:\.\d+)?)(.*)$/);
+  const target = m ? parseFloat(m[1]) : null;
+  const suffix = m ? m[2] : "";
+  const decimals = m && m[1].includes(".") ? (m[1].split(".")[1]||"").length : 0;
+  const [disp, setDisp] = useState(target===null ? str : (m[1].includes(".")?"0."+"0".repeat(decimals):"0")+suffix);
+  useEffect(() => {
+    if (target === null) { setDisp(str); return; }
+    let raf; const dur = 900; const start = performance.now();
+    const tick = (now) => {
+      const p = Math.min(1, (now - start) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const cur = target * eased;
+      setDisp((decimals ? cur.toFixed(decimals) : Math.round(cur).toString()) + suffix);
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [str]);
   return (
     <div className="cbnh-lift" style={S.statBox}>
-      <div style={S.statVal}>{value}</div>
+      <div style={S.statVal}>{disp}</div>
       <div style={S.statLabel}>{label}</div>
     </div>
   );
