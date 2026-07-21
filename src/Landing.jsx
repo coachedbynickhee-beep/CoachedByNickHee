@@ -272,6 +272,10 @@ export default function Landing({ onSignIn }) {
     return { ...c, [section]: arr };
   });
 
+  const addItem = (section, template) => setContent((c) => ({ ...c, [section]: [ ...(c[section]||[]), template ] }));
+
+  const removeItem = (section, idx) => setContent((c) => ({ ...c, [section]: (c[section]||[]).filter((_, i) => i !== idx) }));
+
   const handleSave = useCallback(async () => {
     setSaving(true); setStatus('');
     try {
@@ -467,6 +471,11 @@ export default function Landing({ onSignIn }) {
           {content.testimonials.map((t, i) => (
             <Reveal key={i} delay={i * 90}>
               <HoverCard style={{ padding: 24 }}>
+                {editing && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}>
+                    <button type="button" style={{ background: 'transparent', color: MUTED, border: '1px solid ' + BORDER, borderRadius: 6, padding: '2px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 700 }} onClick={() => removeItem('testimonials', i)}>Remove</button>
+                  </div>
+                )}
                 <div style={{ width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', marginBottom: 16 }}>
                   <Photo src={t.img} label="PHOTO" editing={editing} onChange={(v) => setItem('testimonials', i, 'img', v)} style={{ minHeight: 64 }} />
                 </div>
@@ -483,6 +492,11 @@ export default function Landing({ onSignIn }) {
             </Reveal>
           ))}
         </div>
+          {editing && (
+            <div style={{ marginTop: 28, display: 'flex', justifyContent: 'center' }}>
+              <button type="button" style={{ background: 'transparent', color: ACCENT, border: '1px dashed ' + ACCENT, padding: '12px 28px', borderRadius: 8, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', fontSize: 13, cursor: 'pointer' }} onClick={() => addItem('testimonials', { name: '', role: '', quote: '', img: '' })}>+ Add Testimonial</button>
+            </div>
+          )}
       </section>
 
       {/* TRANSFORMATIONS */}
@@ -493,6 +507,11 @@ export default function Landing({ onSignIn }) {
           {content.transformations.map((t, i) => (
             <Reveal key={i} delay={i * 90}>
               <HoverCard style={{ overflow: 'hidden' }}>
+                {editing && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}>
+                    <button type="button" style={{ background: 'transparent', color: MUTED, border: '1px solid ' + BORDER, borderRadius: 6, padding: '2px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 700 }} onClick={() => removeItem('transformations', i)}>Remove</button>
+                  </div>
+                )}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                   <div style={{ position: 'relative' }}>
                     <Photo src={t.before} label="BEFORE PHOTO" editing={editing} onChange={(v) => setItem('transformations', i, 'before', v)} />
@@ -515,6 +534,11 @@ export default function Landing({ onSignIn }) {
             </Reveal>
           ))}
         </div>
+          {editing && (
+            <div style={{ marginTop: 28, display: 'flex', justifyContent: 'center' }}>
+              <button type="button" style={{ background: 'transparent', color: ACCENT, border: '1px dashed ' + ACCENT, padding: '12px 28px', borderRadius: 8, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', fontSize: 13, cursor: 'pointer' }} onClick={() => addItem('transformations', { name: '', stat: '', before: '', after: '' })}>+ Add Transformation</button>
+            </div>
+          )}
       </section>
 
 
