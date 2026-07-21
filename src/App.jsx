@@ -23,6 +23,12 @@ if (typeof document !== "undefined" && !document.getElementById("cbnh-anim-style
     * { box-sizing: border-box; }
     .cbnh-setrow { display: flex; align-items: center; gap: 6px; width: 100%; }
     .cbnh-setrow > input { min-width: 0; }
+    @keyframes cbnhPop { 0%{transform:scale(1);} 40%{transform:scale(1.35);} 100%{transform:scale(1);} }
+    @keyframes cbnhCheckIn { 0%{transform:scale(.4);opacity:0;} 100%{transform:scale(1);opacity:1;} }
+    .cbnh-tick { transition: transform .18s ease, background .2s ease, border-color .2s ease, color .2s ease; }
+    .cbnh-tick:active { transform: scale(.9); }
+    .cbnh-tick-done { animation: cbnhPop .32s ease; }
+    .cbnh-rowdone { animation: cbnhFadeUp .3s ease; }
   `;
   document.head.appendChild(st);
 }
@@ -1367,9 +1373,15 @@ function DayView({ day, clientId, workoutLog, onBack }) {
           {saved?"✓ Saved!":"💾 Save Session"}
         </button>} />
       <div style={S.content}>
-        <div style={S.progressBar}>
+      <div style={{marginBottom:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:8}}>
+          <span style={{fontSize:11,fontWeight:800,letterSpacing:"0.14em",textTransform:"uppercase",color:completed===total&&total>0?"#4fd1c5":C.muted}}>{completed===total&&total>0?"Session Complete ✓":"Session Progress"}</span>
+          <span style={{fontSize:13,fontWeight:800,color:completed===total&&total>0?"#4fd1c5":C.text}}>{completed}/{total} · {total>0?Math.round((completed/total)*100):0}%</span>
+        </div>
+        <div style={{...S.progressBar,height:8}}>
           <div style={{...S.progressFill,width:`${total>0?(completed/total)*100:0}%`}} />
         </div>
+      </div>
 
         {day.exercises.map((ex,i)=>{
           const sets = logs[ex.id]||[];
@@ -1407,7 +1419,7 @@ function DayView({ day, clientId, workoutLog, onBack }) {
                       value={s.weight} type="number" inputMode="decimal" onChange={e=>updateSet(ex.id,si,"weight",e.target.value)} />
                     <input style={{...S.setInput,borderColor:s.done?"#FFFFFF50":C.line2}} placeholder="—"
                       value={s.reps} type="number" inputMode="numeric" onChange={e=>updateSet(ex.id,si,"reps",e.target.value)} />
-                    <button className="cbnh-btn" style={{...S.checkBtn,width:40,height:40,fontSize:13,
+                    <button className={`cbnh-btn cbnh-tick ${s.done?"cbnh-tick-done":""}`} style={{...S.checkBtn,width:40,height:40,fontSize:13,
                       background:s.done?"#FFFFFF":"transparent",color:s.done?"#000":"#FFFFFF"}}
                       onClick={()=>toggleSet(ex.id,si)}>{s.done?"✓":"○"}</button>
                   </div>
