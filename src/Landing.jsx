@@ -367,6 +367,56 @@ export default function Landing({ onSignIn }) {
         </Reveal>
       </header>
 
+      {/* WHAT YOU GET */}
+      <section style={{ ...container, paddingTop: 60, paddingBottom: 60 }}>
+        <Reveal><div style={heading}>The Coaching Experience</div></Reveal>
+        <Reveal delay={60}><h2 style={sectionTitle}>What You Get</h2></Reveal>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 20 }}>
+          <Reveal delay={0}>
+            <HoverCard style={{ padding: 28, height: '100%', boxSizing: 'border-box' }}>
+              <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 30, color: ACCENT, lineHeight: 1, marginBottom: 14, letterSpacing: 1 }}>01</div>
+              <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 10, letterSpacing: '-0.01em' }}>Bespoke Training Programs</div>
+              <p style={{ fontSize: 14, lineHeight: 1.65, margin: 0, color: MUTED }}>Fully individualised training built around your body, schedule, equipment and goals — updated as you progress, never off-the-shelf.</p>
+            </HoverCard>
+          </Reveal>
+          <Reveal delay={70}>
+            <HoverCard style={{ padding: 28, height: '100%', boxSizing: 'border-box' }}>
+              <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 30, color: ACCENT, lineHeight: 1, marginBottom: 14, letterSpacing: 1 }}>02</div>
+              <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 10, letterSpacing: '-0.01em' }}>Tailored Nutrition Coaching</div>
+              <p style={{ fontSize: 14, lineHeight: 1.65, margin: 0, color: MUTED }}>Flexible nutrition plans designed around your preferences and lifestyle, with refeeds and diet breaks built in for sustainable results.</p>
+            </HoverCard>
+          </Reveal>
+          <Reveal delay={140}>
+            <HoverCard style={{ padding: 28, height: '100%', boxSizing: 'border-box' }}>
+              <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 30, color: ACCENT, lineHeight: 1, marginBottom: 14, letterSpacing: 1 }}>03</div>
+              <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 10, letterSpacing: '-0.01em' }}>Weekly Check-Ins & Feedback</div>
+              <p style={{ fontSize: 14, lineHeight: 1.65, margin: 0, color: MUTED }}>Structured weekly reviews of your training, nutrition and recovery so adjustments are made before progress ever stalls.</p>
+            </HoverCard>
+          </Reveal>
+          <Reveal delay={210}>
+            <HoverCard style={{ padding: 28, height: '100%', boxSizing: 'border-box' }}>
+              <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 30, color: ACCENT, lineHeight: 1, marginBottom: 14, letterSpacing: 1 }}>04</div>
+              <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 10, letterSpacing: '-0.01em' }}>Live Progress Tracking</div>
+              <p style={{ fontSize: 14, lineHeight: 1.65, margin: 0, color: MUTED }}>Log every set, rep and load in your private dashboard and watch personal bests, measurements and trends update in real time.</p>
+            </HoverCard>
+          </Reveal>
+          <Reveal delay={280}>
+            <HoverCard style={{ padding: 28, height: '100%', boxSizing: 'border-box' }}>
+              <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 30, color: ACCENT, lineHeight: 1, marginBottom: 14, letterSpacing: 1 }}>05</div>
+              <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 10, letterSpacing: '-0.01em' }}>Form & Technique Guidance</div>
+              <p style={{ fontSize: 14, lineHeight: 1.65, margin: 0, color: MUTED }}>Move with confidence. Refine technique on every key lift so you train harder, lift heavier and stay injury-free.</p>
+            </HoverCard>
+          </Reveal>
+          <Reveal delay={350}>
+            <HoverCard style={{ padding: 28, height: '100%', boxSizing: 'border-box' }}>
+              <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 30, color: ACCENT, lineHeight: 1, marginBottom: 14, letterSpacing: 1 }}>06</div>
+              <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 10, letterSpacing: '-0.01em' }}>Direct Access to Your Coach</div>
+              <p style={{ fontSize: 14, lineHeight: 1.65, margin: 0, color: MUTED }}>One-to-one support and accountability whenever you need it — you are coached by Nick, not handed to an app.</p>
+            </HoverCard>
+          </Reveal>
+        </div>
+      </section>
+
       {/* TESTIMONIALS */}
       <section style={{ ...container, paddingTop: 40, paddingBottom: 60 }}>
         <Reveal><div style={heading}>What Clients Say</div></Reveal>
