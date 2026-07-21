@@ -2172,7 +2172,7 @@ const S = {
   wcNotes:{ fontSize:11, color:C.faint, marginTop:4, fontStyle:"italic" },
   checkBtn:{ border:"1px solid #FFFFFF", borderRadius:8, width:40, height:40, cursor:"pointer", fontWeight:700, fontSize:16, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" },
 
-  setLogWrap:{ borderTop:"1px solid rgba(255,255,255,.07)", paddingTop:10, marginTop:4 },
+  setLogWrap:{ borderTop:"1px solid rgba(255,255,255,.07)", paddingTop:10, marginTop:4, width:"100%", alignSelf:"stretch" },
   setLogHeader:{ display:"flex", alignItems:"center", gap:6, marginBottom:6, fontSize:10, fontWeight:700, color:"#65656e", textTransform:"uppercase", letterSpacing:0.8, padding:"0 2px" },
   setLogRow:{ display:"flex", alignItems:"center", gap:6, marginBottom:6, borderRadius:6, padding:"4px 2px", transition:"background .2s", width:"100%", boxSizing:"border-box" },
   setNum:{ flex:"0 0 36px", fontSize:12, fontWeight:700, textAlign:"center" },
