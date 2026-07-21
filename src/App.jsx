@@ -1355,6 +1355,9 @@ function DayView({ day, clientId, workoutLog, onBack }) {
   const exDone = (exId) => logs[exId]?.every(s=>s.done);
   const total = day.exercises.length;
   const completed = day.exercises.filter(ex=>exDone(ex.id)).length;
+  const setsTotal = day.exercises.reduce((a,ex)=>a+((logs[ex.id]||[]).length),0);
+  const setsDone = day.exercises.reduce((a,ex)=>a+((logs[ex.id]||[]).filter(s=>s.done).length),0);
+  const setPct = setsTotal>0?Math.round((setsDone/setsTotal)*100):0;
 
   // Get PBs for this day's exercises
   const pbs = workoutLog.getPBs(clientId, day.exercises);
@@ -1375,16 +1378,19 @@ function DayView({ day, clientId, workoutLog, onBack }) {
       <div style={S.content}>
       <div style={{marginBottom:20}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:8}}>
-          <span style={{fontSize:11,fontWeight:800,letterSpacing:"0.14em",textTransform:"uppercase",color:completed===total&&total>0?"#4fd1c5":C.muted}}>{completed===total&&total>0?"Session Complete ✓":"Session Progress"}</span>
-          <span style={{fontSize:13,fontWeight:800,color:completed===total&&total>0?"#4fd1c5":C.text}}>{completed}/{total} · {total>0?Math.round((completed/total)*100):0}%</span>
+          <span style={{fontSize:11,fontWeight:800,letterSpacing:"0.14em",textTransform:"uppercase",color:setsDone===setsTotal&&setsTotal>0?"#4fd1c5":C.muted}}>{setsDone===setsTotal&&setsTotal>0?"Session Complete ✓":"Session Progress"}</span>
+          <span style={{fontSize:13,fontWeight:800,color:setsDone===setsTotal&&setsTotal>0?"#4fd1c5":C.text}}>{setsDone}/{setsTotal} sets · {setPct}%</span>
         </div>
         <div style={{...S.progressBar,height:8}}>
-          <div style={{...S.progressFill,width:`${total>0?(completed/total)*100:0}%`}} />
+          <div style={{...S.progressFill,width:`${setPct}%`}} />
         </div>
       </div>
 
         {day.exercises.map((ex,i)=>{
           const sets = logs[ex.id]||[];
+          const _hist = workoutLog.getHistory(clientId, day.id);
+          const _last = _hist[_hist.length-1];
+          const lastSets = _last?.sets?.[ex.id] || [];
           const allDone = sets.every(s=>s.done);
           const pb = pbs[ex.id];
           const currentBest = Math.max(...sets.filter(s=>s.done&&s.weight).map(s=>parseFloat(s.weight)||0),0);
@@ -1415,9 +1421,9 @@ function DayView({ day, clientId, workoutLog, onBack }) {
                 {sets.map((s,si)=>(
                   <div key={si} style={{...S.setLogRow,background:s.done?"#FFFFFF10":"transparent"}}>
                     <span style={{...S.setNum,color:s.done?"#FFFFFF":C.muted}}>{si+1}</span>
-                    <input style={{...S.setInput,borderColor:s.done?"#FFFFFF50":C.line2}} placeholder="—"
+                    <input style={{...S.setInput,borderColor:s.done?"#FFFFFF50":C.line2}} placeholder={lastSets[si]?.weight?String(lastSets[si].weight):"—"}
                       value={s.weight} type="number" inputMode="decimal" onChange={e=>updateSet(ex.id,si,"weight",e.target.value)} />
-                    <input style={{...S.setInput,borderColor:s.done?"#FFFFFF50":C.line2}} placeholder="—"
+                    <input style={{...S.setInput,borderColor:s.done?"#FFFFFF50":C.line2}} placeholder={lastSets[si]?.reps?String(lastSets[si].reps):"—"}
                       value={s.reps} type="number" inputMode="numeric" onChange={e=>updateSet(ex.id,si,"reps",e.target.value)} />
                     <button className={`cbnh-btn cbnh-tick ${s.done?"cbnh-tick-done":""}`} style={{...S.checkBtn,width:40,height:40,fontSize:13,
                       background:s.done?"#FFFFFF":"transparent",color:s.done?"#000":"#FFFFFF"}}
