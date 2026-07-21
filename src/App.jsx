@@ -29,6 +29,11 @@ if (typeof document !== "undefined" && !document.getElementById("cbnh-anim-style
     .cbnh-tick:active { transform: scale(.9); }
     .cbnh-tick-done { animation: cbnhPop .32s ease; }
     .cbnh-rowdone { animation: cbnhFadeUp .3s ease; }
+    @keyframes cbnhPBpop { 0% { transform: scale(0.6); opacity: 0; } 55% { transform: scale(1.18); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+    @keyframes cbnhPBglow { 0%,100% { box-shadow: 0 0 0 1px rgba(255,196,0,0.55), 0 0 10px rgba(255,196,0,0.55); } 50% { box-shadow: 0 0 0 1px rgba(255,196,0,0.55), 0 0 22px rgba(255,196,0,0.55); } }
+    @keyframes cbnhPBshine { 0% { background-position: -120% 0; } 100% { background-position: 220% 0; } }
+    .cbnh-pb-badge { animation: cbnhPBpop 0.5s cubic-bezier(0.34,1.56,0.64,1) both, cbnhPBglow 1.8s ease-in-out 0.5s infinite; background: linear-gradient(90deg, rgb(255,196,0), rgb(255,224,130), rgb(255,196,0)) !important; background-size: 200% 100% !important; color: rgb(40,28,0) !important; border-color: rgba(255,196,0,0.55) !important; font-weight: 800 !important; }
+    .cbnh-pb-card { animation: cbnhPBglow 1.8s ease-in-out infinite; border-color: rgba(255,196,0,0.55) !important; }
   `;
   document.head.appendChild(st);
 }
@@ -1396,13 +1401,13 @@ function DayView({ day, clientId, workoutLog, onBack }) {
           const currentBest = Math.max(...sets.filter(s=>s.done&&s.weight).map(s=>parseFloat(s.weight)||0),0);
           const isNewPB = currentBest > 0 && (!pb || currentBest > pb);
           return (
-            <div key={ex.id} style={{...S.workoutCard,flexDirection:"column",opacity:allDone?0.65:1}}>
+            <div key={ex.id} className={isNewPB ? "cbnh-pb-card" : undefined} style={{...S.workoutCard,flexDirection:"column",opacity:allDone?0.65:1}}>
               <div style={{display:"flex",alignItems:"flex-start",gap:12,marginBottom:12}}>
                 <span style={S.wcNum}>{i+1}</span>
                 <div style={{flex:1}}>
                   <div style={{display:"flex",alignItems:"center",gap:8}}>
                     <div style={{...S.wcName,textDecoration:allDone?"line-through":"none"}}>{ex?.name}</div>
-                    {isNewPB && <span style={S.pbBadge}>🏆 New PB!</span>}
+                    {isNewPB && <span className="cbnh-pb-badge" style={S.pbBadge}>🏆 New PB!</span>}
                     {!isNewPB && pb && <span style={S.prevPB}>PB {pb}kg</span>}
                   </div>
                   <div style={S.wcMeta}>{ex.sets} sets · {ex.reps} reps · {ex.rest} rest</div>
