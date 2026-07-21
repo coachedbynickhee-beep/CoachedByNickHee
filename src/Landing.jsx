@@ -43,11 +43,17 @@ const DEFAULT_CONTENT = {
     { name: 'CLIENT NAME HERE', role: 'e.g. Fat loss client', quote: 'Testimonial text goes here - paste what your client said about training with you.', img: '' },
     { name: 'CLIENT NAME HERE', role: 'e.g. Strength client', quote: 'Testimonial text goes here - paste what your client said about training with you.', img: '' },
     { name: 'CLIENT NAME HERE', role: 'e.g. Prep client', quote: 'Testimonial text goes here - paste what your client said about training with you.', img: '' },
+    { name: 'CLIENT NAME HERE', role: 'e.g. Body recomposition client', quote: 'Testimonial text goes here - paste what your client said about training with you.', img: '' },
+    { name: 'CLIENT NAME HERE', role: 'e.g. Competition prep client', quote: 'Testimonial text goes here - paste what your client said about training with you.', img: '' },
+    { name: 'CLIENT NAME HERE', role: 'e.g. Online coaching client', quote: 'Testimonial text goes here - paste what your client said about training with you.', img: '' },
   ],
   transformations: [
     { name: 'CLIENT NAME', stat: 'e.g. -12kg in 16 weeks', before: '', after: '' },
     { name: 'CLIENT NAME', stat: 'e.g. +8kg lean mass', before: '', after: '' },
     { name: 'CLIENT NAME', stat: 'e.g. First pull-up achieved', before: '', after: '' },
+    { name: 'CLIENT NAME', stat: 'e.g. Down 2 dress sizes', before: '', after: '' },
+    { name: 'CLIENT NAME', stat: 'e.g. 8kg squat PB', before: '', after: '' },
+    { name: 'CLIENT NAME', stat: 'e.g. 12 week transformation', before: '', after: '' },
   ],
   updates: [
     { date: 'DATE HERE', title: 'TRAINING UPDATE TITLE', body: 'Write your latest training update, programme news or announcement here.' },
