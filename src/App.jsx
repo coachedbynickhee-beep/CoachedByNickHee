@@ -666,8 +666,20 @@ function ClientDetail({ client, programs, clients, updateClient, updateProgram, 
   const assigned = programs.filter(p=>p.assignedTo.includes(client.id));
   const unassigned = programs.filter(p=>!p.assignedTo.includes(client.id));
 
+  const [editNames, setEditNames] = useState({});
+  const renameProg = (p) => {
+    const nn = editNames[p.id];
+    if (nn != null && nn.trim() && nn.trim() !== p.name) { updateProgram({ ...p, name: nn.trim() }); }
+  };
+
   const doAssignProgram = (pid) => {
-    assignProgram(pid, client.id);
+    const prog = programs.find(p => p.id === pid);
+    const nn = editNames[pid];
+    if (prog && nn != null && nn.trim() && nn.trim() !== prog.name) {
+      updateProgram({ ...prog, name: nn.trim(), assignedTo: [ ...(prog.assignedTo || []), client.id ] });
+    } else {
+      assignProgram(pid, client.id);
+    }
   };
 
   // Collect all exercises across all assigned programs for PB lookup
@@ -708,7 +720,7 @@ function ClientDetail({ client, programs, clients, updateClient, updateProgram, 
             <div style={S.grid}>{unassigned.map(p=>(
               <div key={p.id} style={S.assignCard}>
                 <div style={{...S.programDot,background:p.color}} />
-                <div style={S.assignName}>{p?.name}</div>
+                <input style={{ ...S.assignName, ...S.input, minWidth: 0 }} value={editNames[p.id] ?? p?.name ?? ''} onChange={e => setEditNames(m => ({ ...m, [p.id]: e.target.value }))} onBlur={() => renameProg(p)} placeholder="Program name" />
                 <button className="cbnh-btn" style={S.btnSm} onClick={()=>doAssignProgram(p.id)}>Assign →</button>
               </div>
             ))}</div>
