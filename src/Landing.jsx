@@ -384,9 +384,6 @@ export default function Landing({ onSignIn }) {
       {/* NAV */}
       <nav style={{ ...container, display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 72, maxWidth: 1240, gap: 16 }}>
         <div style={{ fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', fontSize: 'clamp(13px,3.5vw,16px)' }}>CoachedByNickHee</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
-          <LinkButton href={applyHref}>Apply</LinkButton>
-        </div>
       </nav>
 
       {/* Coach-only: booking links */}
@@ -730,25 +727,28 @@ export default function Landing({ onSignIn }) {
       {/* TRAINING UPDATES */}
       <section style={{ ...container, paddingTop: 40, paddingBottom: 80 }}>
         <Reveal><div style={heading}>Free Value, Every Day</div></Reveal>
-        <Reveal delay={60}><h2 style={sectionTitle}>Today's Coaching Tip</h2></Reveal>
+        <Reveal delay={60}><h2 style={sectionTitle}>Coaching Tips</h2></Reveal>
         <Reveal delay={100}>
           <div style={{ display: 'inline-block', marginBottom: 24, padding: '5px 12px', borderRadius: 999, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: ACCENT, background: ACCENT_SOFT, border: '1px solid ' + ACCENT_SOFT }}>New Tip Daily</div>
         </Reveal>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 720 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 20 }}>
           {(() => {
-              const _tip = FAT_LOSS_TIPS[Math.floor(Date.now() / 86400000) % FAT_LOSS_TIPS.length];
-              const _today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-              return (
-                <Reveal>
-                  <HoverCard style={{ padding: 24, display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-                    <div style={{ color: ACCENT, fontSize: 13, fontWeight: 700, letterSpacing: 1, minWidth: 120 }}>{_today}</div>
-                    <div style={{ flex: 1, minWidth: 240 }}>
-                      <div style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>{_tip.title}</div>
-                      <p style={{ color: 'rgba(255,255,255,0.8)', margin: 0, lineHeight: 1.6 }}>{_tip.body}</p>
-                    </div>
+              // Two different tips each day: today's tip plus a bonus tip, both rotate at midnight
+              const day = Math.floor(Date.now() / 86400000);
+              const n = FAT_LOSS_TIPS.length;
+              const tips = [
+                { label: "Today's Tip", tip: FAT_LOSS_TIPS[day % n] },
+                { label: 'Bonus Tip', tip: FAT_LOSS_TIPS[(day + Math.floor(n / 2)) % n] },
+              ];
+              return tips.map(({ label, tip }, k) => (
+                <Reveal key={k} delay={k * 90}>
+                  <HoverCard style={{ padding: 26, height: '100%', boxSizing: 'border-box' }}>
+                    <div style={{ color: ACCENT, fontSize: 12, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 12 }}>{label}</div>
+                    <div style={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, fontSize: 16 }}>{tip.title}</div>
+                    <p style={{ color: 'rgba(255,255,255,0.8)', margin: 0, lineHeight: 1.65, fontSize: 15 }}>{tip.body}</p>
                   </HoverCard>
                 </Reveal>
-              );
+              ));
             })()}
         </div>
       </section>
