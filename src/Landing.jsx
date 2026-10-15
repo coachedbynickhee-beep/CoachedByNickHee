@@ -35,13 +35,14 @@ const BORDER = '1px solid rgba(255,255,255,0.08)';
 const MUTED = 'rgba(255,255,255,0.55)';
 
 const DEFAULT_CONTENT = {
-  // Online-coaching copy + booking links (editable in Coach mode → Edit page)
+  // Coaching copy + booking links (editable in Coach mode → Edit page)
   online: {
-    kicker: '1:1 Online Coaching',
-    intro: 'For people who are done starting over. A fully personalised plan, weekly check-ins and a coach in your corner — so you finally build the body, and the person, you keep promising yourself.',
+    heroKicker: 'Online & 1-on-1 Coaching',
+    heroIntro: 'For people who are done starting over. Train with me in person or be coached online from anywhere — either way you get a fully personalised plan, real accountability and a coach in your corner, so you finally build the body, and the person, you keep promising yourself.',
+    ptLocation: 'Sessions are held in person at a time that suits you. Message me for the location and current availability.',
     applyUrl: '',   // paste your Typeform link here (or in Edit page)
     callUrl: '',    // paste your Calendly link here (or in Edit page)
-    capacity: 'I only take on a limited number of online clients at a time so every one of them gets my full attention. If a spot is open, apply below.',
+    capacity: 'I only take on a limited number of clients at a time so every one of them gets my full attention. If a spot is open, apply below.',
   },
   hero: {
     kicker: 'Elite Coaching Platform',
@@ -53,7 +54,7 @@ const DEFAULT_CONTENT = {
     { name: 'CLIENT NAME HERE', role: 'e.g. Prep client', quote: 'Testimonial text goes here - paste what your client said about training with you.', img: '' },
     { name: 'CLIENT NAME HERE', role: 'e.g. Body recomposition client', quote: 'Testimonial text goes here - paste what your client said about training with you.', img: '' },
     { name: 'CLIENT NAME HERE', role: 'e.g. Competition prep client', quote: 'Testimonial text goes here - paste what your client said about training with you.', img: '' },
-    { name: 'CLIENT NAME HERE', role: 'e.g. Online coaching client', quote: 'Testimonial text goes here - paste what your client said about training with you.', img: '' },
+    { name: 'CLIENT NAME HERE', role: 'e.g. 1-on-1 / online coaching client', quote: 'Testimonial text goes here - paste what your client said about training with you.', img: '' },
   ],
   transformations: [
     { name: 'CLIENT NAME', stat: 'e.g. -12kg in 16 weeks', before: '', after: '' },
@@ -393,9 +394,12 @@ export default function Landing({ onSignIn }) {
       {editing && (
         <div style={{ ...container, marginTop: 8 }}>
           <div style={{ border: '1px solid rgba(77,163,255,0.4)', borderRadius: 8, padding: 16, display: 'grid', gap: 10, background: 'rgba(77,163,255,0.06)' }}>
-            <div style={{ fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', color: ACCENT, fontWeight: 700 }}>Booking links (only you see this)</div>
+            <div style={{ fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', color: ACCENT, fontWeight: 700 }}>Booking links &amp; details (only you see this)</div>
             <label style={{ fontSize: 13, color: MUTED }}>Typeform application link — used by every "Apply" button
               <EditableText editing value={o.applyUrl} onChange={(v) => setOnline('applyUrl', v.trim())} placeholder="https://form.typeform.com/to/…" style={{ marginTop: 4, color: '#fff' }} />
+            </label>
+            <label style={{ fontSize: 13, color: MUTED }}>1-on-1 location / availability — shown in the FAQ
+              <EditableText editing value={o.ptLocation} onChange={(v) => setOnline('ptLocation', v)} placeholder="e.g. Private studio in Tanjong Pagar, weekday mornings & evenings" style={{ marginTop: 4, color: '#fff' }} />
             </label>
             <label style={{ fontSize: 13, color: MUTED }}>Calendly link — used by every "Book a call" button
               <EditableText editing value={o.callUrl} onChange={(v) => setOnline('callUrl', v.trim())} placeholder="https://calendly.com/…" style={{ marginTop: 4, color: '#fff' }} />
@@ -416,7 +420,7 @@ export default function Landing({ onSignIn }) {
         <div>
           <Reveal>
             <EditableText tag="div" style={heading} editing={editing}
-              value={o.kicker} onChange={(v) => setOnline('kicker', v)} placeholder="Kicker" />
+              value={o.heroKicker} onChange={(v) => setOnline('heroKicker', v)} placeholder="Kicker" />
           </Reveal>
           <Reveal delay={80}>
             <h1 style={{ fontSize: 'clamp(40px,10.5vw,68px)', fontWeight: 900, lineHeight: 0.95, textTransform: 'uppercase', margin: '0 0 22px' }}>
@@ -426,11 +430,11 @@ export default function Landing({ onSignIn }) {
           <Reveal delay={160}>
             <EditableText tag="p" multiline editing={editing}
               style={{ color: 'rgba(255,255,255,0.72)', fontSize: 18, lineHeight: 1.6, maxWidth: 560, margin: '0 0 32px' }}
-              value={o.intro} onChange={(v) => setOnline('intro', v)} placeholder="Who online coaching is for and what changes" />
+              value={o.heroIntro} onChange={(v) => setOnline('heroIntro', v)} placeholder="Who your coaching is for and what changes" />
           </Reveal>
           <Reveal delay={240}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14 }}>
-              <LinkButton href={applyHref} big>Apply for Online Coaching &rarr;</LinkButton>
+              <LinkButton href={applyHref} big>Apply for Coaching &rarr;</LinkButton>
               {o.callUrl && <LinkButton href={o.callUrl} big ghost>Book a Free Call</LinkButton>}
             </div>
             <div style={{ color: MUTED, fontSize: 13, marginTop: 14 }}>Takes 3 minutes. No payment, no pressure — just a conversation about your goals.</div>
@@ -466,7 +470,7 @@ export default function Landing({ onSignIn }) {
       {/* TRUST STRIP */}
       <div style={{ borderTop: BORDER, borderBottom: BORDER, background: 'rgba(255,255,255,0.02)' }}>
         <div style={{ ...container, display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 16, padding: '22px 24px' }}>
-          {['100% online — train anywhere', 'Weekly 1:1 check-ins', 'Coached by Nick, not a bot', 'Everything in one app'].map((t, k) => (
+          {['In person or online', '1-on-1 attention, every week', 'Coached by Nick, not a bot', 'Everything in one app'].map((t, k) => (
             <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, fontWeight: 700, letterSpacing: 0.3 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT, flexShrink: 0 }} />{t}
             </div>
@@ -497,22 +501,56 @@ export default function Landing({ onSignIn }) {
             <HoverCard style={{ padding: 28 }}>
               <div style={{ fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: ACCENT, fontWeight: 700, marginBottom: 12 }}>The shift</div>
               <p style={{ fontSize: 17, lineHeight: 1.65, margin: '0 0 14px' }}>Lasting change isn't a 12-week sprint. It's becoming the kind of person who trains, eats and recovers well <i>without needing motivation</i>.</p>
-              <p style={{ fontSize: 15, lineHeight: 1.65, margin: 0, color: MUTED }}>Online coaching gives you the plan, the feedback and the accountability to build those habits — and the confidence that comes with keeping promises to yourself.</p>
+              <p style={{ fontSize: 15, lineHeight: 1.65, margin: 0, color: MUTED }}>Coaching — in person or online — gives you the plan, the feedback and the accountability to build those habits — and the confidence that comes with keeping promises to yourself.</p>
             </HoverCard>
           </Reveal>
         </div>
       </section>
 
+      {/* CHOOSE YOUR COACHING */}
+      <section style={{ ...container, paddingTop: 60, paddingBottom: 20 }}>
+        <Reveal><div style={heading}>Two Ways To Work With Me</div></Reveal>
+        <Reveal delay={60}><h2 style={sectionTitle}>Choose Your Coaching</h2></Reveal>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 20 }}>
+          {[
+            { tag: 'In Person', title: '1-on-1 Personal Training', lead: 'Train side by side with me. Every rep coached, every session planned — the fastest way to learn, lift with confidence and stay accountable.',
+              points: ['Private sessions with Nick', 'Hands-on technique coaching on every lift', 'Sessions planned around your goal and progress', 'Nutrition guidance and full app access between sessions'],
+              cta: 'Apply for 1-on-1', featured: false },
+            { tag: 'Anywhere', title: 'Online Coaching', lead: 'Your plan, your schedule, your gym — with me reviewing your progress every week and adjusting everything that needs it.',
+              points: ['Personalised training & nutrition plan', 'Weekly 1:1 check-ins and feedback', 'Form reviews from your training videos', 'Direct message access to me'],
+              cta: 'Apply for Online', featured: true },
+          ].map((c, k) => (
+            <Reveal key={k} delay={k * 90}>
+              <HoverCard style={{ padding: 30, height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', ...(c.featured ? { border: '1px solid rgba(77,163,255,0.4)' } : null),
+                background: c.featured ? 'linear-gradient(180deg, rgba(77,163,255,0.09), rgba(255,255,255,0.03))' : CARD }}>
+                <span style={{ alignSelf: 'flex-start', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: ACCENT, background: ACCENT_SOFT, padding: '4px 10px', borderRadius: 999, marginBottom: 16 }}>{c.tag}</span>
+                <div style={{ fontSize: 24, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>{c.title}</div>
+                <p style={{ color: 'rgba(255,255,255,0.72)', fontSize: 15, lineHeight: 1.6, margin: '0 0 18px' }}>{c.lead}</p>
+                <div style={{ flex: 1, marginBottom: 22 }}>
+                  {c.points.map((t, j) => (
+                    <div key={j} style={{ display: 'flex', gap: 12, padding: '7px 0', fontSize: 14.5, lineHeight: 1.5 }}><span style={{ color: ACCENT, fontWeight: 900 }}>✓</span>{t}</div>
+                  ))}
+                </div>
+                <LinkButton href={applyHref} ghost={!c.featured}>{c.cta} &rarr;</LinkButton>
+              </HoverCard>
+            </Reveal>
+          ))}
+        </div>
+        <Reveal delay={150}>
+          <p style={{ color: MUTED, fontSize: 14, marginTop: 18 }}>Not sure which suits you? Apply anyway — we'll work it out together on your free call. Many clients combine both.</p>
+        </Reveal>
+      </section>
+
       {/* WHAT YOU GET */}
       <section style={{ ...container, paddingTop: 60, paddingBottom: 40 }}>
-        <Reveal><div style={heading}>What's Included</div></Reveal>
+        <Reveal><div style={heading}>Included Either Way</div></Reveal>
         <Reveal delay={60}><h2 style={sectionTitle}>Everything You Need. Nothing You Don't.</h2></Reveal>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 20 }}>
           {[
             ['Bespoke Training Plan', 'Built around your body, schedule, equipment and goal — gym or home — and adjusted as you progress. Never a template.'],
             ['Nutrition That Fits Your Life', 'Flexible targets and guidance built around foods you actually enjoy, so results don\'t cost you your social life.'],
-            ['Weekly 1:1 Check-Ins', 'Every week I review your training, nutrition, recovery and photos, then tell you exactly what to adjust next.'],
-            ['Form & Technique Reviews', 'Send videos of your key lifts and get clear coaching cues back so you train safely and progress faster.'],
+            ['Weekly Check-Ins', 'Every week I review your training, nutrition, recovery and photos, then tell you exactly what to adjust next.'],
+            ['Form & Technique Coaching', 'Coached live in our sessions or through your training videos — clear cues so you train safely and progress faster.'],
             ['Mindset & Habit Coaching', 'Confidence, consistency and a healthier relationship with food and training — the part most plans ignore.'],
             ['Your Own Coaching App', 'Log every set, track PBs and measurements, see your plan and check in — all in one place, on your phone.'],
           ].map(([t, d], k) => (
@@ -530,7 +568,7 @@ export default function Landing({ onSignIn }) {
       {/* TRANSFORMATIONS */}
       <section style={{ ...container, paddingTop: 60, paddingBottom: 60 }} id="results">
         <Reveal><div style={heading}>Proof It Works</div></Reveal>
-        <Reveal delay={60}><h2 style={sectionTitle}>Online Client Transformations</h2></Reveal>
+        <Reveal delay={60}><h2 style={sectionTitle}>Client Transformations</h2></Reveal>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 20 }}>
           {content.transformations.map((t, i) => (
             <Reveal key={i} delay={i * 90}>
@@ -609,10 +647,10 @@ export default function Landing({ onSignIn }) {
       {/* WHO IT'S FOR */}
       <section style={{ ...container, paddingTop: 40, paddingBottom: 60 }}>
         <Reveal><div style={heading}>Is This For You?</div></Reveal>
-        <Reveal delay={60}><h2 style={sectionTitle}>Online Coaching Isn't For Everyone</h2></Reveal>
+        <Reveal delay={60}><h2 style={sectionTitle}>Coaching Isn't For Everyone</h2></Reveal>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 20 }}>
           <Reveal delay={80}>
-            <HoverCard style={{ padding: 28, height: '100%', boxSizing: 'border-box', borderColor: 'rgba(77,163,255,0.35)' }}>
+            <HoverCard style={{ padding: 28, height: '100%', boxSizing: 'border-box', border: '1px solid rgba(77,163,255,0.35)' }}>
               <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 16 }}>It's a great fit if you…</div>
               {['Are ready to commit for at least 12 weeks', 'Want a plan built for you, not a PDF', 'Will check in honestly every week — good weeks and bad', 'Care about how you feel and perform, not just the scale', 'Want to learn the "why" so you can keep results for life'].map((t, k) => (
                 <div key={k} style={{ display: 'flex', gap: 12, padding: '7px 0', fontSize: 15, lineHeight: 1.5 }}><span style={{ color: ACCENT, fontWeight: 900 }}>✓</span>{t}</div>
@@ -633,13 +671,13 @@ export default function Landing({ onSignIn }) {
       {/* HOW IT WORKS */}
       <section style={{ ...container, paddingTop: 40, paddingBottom: 60 }}>
         <Reveal><div style={heading}>The Process</div></Reveal>
-        <Reveal delay={60}><h2 style={sectionTitle}>How Online Coaching Works</h2></Reveal>
+        <Reveal delay={60}><h2 style={sectionTitle}>How It Works</h2></Reveal>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 28, marginTop: 12 }}>
           {[
             ['Apply', 'Fill in a short application about your goals, history and lifestyle. Takes about 3 minutes.'],
-            ['Strategy Call', 'If we look like a good fit, we jump on a free call to map out your goal and answer every question.'],
-            ['Onboard', 'You get your personalised training and nutrition plan, set up inside your coaching app.'],
-            ['Check In & Progress', 'Train, log, check in weekly. I adjust your plan so progress never stalls.'],
+            ['Strategy Call', 'If we look like a good fit, we jump on a free call to map out your goal and pick the right option — online, in person or both.'],
+            ['Onboard', 'You get your personalised plan in the app — and, for 1-on-1 clients, we book in your first session.'],
+            ['Train & Progress', 'Train with me or on your own, log every session and check in weekly. I adjust your plan so progress never stalls.'],
           ].map(([t, d], k) => (
             <Reveal key={k} delay={k * 80}>
               <div style={{ position: 'relative', paddingTop: 4 }}>
@@ -655,10 +693,12 @@ export default function Landing({ onSignIn }) {
       {/* FAQ */}
       <section style={{ ...container, paddingTop: 40, paddingBottom: 60, maxWidth: 900 }}>
         <Reveal><div style={heading}>Questions</div></Reveal>
-        <Reveal delay={60}><h2 style={sectionTitle}>Online Coaching FAQ</h2></Reveal>
+        <Reveal delay={60}><h2 style={sectionTitle}>Coaching FAQ</h2></Reveal>
         <Reveal delay={100}>
           <div style={{ borderTop: BORDER }}>
-            <FaqItem q="Do I need a gym membership?" a="No. Your plan is built around whatever you have — a full commercial gym, a home setup or minimal equipment. Tell me in your application and I'll programme for it." />
+            <FaqItem q="What's the difference between online and 1-on-1 coaching?" a="1-on-1 means we train together in person — I'm next to you coaching every rep, correcting technique and pushing the pace. Online means you train on your own schedule, anywhere, with your plan in the app and weekly check-ins with me. Both include personalised training, nutrition guidance and app tracking, and you can combine them." />
+            <FaqItem q="Where are 1-on-1 sessions held?" a={o.ptLocation} />
+            <FaqItem q="Do I need a gym membership?" a="No. Your plan is built around whatever you have — a full commercial gym, a home setup or minimal equipment. Tell me in your application and I'll programme for it. (For 1-on-1 sessions, we'll train at our agreed location.)" />
             <FaqItem q="I'm a complete beginner. Is this right for me?" a="Yes. Beginners often see the fastest progress with proper coaching. We start at your level, teach you the key movements and build from there." />
             <FaqItem q="How do the weekly check-ins work?" a="Once a week you submit your check-in in the app — weight, measurements, photos, how training and nutrition went, and how you're feeling. I review everything and send back your adjustments and feedback." />
             <FaqItem q="How quickly will I see results?" a="Most clients notice changes in energy, strength and habits within the first few weeks. Visible physique changes depend on your starting point and consistency — which is exactly why I ask for a minimum 12-week commitment." />
@@ -681,7 +721,7 @@ export default function Landing({ onSignIn }) {
               style={{ color: 'rgba(255,255,255,0.72)', fontSize: 16, lineHeight: 1.6, maxWidth: 620, margin: '0 auto 30px', display: 'block' }}
               value={o.capacity} onChange={(v) => setOnline('capacity', v)} placeholder="Availability note" />
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, justifyContent: 'center' }}>
-              <LinkButton href={applyHref} big>Apply for Online Coaching &rarr;</LinkButton>
+              <LinkButton href={applyHref} big>Apply for Coaching &rarr;</LinkButton>
               {o.callUrl && <LinkButton href={o.callUrl} big ghost>Book a Free Call</LinkButton>}
             </div>
           </div>
