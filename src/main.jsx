@@ -4,7 +4,9 @@ import App from './App.jsx'
 import Landing from './Landing.jsx'
 
 function Root() {
-  const [showApp, setShowApp] = useState(false)
+  // Login is hidden from the public page. Coach/clients can still reach it at
+  // coachedbynickhee.app/#login (needed for Coach mode → Edit page).
+  const [showApp, setShowApp] = useState(window.location.hash === '#login')
   if (showApp) return <App />
   return <Landing onSignIn={() => setShowApp(true)} />
 }

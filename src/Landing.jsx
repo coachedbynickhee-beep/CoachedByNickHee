@@ -385,8 +385,7 @@ export default function Landing({ onSignIn }) {
       <nav style={{ ...container, display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 72, maxWidth: 1240, gap: 16 }}>
         <div style={{ fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', fontSize: 'clamp(13px,3.5vw,16px)' }}>CoachedByNickHee</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
-          <span className="cbnh-hide-sm"><LinkButton href={applyHref}>Apply</LinkButton></span>
-          <NavLink onClick={onSignIn}>Client Login &rarr;</NavLink>
+          <LinkButton href={applyHref}>Apply</LinkButton>
         </div>
       </nav>
 
@@ -445,14 +444,14 @@ export default function Landing({ onSignIn }) {
             <div aria-hidden="true" style={{ position: 'absolute', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle at 35% 35%,' + ACCENT + ',' + ACCENT_DEEP + ')', filter: 'blur(4px)', boxShadow: '0 30px 120px ' + ACCENT_SOFT, opacity: 0.85 }} />
             <div aria-hidden="true" style={{ position: 'absolute', width: 300, height: 300, borderRadius: '50%', border: '1px solid ' + ACCENT_SOFT, transform: 'scale(1.35)' }} />
             <div aria-hidden="true" style={{ position: 'absolute', width: 300, height: 300, borderRadius: '50%', border: '1px solid ' + ACCENT_SOFT, transform: 'scale(1.7)' }} />
-            {/* "Inside the app" preview card */}
+            {/* "Your week" preview card */}
             <div style={{ position: 'relative', width: 260, background: 'rgba(10,10,12,0.82)', backdropFilter: 'blur(10px)', border: '1px solid rgba(77,163,255,0.35)', borderRadius: 14, padding: 20, boxShadow: '0 30px 60px -20px rgba(0,0,0,0.7)' }}>
               <div style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: ACCENT, fontWeight: 700, marginBottom: 14 }}>Your week, coached</div>
               {[
                 ['Training plan', 'Updated for you'],
                 ['Nutrition targets', 'Set to your goal'],
                 ['Weekly check-in', 'Reviewed by Nick'],
-                ['Every set logged', 'PBs tracked live'],
+                ['Progress tracked', 'Every week, every lift'],
               ].map(([a, b], k) => (
                 <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: k ? BORDER : 'none' }}>
                   <span style={{ width: 20, height: 20, borderRadius: '50%', background: ACCENT_SOFT, color: ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900, flexShrink: 0 }}>✓</span>
@@ -470,7 +469,7 @@ export default function Landing({ onSignIn }) {
       {/* TRUST STRIP */}
       <div style={{ borderTop: BORDER, borderBottom: BORDER, background: 'rgba(255,255,255,0.02)' }}>
         <div style={{ ...container, display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 16, padding: '22px 24px' }}>
-          {['In person or online', '1-on-1 attention, every week', 'Coached by Nick, not a bot', 'Everything in one app'].map((t, k) => (
+          {['In person or online', '1-on-1 attention, every week', 'Coached by Nick, not a bot', 'Plans built around your life'].map((t, k) => (
             <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, fontWeight: 700, letterSpacing: 0.3 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT, flexShrink: 0 }} />{t}
             </div>
@@ -514,7 +513,7 @@ export default function Landing({ onSignIn }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 20 }}>
           {[
             { tag: 'In Person', title: '1-on-1 Personal Training', lead: 'Train side by side with me. Every rep coached, every session planned — the fastest way to learn, lift with confidence and stay accountable.',
-              points: ['Private sessions with Nick', 'Hands-on technique coaching on every lift', 'Sessions planned around your goal and progress', 'Nutrition guidance and full app access between sessions'],
+              points: ['Private sessions with Nick', 'Hands-on technique coaching on every lift', 'Sessions planned around your goal and progress', 'Nutrition guidance and support between sessions'],
               cta: 'Apply for 1-on-1', featured: false },
             { tag: 'Anywhere', title: 'Online Coaching', lead: 'Your plan, your schedule, your gym — with me reviewing your progress every week and adjusting everything that needs it.',
               points: ['Personalised training & nutrition plan', 'Weekly 1:1 check-ins and feedback', 'Form reviews from your training videos', 'Direct message access to me'],
@@ -552,7 +551,7 @@ export default function Landing({ onSignIn }) {
             ['Weekly Check-Ins', 'Every week I review your training, nutrition, recovery and photos, then tell you exactly what to adjust next.'],
             ['Form & Technique Coaching', 'Coached live in our sessions or through your training videos — clear cues so you train safely and progress faster.'],
             ['Mindset & Habit Coaching', 'Confidence, consistency and a healthier relationship with food and training — the part most plans ignore.'],
-            ['Your Own Coaching App', 'Log every set, track PBs and measurements, see your plan and check in — all in one place, on your phone.'],
+            ['Progress You Can See', 'Bodyweight, measurements, photos and strength tracked week to week, so you always know what\'s working.'],
           ].map(([t, d], k) => (
             <Reveal key={k} delay={k * 70}>
               <HoverCard style={{ padding: 28, height: '100%', boxSizing: 'border-box' }}>
@@ -676,7 +675,7 @@ export default function Landing({ onSignIn }) {
           {[
             ['Apply', 'Fill in a short application about your goals, history and lifestyle. Takes about 3 minutes.'],
             ['Strategy Call', 'If we look like a good fit, we jump on a free call to map out your goal and pick the right option — online, in person or both.'],
-            ['Onboard', 'You get your personalised plan in the app — and, for 1-on-1 clients, we book in your first session.'],
+            ['Onboard', 'You receive your personalised plan — and, for 1-on-1 clients, we book in your first session.'],
             ['Train & Progress', 'Train with me or on your own, log every session and check in weekly. I adjust your plan so progress never stalls.'],
           ].map(([t, d], k) => (
             <Reveal key={k} delay={k * 80}>
@@ -696,11 +695,11 @@ export default function Landing({ onSignIn }) {
         <Reveal delay={60}><h2 style={sectionTitle}>Coaching FAQ</h2></Reveal>
         <Reveal delay={100}>
           <div style={{ borderTop: BORDER }}>
-            <FaqItem q="What's the difference between online and 1-on-1 coaching?" a="1-on-1 means we train together in person — I'm next to you coaching every rep, correcting technique and pushing the pace. Online means you train on your own schedule, anywhere, with your plan in the app and weekly check-ins with me. Both include personalised training, nutrition guidance and app tracking, and you can combine them." />
+            <FaqItem q="What's the difference between online and 1-on-1 coaching?" a="1-on-1 means we train together in person — I'm next to you coaching every rep, correcting technique and pushing the pace. Online means you train on your own schedule, anywhere, with a personalised plan and weekly check-ins with me. Both include personalised training, nutrition guidance and progress tracking, and you can combine them." />
             <FaqItem q="Where are 1-on-1 sessions held?" a={o.ptLocation} />
             <FaqItem q="Do I need a gym membership?" a="No. Your plan is built around whatever you have — a full commercial gym, a home setup or minimal equipment. Tell me in your application and I'll programme for it. (For 1-on-1 sessions, we'll train at our agreed location.)" />
             <FaqItem q="I'm a complete beginner. Is this right for me?" a="Yes. Beginners often see the fastest progress with proper coaching. We start at your level, teach you the key movements and build from there." />
-            <FaqItem q="How do the weekly check-ins work?" a="Once a week you submit your check-in in the app — weight, measurements, photos, how training and nutrition went, and how you're feeling. I review everything and send back your adjustments and feedback." />
+            <FaqItem q="How do the weekly check-ins work?" a="Once a week you send me your check-in — weight, measurements, photos, how training and nutrition went, and how you're feeling. I review everything and send back your adjustments and feedback." />
             <FaqItem q="How quickly will I see results?" a="Most clients notice changes in energy, strength and habits within the first few weeks. Visible physique changes depend on your starting point and consistency — which is exactly why I ask for a minimum 12-week commitment." />
             <FaqItem q="How much does it cost?" a="It depends on your goal and the level of support you need. We'll go through the options on your free call, with no pressure to sign up." />
             <FaqItem q="Can I message you between check-ins?" a="Yes. You get direct access to me for questions about training, nutrition or anything that comes up during the week." />
@@ -758,7 +757,6 @@ export default function Landing({ onSignIn }) {
       <footer style={{ borderTop: BORDER, padding: '40px 0' }}>
         <div style={{ ...container, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ color: MUTED, fontSize: 13 }}>&copy; CoachedByNickHee &middot; Re-establishing limits, one rep at a time.</div>
-          <NavLink onClick={onSignIn}>Existing client? Log in &rarr;</NavLink>
         </div>
       </footer>
 
